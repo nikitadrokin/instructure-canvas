@@ -55,12 +55,7 @@ export const canvasRouter = createTRPCRouter({
 		}),
 	dashboard: publicProcedure.query(async ({ ctx }) => {
 		const session = getCanvasSession(ctx.canvasSessionId);
-		if (!session) {
-			throw new TRPCError({
-				code: "UNAUTHORIZED",
-				message: "Connect your Canvas account to continue.",
-			});
-		}
+		if (!session) return null;
 
 		try {
 			return await getCanvasDashboard(session);

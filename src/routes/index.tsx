@@ -5,9 +5,16 @@ import { useMemo, useRef, useState } from "react";
 import { useTRPC, useTRPCClient } from "#/integrations/trpc/react";
 import type { TRPCRouter } from "#/integrations/trpc/router";
 
-type DashboardData = inferRouterOutputs<TRPCRouter>["canvas"]["dashboard"];
+type DashboardData = NonNullable<
+	inferRouterOutputs<TRPCRouter>["canvas"]["dashboard"]
+>;
 type Course = DashboardData["courses"][number];
 type UpcomingItem = DashboardData["upcoming"][number];
+type Enrollment = NonNullable<Course["enrollments"]>[number];
+
+function getTrpcErrorMessage(error: unknown, fallback: string) {
+	return error instanceof Error && error.message ? error.message : fallback;
+}
 
 export const Route = createFileRoute("/")({ component: Home });
 
@@ -39,7 +46,7 @@ function Home() {
 			if (tokenInput.current) tokenInput.current.value = "";
 		} catch (error) {
 			setConnectionError(
-				error instanceof Error ? error.message : "Could not connect to Canvas.",
+				getTrpcErrorMessage(error, "Could not connect to Canvas."),
 			);
 		} finally {
 			setIsConnecting(false);
@@ -50,13 +57,11 @@ function Home() {
 		setConnectionError(undefined);
 		try {
 			await client.canvas.disconnect.mutate();
-			queryClient.setQueryData(trpc.canvas.dashboard.queryKey(), undefined);
+			queryClient.setQueryData(trpc.canvas.dashboard.queryKey(), null);
 			await dashboard.refetch();
 		} catch (error) {
 			setConnectionError(
-				error instanceof Error
-					? error.message
-					: "Could not disconnect from Canvas.",
+				getTrpcErrorMessage(error, "Could not disconnect from Canvas."),
 			);
 		}
 	}
@@ -518,11 +523,43 @@ function StatCard({
 	);
 }
 
-function getCourseScore(course: Course) {
-	const enrollment = course.enrollments?.[0];
+function getPrimaryEnrollment(course: Course) {
+	const enrollments = course.enrollments ?? [];
 	return (
-		enrollment?.computed_current_score ?? enrollment?.current_score ?? null
+		enrollments.find(
+			(enrollment) =>
+				enrollment.type === "student" ||
+				enrollment.role === "StudentEnrollment",
+		) ?? enrollments[0]
 	);
+}
+
+function getEnrollmentScore(enrollment: Enrollment | undefined) {
+	if (!enrollment) return null;
+	return (
+		enrollment.computed_current_score ??
+		enrollment.current_period_computed_current_score ??
+		enrollment.current_score ??
+		enrollment.grades?.current_score ??
+		enrollment.grades?.unposted_current_score ??
+		null
+	);
+}
+
+function getEnrollmentGrade(enrollment: Enrollment | undefined) {
+	if (!enrollment) return null;
+	return (
+		enrollment.computed_current_grade ??
+		enrollment.current_period_computed_current_grade ??
+		enrollment.current_grade ??
+		enrollment.grades?.current_grade ??
+		enrollment.grades?.unposted_current_grade ??
+		null
+	);
+}
+
+function getCourseScore(course: Course) {
+	return getEnrollmentScore(getPrimaryEnrollment(course));
 }
 
 function CourseCard({
@@ -534,9 +571,9 @@ function CourseCard({
 	index: number;
 	origin: string;
 }) {
-	const enrollment = course.enrollments?.[0];
-	const score = getCourseScore(course);
-	const grade = enrollment?.computed_current_grade ?? enrollment?.current_grade;
+	const enrollment = getPrimaryEnrollment(course);
+	const score = getEnrollmentScore(enrollment);
+	const grade = getEnrollmentGrade(enrollment);
 	const role = enrollment?.role?.replace("Enrollment", "") ?? "Member";
 	const href = course.html_url ?? `${origin}/courses/${course.id}`;
 
@@ -571,9 +608,7 @@ function UpcomingRow({ item, origin }: { item: UpcomingItem; origin: string }) {
 	const dueAt = item.assignment?.due_at ?? item.start_at;
 	const title = item.assignment?.name ?? item.title;
 	const href = item.assignment?.html_url ?? item.html_url ?? origin;
-	const courseId = item.context_code?.startsWith("course_")
-		? item.context_code.replace("course_", "Course ")
-		: "Canvas";
+	const contextLabel = item.context_name ?? "Canvas";
 
 	return (
 		<a className="upcoming-row" href={href} target="_blank" rel="noreferrer">
@@ -584,7 +619,7 @@ function UpcomingRow({ item, origin }: { item: UpcomingItem; origin: string }) {
 			<div className="upcoming-copy">
 				<strong>{title}</strong>
 				<span>
-					{courseId} · {dueAt ? formatTime(dueAt) : "No due date"}
+					{contextLabel} · {dueAt ? formatTime(dueAt) : "No due date"}
 				</span>
 			</div>
 			<Icon name="chevron" />
