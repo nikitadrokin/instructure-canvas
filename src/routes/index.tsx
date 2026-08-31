@@ -21,6 +21,7 @@ function Home() {
 	const [isConnecting, setIsConnecting] = useState(false);
 	const dashboard = useQuery(
 		trpc.canvas.dashboard.queryOptions(undefined, {
+			enabled: typeof window !== "undefined",
 			retry: false,
 			staleTime: 60_000,
 		}),
@@ -292,6 +293,14 @@ function Dashboard({
 					<a className="nav-item" href="#upcoming">
 						<Icon name="calendar" /> Upcoming
 					</a>
+					<button
+						className="nav-item mobile-disconnect"
+						type="button"
+						onClick={onDisconnect}
+						aria-label="Disconnect Canvas"
+					>
+						<Icon name="logout" /> Disconnect
+					</button>
 				</nav>
 
 				<div className="sidebar-connection">

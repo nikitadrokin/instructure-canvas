@@ -196,6 +196,7 @@ function createCanvasFetch(origin: string, token: string) {
 		try {
 			response = await fetch(url, {
 				headers,
+				redirect: "manual",
 				signal: AbortSignal.timeout(12_000),
 			});
 		} catch {
