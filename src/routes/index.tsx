@@ -47,9 +47,18 @@ function Home() {
 	}
 
 	async function disconnect() {
-		await client.canvas.disconnect.mutate();
-		queryClient.setQueryData(trpc.canvas.dashboard.queryKey(), undefined);
-		await dashboard.refetch();
+		setConnectionError(undefined);
+		try {
+			await client.canvas.disconnect.mutate();
+			queryClient.setQueryData(trpc.canvas.dashboard.queryKey(), undefined);
+			await dashboard.refetch();
+		} catch (error) {
+			setConnectionError(
+				error instanceof Error
+					? error.message
+					: "Could not disconnect from Canvas.",
+			);
+		}
 	}
 
 	if (dashboard.isPending) return <LoadingScreen />;
@@ -58,7 +67,7 @@ function Home() {
 		return (
 			<ConnectionScreen
 				canvasUrl={canvasUrl}
-				error={connectionError}
+				error={connectionError ?? dashboard.error?.message}
 				isPending={isConnecting}
 				onCanvasUrlChange={setCanvasUrl}
 				onSubmit={connect}
@@ -70,6 +79,7 @@ function Home() {
 	return (
 		<Dashboard
 			data={dashboard.data}
+			error={connectionError ?? dashboard.error?.message}
 			isRefreshing={dashboard.isFetching}
 			onDisconnect={disconnect}
 			onRefresh={() => dashboard.refetch()}
@@ -170,7 +180,11 @@ function ConnectionScreen({
 						</div>
 					</div>
 
-					<form onSubmit={onSubmit} className="connect-form">
+					<form
+						onSubmit={onSubmit}
+						className="connect-form"
+						aria-busy={isPending}
+					>
 						<label htmlFor="canvas-url">Canvas domain</label>
 						<div className="input-shell">
 							<Icon name="globe" />
@@ -184,6 +198,8 @@ function ConnectionScreen({
 								placeholder="school.instructure.com"
 								value={canvasUrl}
 								onChange={(event) => onCanvasUrlChange(event.target.value)}
+								aria-invalid={error ? true : undefined}
+								aria-describedby={error ? "connection-error" : undefined}
 								required
 							/>
 						</div>
@@ -207,12 +223,14 @@ function ConnectionScreen({
 								type="password"
 								autoComplete="off"
 								placeholder="Paste your token"
+								aria-invalid={error ? true : undefined}
+								aria-describedby={error ? "connection-error" : undefined}
 								required
 							/>
 						</div>
 
 						{error ? (
-							<div className="form-error" role="alert">
+							<div className="form-error" id="connection-error" role="alert">
 								<Icon name="alert" />
 								{error}
 							</div>
@@ -252,11 +270,13 @@ function ConnectionScreen({
 
 function Dashboard({
 	data,
+	error,
 	isRefreshing,
 	onDisconnect,
 	onRefresh,
 }: {
 	data: DashboardData;
+	error?: string;
 	isRefreshing: boolean;
 	onDisconnect: () => void;
 	onRefresh: () => void;
@@ -317,7 +337,7 @@ function Dashboard({
 				</div>
 			</aside>
 
-			<main className="dashboard-main" id="overview">
+			<main className="dashboard-main" id="overview" aria-busy={isRefreshing}>
 				<header className="dashboard-header">
 					<div>
 						<p className="eyebrow">{weekday} overview</p>
@@ -339,6 +359,16 @@ function Dashboard({
 						<Avatar profile={data.profile} />
 					</div>
 				</header>
+
+				{error ? (
+					<div className="dashboard-error" role="alert">
+						<Icon name="alert" />
+						<span>{error}</span>
+					</div>
+				) : null}
+				<div className="sr-only" aria-live="polite">
+					{isRefreshing ? "Refreshing dashboard" : "Dashboard is up to date"}
+				</div>
 
 				<section className="stats-grid" aria-label="Dashboard summary">
 					<StatCard
