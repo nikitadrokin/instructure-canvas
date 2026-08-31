@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { inferRouterOutputs } from "@trpc/server";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useCanvasStore } from "#/integrations/canvas/store";
 import { useTRPC, useTRPCClient } from "#/integrations/trpc/react";
 import type { TRPCRouter } from "#/integrations/trpc/router";
 
@@ -23,16 +24,80 @@ function Home() {
 	const client = useTRPCClient();
 	const queryClient = useQueryClient();
 	const tokenInput = useRef<HTMLInputElement>(null);
+	const restoreStarted = useRef(false);
+	const hasHydrated = useCanvasStore((state) => state.hasHydrated);
+	const storedUrl = useCanvasStore((state) => state.canvasUrl);
+	const storedDashboard = useCanvasStore((state) => state.dashboard);
+	const rememberSession = useCanvasStore((state) => state.rememberSession);
+	const forgetSession = useCanvasStore((state) => state.forgetSession);
+	const setStoredDashboard = useCanvasStore((state) => state.setDashboard);
 	const [canvasUrl, setCanvasUrl] = useState("");
 	const [connectionError, setConnectionError] = useState<string>();
 	const [isConnecting, setIsConnecting] = useState(false);
+	const [restoreFinished, setRestoreFinished] = useState(false);
+	const dashboardQueryKey = trpc.canvas.dashboard.queryKey();
+
+	useEffect(() => {
+		void Promise.resolve(useCanvasStore.persist.rehydrate()).then(() => {
+			if (!useCanvasStore.getState().hasHydrated) {
+				useCanvasStore.getState().markHydrated();
+			}
+		});
+	}, []);
+
+	useEffect(() => {
+		if (hasHydrated && storedUrl) {
+			setCanvasUrl((current) => current || storedUrl);
+		}
+	}, [hasHydrated, storedUrl]);
+
+	useEffect(() => {
+		if (!hasHydrated || restoreStarted.current) return;
+		restoreStarted.current = true;
+
+		const cached = useCanvasStore.getState().dashboard;
+		if (cached) {
+			queryClient.setQueryData(dashboardQueryKey, cached);
+		}
+
+		const url = useCanvasStore.getState().canvasUrl;
+		const token = useCanvasStore.getState().token;
+		if (!url || !token) {
+			setRestoreFinished(true);
+			return;
+		}
+
+		setIsConnecting(true);
+		void client.canvas.connect
+			.mutate({ canvasUrl: url, token })
+			.then((data) => {
+				queryClient.setQueryData(dashboardQueryKey, data);
+				rememberSession({ canvasUrl: url, token, dashboard: data });
+			})
+			.catch((error: unknown) => {
+				setConnectionError(
+					getTrpcErrorMessage(error, "Could not restore your Canvas session."),
+				);
+				queryClient.setQueryData(dashboardQueryKey, null);
+				useCanvasStore.setState({ token: "", dashboard: null });
+			})
+			.finally(() => {
+				setIsConnecting(false);
+				setRestoreFinished(true);
+			});
+	}, [client, dashboardQueryKey, hasHydrated, queryClient, rememberSession]);
+
 	const dashboard = useQuery(
 		trpc.canvas.dashboard.queryOptions(undefined, {
-			enabled: typeof window !== "undefined",
+			enabled: typeof window !== "undefined" && restoreFinished,
 			retry: false,
 			staleTime: 60_000,
 		}),
 	);
+
+	useEffect(() => {
+		if (dashboard.data) setStoredDashboard(dashboard.data);
+	}, [dashboard.data, setStoredDashboard]);
 
 	async function connect(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -42,7 +107,8 @@ function Home() {
 
 		try {
 			const data = await client.canvas.connect.mutate({ canvasUrl, token });
-			queryClient.setQueryData(trpc.canvas.dashboard.queryKey(), data);
+			rememberSession({ canvasUrl, token, dashboard: data });
+			queryClient.setQueryData(dashboardQueryKey, data);
 			if (tokenInput.current) tokenInput.current.value = "";
 		} catch (error) {
 			setConnectionError(
@@ -55,9 +121,10 @@ function Home() {
 
 	async function disconnect() {
 		setConnectionError(undefined);
+		forgetSession();
 		try {
 			await client.canvas.disconnect.mutate();
-			queryClient.setQueryData(trpc.canvas.dashboard.queryKey(), null);
+			queryClient.setQueryData(dashboardQueryKey, null);
 			await dashboard.refetch();
 		} catch (error) {
 			setConnectionError(
@@ -66,9 +133,12 @@ function Home() {
 		}
 	}
 
-	if (dashboard.isPending) return <LoadingScreen />;
+	const data = dashboard.data ?? storedDashboard;
 
-	if (!dashboard.data) {
+	if (!hasHydrated) return <LoadingScreen />;
+	if (!data && (isConnecting || dashboard.isPending)) return <LoadingScreen />;
+
+	if (!data) {
 		return (
 			<ConnectionScreen
 				canvasUrl={canvasUrl}
@@ -83,9 +153,9 @@ function Home() {
 
 	return (
 		<Dashboard
-			data={dashboard.data}
+			data={data}
 			error={connectionError ?? dashboard.error?.message}
-			isRefreshing={dashboard.isFetching}
+			isRefreshing={isConnecting || dashboard.isFetching}
 			onDisconnect={disconnect}
 			onRefresh={() => dashboard.refetch()}
 		/>
@@ -167,7 +237,7 @@ function ConnectionScreen({
 							<div>
 								<strong>Private by default</strong>
 								<span>
-									Your token stays in the local server and is never saved.
+									This browser remembers your school until you disconnect.
 								</span>
 							</div>
 						</li>
@@ -257,8 +327,8 @@ function ConnectionScreen({
 					<div className="privacy-note">
 						<Icon name="shield" />
 						<p>
-							<strong>Your credentials are not stored.</strong>
-							They remain in local server memory and disappear on restart.
+							<strong>Saved on this device.</strong>
+							Your school and token stay in this browser until you disconnect.
 						</p>
 					</div>
 				</section>

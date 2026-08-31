@@ -31,7 +31,8 @@
     "react-dom": "^19.2.0",
     "superjson": "^2.2.2",
     "tailwindcss": "^4.1.18",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.5",
