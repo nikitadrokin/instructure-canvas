@@ -4,6 +4,12 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "#/integrations/trpc/init";
 
 import { CanvasApiError, getCanvasDashboard } from "./client";
+import {
+	createCanvasSession,
+	createSessionCookie,
+	destroyCanvasSession,
+	getCanvasSession,
+} from "./session";
 
 const canvasCredentialsSchema = z.object({
 	canvasUrl: z.string().trim().min(1, "Enter your Canvas domain."),
@@ -34,13 +40,37 @@ function toTrpcError(error: unknown) {
 }
 
 export const canvasRouter = createTRPCRouter({
-	dashboard: publicProcedure
+	connect: publicProcedure
 		.input(canvasCredentialsSchema)
-		.mutation(async ({ input }) => {
+		.mutation(async ({ ctx, input }) => {
 			try {
-				return await getCanvasDashboard(input);
+				const dashboard = await getCanvasDashboard(input);
+				destroyCanvasSession(ctx.canvasSessionId);
+				const sessionId = createCanvasSession(input);
+				ctx.resHeaders.append("Set-Cookie", createSessionCookie(sessionId));
+				return dashboard;
 			} catch (error) {
 				throw toTrpcError(error);
 			}
 		}),
+	dashboard: publicProcedure.query(async ({ ctx }) => {
+		const session = getCanvasSession(ctx.canvasSessionId);
+		if (!session) {
+			throw new TRPCError({
+				code: "UNAUTHORIZED",
+				message: "Connect your Canvas account to continue.",
+			});
+		}
+
+		try {
+			return await getCanvasDashboard(session);
+		} catch (error) {
+			throw toTrpcError(error);
+		}
+	}),
+	disconnect: publicProcedure.mutation(({ ctx }) => {
+		destroyCanvasSession(ctx.canvasSessionId);
+		ctx.resHeaders.append("Set-Cookie", createSessionCookie(null));
+		return { disconnected: true };
+	}),
 });
