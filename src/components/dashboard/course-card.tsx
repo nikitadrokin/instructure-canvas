@@ -36,7 +36,15 @@ export function CourseCard({
 
 	return (
 		<Card
-			render={<a href={href} target="_blank" rel="noreferrer" />}
+			render={
+				// biome-ignore lint/a11y/useAnchorContent: link text is provided by Card children at render time
+				<a
+					href={href}
+					target="_blank"
+					rel="noreferrer"
+					aria-label={course.name ?? course.course_code}
+				/>
+			}
 			className="group flex-row overflow-hidden transition-shadow hover:shadow-md"
 		>
 			<span aria-hidden="true" className={cn("w-1.5 shrink-0", tone)} />

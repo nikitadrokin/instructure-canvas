@@ -1,4 +1,10 @@
-import { AlertCircle, ArrowRight, Globe, Lock, ShieldCheck } from "lucide-react";
+import {
+	AlertCircle,
+	ArrowRight,
+	Globe,
+	Lock,
+	ShieldCheck,
+} from "lucide-react";
 import type React from "react";
 import { Brand } from "@/components/brand";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

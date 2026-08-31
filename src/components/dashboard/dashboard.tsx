@@ -13,15 +13,14 @@ import type React from "react";
 import { useMemo } from "react";
 import { Brand } from "@/components/brand";
 import { CourseCard } from "@/components/dashboard/course-card";
-import { type DashboardData, getCourseScore } from "@/components/dashboard/shared";
+import {
+	type DashboardData,
+	getCourseScore,
+} from "@/components/dashboard/shared";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { UpcomingRow } from "@/components/dashboard/upcoming-row";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -54,7 +53,9 @@ export function Dashboard({
 		[data.courses],
 	);
 	const average = scores.length
-		? Math.round(scores.reduce((total, score) => total + score, 0) / scores.length)
+		? Math.round(
+				scores.reduce((total, score) => total + score, 0) / scores.length,
+			)
 		: null;
 	const firstName =
 		data.profile.short_name?.split(" ")[0] ?? data.profile.name.split(" ")[0];
@@ -132,7 +133,11 @@ export function Dashboard({
 						</p>
 					</div>
 					<div className="flex items-center gap-3">
-						<Button variant="outline" onClick={onRefresh} loading={isRefreshing}>
+						<Button
+							variant="outline"
+							onClick={onRefresh}
+							loading={isRefreshing}
+						>
 							<RefreshCw />
 							Refresh
 						</Button>
