@@ -159,12 +159,12 @@ function Home() {
 
 function LoadingScreen() {
 	return (
-		<div
+		<output
 			className="flex min-h-screen flex-col items-center justify-center gap-6"
 			aria-label="Loading your Canvas session"
 		>
 			<Brand />
 			<Spinner className="size-6 text-muted-foreground" />
-		</div>
+		</output>
 	);
 }
