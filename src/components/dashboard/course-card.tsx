@@ -1,4 +1,5 @@
-import { ExternalLink } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 import type React from "react";
 import {
 	type Course,
@@ -17,27 +18,18 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 
-export function CourseCard({
-	course,
-	origin,
-}: {
-	course: Course;
-	origin: string;
-}): React.ReactElement {
+export function CourseCard({ course }: { course: Course }): React.ReactElement {
 	const enrollment = getPrimaryEnrollment(course);
 	const score = getEnrollmentScore(enrollment);
 	const grade = getEnrollmentGrade(enrollment);
 	const role = enrollment?.role?.replace("Enrollment", "") ?? "Member";
-	const href = course.html_url ?? `${origin}/courses/${course.id}`;
 
 	return (
 		<Card
 			render={
-				// biome-ignore lint/a11y/useAnchorContent: link text is provided by Card children at render time
-				<a
-					href={href}
-					target="_blank"
-					rel="noreferrer"
+				<Link
+					to="/courses"
+					search={{ courseId: course.id }}
 					aria-label={course.name ?? course.course_code}
 				/>
 			}
@@ -51,7 +43,7 @@ export function CourseCard({
 					{course.name ?? course.course_code}
 				</CardTitle>
 				<CardAction>
-					<ExternalLink className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+					<ArrowRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
 				</CardAction>
 			</CardHeader>
 			<CardContent className="text-muted-foreground text-sm">

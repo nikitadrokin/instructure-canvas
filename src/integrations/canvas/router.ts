@@ -2,8 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "#/integrations/trpc/init";
-
-import { CanvasApiError, getCanvasDashboard } from "./client";
+import { normalizeCanvasBaseUrl } from "./auth";
+import { CanvasApiError, CanvasClient, getCanvasDashboard } from "./client";
 import {
 	createCanvasSession,
 	createSessionCookie,
@@ -63,6 +63,27 @@ export const canvasRouter = createTRPCRouter({
 			throw toTrpcError(error);
 		}
 	}),
+	courseDetail: publicProcedure
+		.input(z.object({ courseId: z.string().min(1) }))
+		.query(async ({ ctx, input }) => {
+			const session = getCanvasSession(ctx.canvasSessionId);
+			if (!session)
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "Connect to Canvas to view a course.",
+				});
+			const client = new CanvasClient({
+				baseUrl: normalizeCanvasBaseUrl(session.canvasUrl),
+				accessToken: session.token,
+			});
+			try {
+				return await client.getCourseDetail(input.courseId);
+			} catch (error) {
+				throw toTrpcError(error);
+			} finally {
+				client.forgetCredentials();
+			}
+		}),
 	disconnect: publicProcedure.mutation(({ ctx }) => {
 		destroyCanvasSession(ctx.canvasSessionId);
 		ctx.resHeaders.append("Set-Cookie", createSessionCookie(null));

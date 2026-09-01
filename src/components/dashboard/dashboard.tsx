@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	BarChart3,
@@ -50,7 +51,6 @@ import {
 
 const NAV_ITEMS = [
 	{ href: "#overview", icon: LayoutGrid, label: "Overview" },
-	{ href: "#courses", icon: BookOpen, label: "Courses" },
 	{ href: "#upcoming", icon: Calendar, label: "Upcoming" },
 ];
 
@@ -120,6 +120,22 @@ export function Dashboard({
 										</SidebarMenuButton>
 									</SidebarMenuItem>
 								))}
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+					<SidebarGroup>
+						<SidebarGroupLabel>Explore</SidebarGroupLabel>
+						<SidebarGroupContent>
+							<SidebarMenu>
+								<SidebarMenuItem>
+									<SidebarMenuButton
+										tooltip="Course explorer"
+										render={<Link to="/courses" search={{}} />}
+									>
+										<BookOpen />
+										<span>Course explorer</span>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
 							</SidebarMenu>
 						</SidebarGroupContent>
 					</SidebarGroup>
@@ -242,11 +258,7 @@ export function Dashboard({
 							{data.courses.length ? (
 								<div className="grid gap-3 sm:grid-cols-2">
 									{data.courses.map((course) => (
-										<CourseCard
-											key={course.id}
-											course={course}
-											origin={data.origin}
-										/>
+										<CourseCard key={course.id} course={course} />
 									))}
 								</div>
 							) : (

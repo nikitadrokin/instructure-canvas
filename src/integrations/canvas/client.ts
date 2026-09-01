@@ -77,6 +77,63 @@ const canvasCourseSchema = z
 			.nullable()
 			.optional(),
 		enrollments: z.array(canvasEnrollmentSchema).optional(),
+		syllabus_body: nullableStringSchema,
+		public_description: nullableStringSchema,
+		default_view: nullableStringSchema,
+	})
+	.passthrough();
+
+const canvasAssignmentSchema = z
+	.object({
+		id: canvasIdSchema,
+		name: z.string(),
+		due_at: nullableStringSchema,
+		points_possible: nullableNumberSchema,
+		html_url: z.string().optional(),
+		submission_types: z.array(z.string()).optional(),
+		workflow_state: z.string().optional(),
+		has_submitted_submissions: z.boolean().optional(),
+	})
+	.passthrough();
+
+const canvasModuleItemSchema = z
+	.object({
+		id: canvasIdSchema,
+		title: z.string(),
+		type: z.string().optional(),
+		html_url: z.string().optional(),
+		completion_requirement: z
+			.object({ completed: z.boolean().optional() })
+			.passthrough()
+			.nullable()
+			.optional(),
+	})
+	.passthrough();
+
+const canvasModuleSchema = z
+	.object({
+		id: canvasIdSchema,
+		name: z.string(),
+		position: z.number().optional(),
+		state: z.string().optional(),
+		items_count: z.number().optional(),
+		items: z.array(canvasModuleItemSchema).optional(),
+	})
+	.passthrough();
+
+const canvasAnnouncementSchema = z
+	.object({
+		id: canvasIdSchema,
+		title: z.string(),
+		posted_at: nullableStringSchema,
+		html_url: z.string().optional(),
+		author: z
+			.object({
+				display_name: z.string().optional(),
+				avatar_image_url: nullableStringSchema,
+			})
+			.passthrough()
+			.optional(),
 	})
 	.passthrough();
 
@@ -144,6 +201,9 @@ export type CanvasCourse = {
 		end_at?: string | null;
 	} | null;
 	enrollments?: Array<z.infer<typeof canvasEnrollmentSchema>>;
+	syllabus_body?: string | null;
+	public_description?: string | null;
+	default_view?: string | null;
 };
 
 /** Planner-style upcoming assignment or calendar event. */
@@ -172,6 +232,13 @@ export type CanvasDashboard = {
 	profile: CanvasProfile;
 	courses: CanvasCourse[];
 	upcoming: CanvasUpcomingItem[];
+};
+
+export type CanvasCourseDetail = {
+	course: z.infer<typeof canvasCourseSchema>;
+	assignments: Array<z.infer<typeof canvasAssignmentSchema>>;
+	modules: Array<z.infer<typeof canvasModuleSchema>>;
+	announcements: Array<z.infer<typeof canvasAnnouncementSchema>>;
 };
 
 /**
@@ -275,6 +342,47 @@ export class CanvasClient {
 			canvasCourseSchema,
 			"course list",
 		);
+	}
+
+	async getCourseDetail(courseId: string): Promise<CanvasCourseDetail> {
+		const encodedId = encodeURIComponent(courseId);
+		const assignmentParams = new URLSearchParams({
+			per_page: "100",
+			order_by: "due_at",
+		});
+		const moduleParams = new URLSearchParams({ per_page: "100" });
+		moduleParams.append("include[]", "items");
+		const announcementParams = new URLSearchParams({
+			per_page: "50",
+			active_only: "true",
+			latest_only: "false",
+		});
+		announcementParams.append("context_codes[]", `course_${courseId}`);
+
+		const [course, assignments, modules, announcements] = await Promise.all([
+			this.parseResponse(
+				canvasCourseSchema,
+				await this.request(`/api/v1/courses/${encodedId}`),
+				"course",
+			),
+			this.fetchAllPages(
+				`/api/v1/courses/${encodedId}/assignments?${assignmentParams}`,
+				canvasAssignmentSchema,
+				"assignment list",
+			),
+			this.fetchAllPages(
+				`/api/v1/courses/${encodedId}/modules?${moduleParams}`,
+				canvasModuleSchema,
+				"module list",
+			),
+			this.fetchAllPages(
+				`/api/v1/announcements?${announcementParams}`,
+				canvasAnnouncementSchema,
+				"announcement list",
+			),
+		]);
+
+		return { course, assignments, modules, announcements };
 	}
 
 	async getUpcomingAssignments() {
