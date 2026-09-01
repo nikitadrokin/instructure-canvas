@@ -77,7 +77,10 @@ export function AppSidebar({
 											}
 											tooltip={label}
 											render={
-												<Link to="/courses" search={{ courseId: course.id }} />
+												<Link
+													to="/courses/$courseId"
+													params={{ courseId: course.id }}
+												/>
 											}
 										>
 											<BookOpen />

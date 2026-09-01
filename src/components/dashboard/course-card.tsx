@@ -28,8 +28,8 @@ export function CourseCard({ course }: { course: Course }): React.ReactElement {
 		<Card
 			render={
 				<Link
-					to="/courses"
-					search={{ courseId: course.id }}
+					to="/courses/$courseId"
+					params={{ courseId: course.id }}
 					aria-label={course.name ?? course.course_code}
 				/>
 			}

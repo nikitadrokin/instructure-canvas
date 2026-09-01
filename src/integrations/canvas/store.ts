@@ -24,10 +24,16 @@ type PersistedCanvasSession = {
 type CanvasSessionState = PersistedCanvasSession & {
 	/** False until `localStorage` rehydration finishes on the client. */
 	hasHydrated: boolean;
+	/** True once a restore attempt has settled, so course queries may run. */
+	sessionReady: boolean;
+	/** True while a stored session is being replayed against the server. */
+	isRestoring: boolean;
 	rememberSession: (session: PersistedCanvasSession) => void;
 	setDashboard: (dashboard: CanvasDashboard) => void;
 	forgetSession: () => void;
 	markHydrated: () => void;
+	setSessionReady: (ready: boolean) => void;
+	setIsRestoring: (restoring: boolean) => void;
 };
 
 function memoryStorage() {
@@ -75,6 +81,8 @@ export const useCanvasStore = create<CanvasSessionState>()(
 			token: "",
 			dashboard: null,
 			hasHydrated: false,
+			sessionReady: false,
+			isRestoring: false,
 			rememberSession: (session) => set(session),
 			setDashboard: (dashboard) => set({ dashboard }),
 			forgetSession: () =>
@@ -84,6 +92,8 @@ export const useCanvasStore = create<CanvasSessionState>()(
 					dashboard: null,
 				}),
 			markHydrated: () => set({ hasHydrated: true }),
+			setSessionReady: (ready) => set({ sessionReady: ready }),
+			setIsRestoring: (restoring) => set({ isRestoring: restoring }),
 		}),
 		{
 			name: STORAGE_KEY,
