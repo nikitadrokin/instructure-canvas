@@ -92,13 +92,9 @@ export function AppSidebar({
 			</SidebarContent>
 			<SidebarFooter>
 				<div className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
-					<span
-						aria-hidden="true"
-						className="size-1.5 shrink-0 rounded-full bg-success"
-					/>
 					<div className="flex min-w-0 flex-col">
-						<span className="font-medium text-xs">Connected</span>
-						<span className="truncate text-muted-foreground text-xs">
+						<span className="font-medium text-xs">Connected at</span>
+						<span className="truncate text-foreground text-xs">
 							{new URL(data.origin).hostname}
 						</span>
 					</div>

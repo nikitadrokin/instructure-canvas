@@ -172,16 +172,12 @@ function CoursesPage() {
 					</Breadcrumb>
 				</header>
 
-				<main className="mx-auto w-full max-w-6xl px-6 py-8 md:px-10">
-					<div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+				<main className="flex w-full flex-1 flex-col gap-8 px-6 py-8 md:px-10">
+					<div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between md:pl-66">
 						<div>
 							<h1 className="font-heading font-semibold text-3xl tracking-tight">
 								Course explorer
 							</h1>
-							<p className="mt-1 text-muted-foreground text-sm">
-								Assignments, modules, and announcements without leaving your
-								dashboard.
-							</p>
 						</div>
 						{options.length ? (
 							<Select
@@ -208,23 +204,31 @@ function CoursesPage() {
 						) : null}
 					</div>
 
-					{!hasHydrated || detail.isPending || isRestoring ? (
-						<CourseSkeleton />
-					) : null}
-					{hasHydrated && !dashboard ? <DisconnectedState /> : null}
-					{detail.error && !isRestoring ? (
-						<Alert variant="error">
-							<AlertTitle>Couldn&rsquo;t load this course</AlertTitle>
-							<AlertDescription>{detail.error.message}</AlertDescription>
-						</Alert>
-					) : null}
-					{detail.data && dashboard ? (
-						<CourseDetail
-							data={detail.data}
-							origin={dashboard.origin}
-							score={selectedCourse ? getCourseScore(selectedCourse) : null}
-						/>
-					) : null}
+					<div className="flex flex-col gap-8 md:flex-row md:items-start">
+						{detail.data && dashboard ? (
+							<CourseNav course={detail.data.course} tabs={detail.data.tabs} />
+						) : null}
+
+						<div className="min-w-0 flex-1">
+							{!hasHydrated || detail.isPending || isRestoring ? (
+								<CourseSkeleton />
+							) : null}
+							{hasHydrated && !dashboard ? <DisconnectedState /> : null}
+							{detail.error && !isRestoring ? (
+								<Alert variant="error">
+									<AlertTitle>Couldn&rsquo;t load this course</AlertTitle>
+									<AlertDescription>{detail.error.message}</AlertDescription>
+								</Alert>
+							) : null}
+							{detail.data && dashboard ? (
+								<CourseDetail
+									data={detail.data}
+									origin={dashboard.origin}
+									score={selectedCourse ? getCourseScore(selectedCourse) : null}
+								/>
+							) : null}
+						</div>
+					</div>
 				</main>
 			</SidebarInset>
 		</SidebarProvider>
@@ -233,6 +237,48 @@ function CoursesPage() {
 
 type CourseDetailData =
 	inferRouterOutputs<TRPCRouter>["canvas"]["courseDetail"];
+
+function CourseNav({
+	course,
+	tabs,
+}: {
+	course: CourseDetailData["course"];
+	tabs: CourseDetailData["tabs"];
+}) {
+	return (
+		<nav
+			aria-label="Course navigation"
+			className="flex shrink-0 flex-col gap-1 md:sticky md:top-8 md:w-52"
+		>
+			<div className="mb-1 flex min-w-0 flex-col px-3">
+				<span className="truncate font-semibold text-sm">
+					{course.name ?? course.course_code}
+				</span>
+				<span className="truncate text-muted-foreground text-xs">
+					{course.course_code}
+				</span>
+			</div>
+			{tabs.map((tab) => (
+				<Button
+					key={tab.id}
+					variant="link"
+					className="h-auto w-full justify-start whitespace-normal px-3 py-1.5 text-start"
+					render={
+						// biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+						<a
+							href={tab.html_url}
+							target="_blank"
+							rel="noreferrer"
+							aria-label={`Open ${tab.label} in Canvas`}
+						/>
+					}
+				>
+					{tab.label}
+				</Button>
+			))}
+		</nav>
+	);
+}
 
 function CourseDetail({
 	data,
@@ -318,35 +364,6 @@ function CourseDetail({
 							value={String(data.announcements.length)}
 						/>
 					) : null}
-				</CardContent>
-			</Card>
-
-			<Card className="mb-6">
-				<CardHeader>
-					<CardTitle>Course navigation</CardTitle>
-					<CardDescription>
-						Only the pages Canvas makes available to your enrollment are shown.
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="flex flex-wrap gap-2">
-					{data.tabs.map((tab) => (
-						<Button
-							key={tab.id}
-							variant="outline"
-							render={
-								// biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-								<a
-									href={tab.html_url}
-									target="_blank"
-									rel="noreferrer"
-									aria-label={`Open ${tab.label} in Canvas`}
-								/>
-							}
-						>
-							{tab.label}
-							<ExternalLink />
-						</Button>
-					))}
 				</CardContent>
 			</Card>
 
