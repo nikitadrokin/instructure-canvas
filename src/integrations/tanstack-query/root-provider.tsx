@@ -3,6 +3,7 @@ import { createTRPCClient, httpBatchStreamLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import type { ReactNode } from "react";
 import superjson from "superjson";
+import { useCanvasStore } from "#/integrations/canvas/store";
 import { TRPCProvider } from "#/integrations/trpc/react";
 import type { TRPCRouter } from "#/integrations/trpc/router";
 
@@ -19,6 +20,16 @@ export const trpcClient = createTRPCClient<TRPCRouter>({
 		httpBatchStreamLink({
 			transformer: superjson,
 			url: getUrl(),
+			methodOverride: "POST",
+			headers() {
+				if (typeof window === "undefined") return {};
+				const { canvasUrl, token } = useCanvasStore.getState();
+				if (!canvasUrl || !token) return {};
+				return {
+					Authorization: `Bearer ${token}`,
+					"X-Canvas-Url": canvasUrl,
+				};
+			},
 		}),
 	],
 });

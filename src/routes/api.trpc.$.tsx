@@ -16,6 +16,7 @@ async function handler({ request }: { request: Request }) {
 		router: trpcRouter,
 		endpoint: "/api/trpc",
 		createContext: createTRPCContext,
+		allowMethodOverride: true,
 	});
 
 	const headers = new Headers(response.headers);

@@ -9,6 +9,12 @@ import {
 
 export { CanvasApiError } from "./auth";
 
+function devLog(event: string, details: Record<string, unknown>) {
+	if (process.env.NODE_ENV === "development") {
+		console.info(`[canvas] ${event}`, details);
+	}
+}
+
 /**
  * Canvas IDs are numbers by default (as the MCP client uses). Some instances
  * honor `application/json+canvas-string-ids` and return strings instead.
@@ -393,6 +399,10 @@ export class CanvasClient {
 				.filter((tab) => !tab.hidden && tab.visibility !== "admins")
 				.map((tab) => tab.id),
 		);
+		devLog("course navigation resolved", {
+			courseId,
+			availableTabs: [...availableTabIds],
+		});
 		const sectionResults = await Promise.allSettled([
 			availableTabIds.has("assignments")
 				? this.fetchAllPages(
@@ -428,6 +438,13 @@ export class CanvasClient {
 				: [],
 		);
 		const [assignmentResult, moduleResult, announcementResult] = sectionResults;
+		devLog("course sections resolved", {
+			courseId,
+			assignments: assignmentResult.status,
+			modules: moduleResult.status,
+			announcements: announcementResult.status,
+			issues,
+		});
 
 		return {
 			course,
@@ -480,6 +497,14 @@ export class CanvasClient {
 		return response.json().then((data: unknown) => {
 			const parsed = schema.safeParse(data);
 			if (!parsed.success) {
+				devLog("response validation failed", {
+					label,
+					status: response.status,
+					issues: parsed.error.issues.map((issue) => ({
+						path: issue.path.join("."),
+						message: issue.message,
+					})),
+				});
 				throw new CanvasApiError(
 					`Canvas returned an unexpected ${label}.`,
 					502,
@@ -499,6 +524,11 @@ export class CanvasClient {
 		}
 
 		const url = assertCanvasApiRequest(this.baseUrl, pathOrUrl);
+		const startedAt = Date.now();
+		devLog("request started", {
+			method: "GET",
+			path: `${url.pathname}${url.search}`,
+		});
 		let response: Response;
 		try {
 			response = await fetch(url, {
@@ -509,12 +539,24 @@ export class CanvasClient {
 				redirect: "manual",
 				signal: AbortSignal.timeout(20_000),
 			});
-		} catch {
+		} catch (error) {
+			devLog("request failed", {
+				method: "GET",
+				path: `${url.pathname}${url.search}`,
+				durationMs: Date.now() - startedAt,
+				error: error instanceof Error ? error.message : "Unknown network error",
+			});
 			throw new CanvasApiError(
 				"Could not reach that Canvas instance. Check the domain and try again.",
 				502,
 			);
 		}
+		devLog("request completed", {
+			method: "GET",
+			path: `${url.pathname}${url.search}`,
+			status: response.status,
+			durationMs: Date.now() - startedAt,
+		});
 
 		if (!response.ok) {
 			const canvasMessage = await getCanvasError(response);

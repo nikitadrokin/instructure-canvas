@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import type { inferRouterOutputs } from "@trpc/server";
 import {
@@ -94,69 +94,48 @@ function CoursesPage() {
 	const navigate = useNavigate({ from: "/courses" });
 	const trpc = useTRPC();
 	const client = useTRPCClient();
-	const queryClient = useQueryClient();
 	const restoreAttempted = useRef(false);
 	const dashboard = useCanvasStore((state) => state.dashboard);
 	const hasHydrated = useCanvasStore((state) => state.hasHydrated);
 	const storedUrl = useCanvasStore((state) => state.canvasUrl);
 	const storedToken = useCanvasStore((state) => state.token);
-	const rememberSession = useCanvasStore((state) => state.rememberSession);
 	const [isRestoring, setIsRestoring] = useState(false);
+	const [sessionReady, setSessionReady] = useState(false);
 
 	useEffect(() => {
 		if (!hasHydrated) void useCanvasStore.persist.rehydrate();
 	}, [hasHydrated]);
+
+	useEffect(() => {
+		if (!hasHydrated || restoreAttempted.current) return;
+		restoreAttempted.current = true;
+		if (!storedUrl || !storedToken) {
+			setSessionReady(true);
+			return;
+		}
+
+		setIsRestoring(true);
+		void client.canvas.restoreSession
+			.mutate({ canvasUrl: storedUrl, token: storedToken })
+			.catch(() => undefined)
+			.finally(() => {
+				setSessionReady(true);
+				setIsRestoring(false);
+			});
+	}, [client, hasHydrated, storedToken, storedUrl]);
 
 	const selectedId = courseId ?? dashboard?.courses[0]?.id;
 	const detail = useQuery(
 		trpc.canvas.courseDetail.queryOptions(
 			{ courseId: selectedId ?? "" },
 			{
-				enabled: Boolean(selectedId),
+				enabled: Boolean(selectedId) && sessionReady,
 				retry: false,
 				staleTime: 5 * 60_000,
 				gcTime: 60 * 60_000,
 			},
 		),
 	);
-
-	useEffect(() => {
-		if (
-			!detail.isError ||
-			restoreAttempted.current ||
-			!storedUrl ||
-			!storedToken ||
-			!detail.error.message.includes("Connect to Canvas")
-		)
-			return;
-
-		restoreAttempted.current = true;
-		setIsRestoring(true);
-		void client.canvas.connect
-			.mutate({ canvasUrl: storedUrl, token: storedToken })
-			.then(async (restoredDashboard) => {
-				rememberSession({
-					canvasUrl: storedUrl,
-					token: storedToken,
-					dashboard: restoredDashboard,
-				});
-				queryClient.setQueryData(
-					trpc.canvas.dashboard.queryKey(),
-					restoredDashboard,
-				);
-				await detail.refetch();
-			})
-			.catch(() => undefined)
-			.finally(() => setIsRestoring(false));
-	}, [
-		client,
-		detail,
-		queryClient,
-		rememberSession,
-		storedToken,
-		storedUrl,
-		trpc,
-	]);
 
 	const options = (dashboard?.courses ?? []).map((course) => ({
 		label: course.name ?? course.course_code,
