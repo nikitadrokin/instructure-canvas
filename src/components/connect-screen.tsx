@@ -59,9 +59,6 @@ export function ConnectScreen({
 
 			<main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12">
 				<div className="mb-6 flex flex-col gap-2 text-center">
-					<p className="font-medium text-primary text-xs uppercase tracking-widest">
-						A calmer Canvas dashboard
-					</p>
 					<h1 className="font-heading font-semibold text-3xl tracking-tight">
 						Your classes, without the clutter.
 					</h1>
