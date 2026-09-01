@@ -137,6 +137,18 @@ const canvasAnnouncementSchema = z
 	})
 	.passthrough();
 
+const canvasTabSchema = z
+	.object({
+		id: z.string(),
+		label: z.string(),
+		html_url: z.string(),
+		type: z.string().optional(),
+		position: z.number().optional(),
+		hidden: z.boolean().optional(),
+		visibility: z.string().optional(),
+	})
+	.passthrough();
+
 const canvasUpcomingItemSchema = z
 	.object({
 		id: canvasIdSchema,
@@ -236,6 +248,7 @@ export type CanvasDashboard = {
 
 export type CanvasCourseDetail = {
 	course: z.infer<typeof canvasCourseSchema>;
+	tabs: Array<z.infer<typeof canvasTabSchema>>;
 	assignments: Array<z.infer<typeof canvasAssignmentSchema>>;
 	modules: Array<z.infer<typeof canvasModuleSchema>>;
 	announcements: Array<z.infer<typeof canvasAnnouncementSchema>>;
@@ -363,27 +376,45 @@ export class CanvasClient {
 		});
 		announcementParams.append("context_codes[]", `course_${courseId}`);
 
-		const course = await this.parseResponse(
-			canvasCourseSchema,
-			await this.request(`/api/v1/courses/${encodedId}`),
-			"course",
+		const [course, tabs] = await Promise.all([
+			this.parseResponse(
+				canvasCourseSchema,
+				await this.request(`/api/v1/courses/${encodedId}`),
+				"course",
+			),
+			this.fetchAllPages(
+				`/api/v1/courses/${encodedId}/tabs?per_page=100`,
+				canvasTabSchema,
+				"course navigation",
+			),
+		]);
+		const availableTabIds = new Set(
+			tabs
+				.filter((tab) => !tab.hidden && tab.visibility !== "admins")
+				.map((tab) => tab.id),
 		);
 		const sectionResults = await Promise.allSettled([
-			this.fetchAllPages(
-				`/api/v1/courses/${encodedId}/assignments?${assignmentParams}`,
-				canvasAssignmentSchema,
-				"assignment list",
-			),
-			this.fetchAllPages(
-				`/api/v1/courses/${encodedId}/modules?${moduleParams}`,
-				canvasModuleSchema,
-				"module list",
-			),
-			this.fetchAllPages(
-				`/api/v1/announcements?${announcementParams}`,
-				canvasAnnouncementSchema,
-				"announcement list",
-			),
+			availableTabIds.has("assignments")
+				? this.fetchAllPages(
+						`/api/v1/courses/${encodedId}/assignments?${assignmentParams}`,
+						canvasAssignmentSchema,
+						"assignment list",
+					)
+				: Promise.resolve([]),
+			availableTabIds.has("modules")
+				? this.fetchAllPages(
+						`/api/v1/courses/${encodedId}/modules?${moduleParams}`,
+						canvasModuleSchema,
+						"module list",
+					)
+				: Promise.resolve([]),
+			availableTabIds.has("announcements")
+				? this.fetchAllPages(
+						`/api/v1/announcements?${announcementParams}`,
+						canvasAnnouncementSchema,
+						"announcement list",
+					)
+				: Promise.resolve([]),
 		]);
 		const sections = ["assignments", "modules", "announcements"] as const;
 		const issues = sectionResults.flatMap((result, index) =>
@@ -400,6 +431,7 @@ export class CanvasClient {
 
 		return {
 			course,
+			tabs: tabs.filter((tab) => !tab.hidden && tab.visibility !== "admins"),
 			assignments:
 				assignmentResult.status === "fulfilled" ? assignmentResult.value : [],
 			modules: moduleResult.status === "fulfilled" ? moduleResult.value : [],

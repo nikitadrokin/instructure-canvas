@@ -332,6 +332,10 @@ function CourseDetail({
 			total + (module.items?.length ?? module.items_count ?? 0),
 		0,
 	);
+	const availableTabIds = new Set(data.tabs.map((tab) => tab.id));
+	const hasAssignments = availableTabIds.has("assignments");
+	const hasModules = availableTabIds.has("modules");
+	const hasAnnouncements = availableTabIds.has("announcements");
 
 	return (
 		<>
@@ -371,22 +375,57 @@ function CourseDetail({
 						</Button>
 					</div>
 				</CardHeader>
-				<CardContent className="grid gap-4 sm:grid-cols-3">
-					<Summary
-						icon={<FileText />}
-						label="Assignments"
-						value={String(data.assignments.length)}
-					/>
-					<Summary
-						icon={<Layers3 />}
-						label="Module items"
-						value={String(moduleItems)}
-					/>
-					<Summary
-						icon={<Megaphone />}
-						label="Announcements"
-						value={String(data.announcements.length)}
-					/>
+				<CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					{hasAssignments ? (
+						<Summary
+							icon={<FileText />}
+							label="Assignments"
+							value={String(data.assignments.length)}
+						/>
+					) : null}
+					{hasModules ? (
+						<Summary
+							icon={<Layers3 />}
+							label="Module items"
+							value={String(moduleItems)}
+						/>
+					) : null}
+					{hasAnnouncements ? (
+						<Summary
+							icon={<Megaphone />}
+							label="Announcements"
+							value={String(data.announcements.length)}
+						/>
+					) : null}
+				</CardContent>
+			</Card>
+
+			<Card className="mb-6">
+				<CardHeader>
+					<CardTitle>Course navigation</CardTitle>
+					<CardDescription>
+						Only the pages Canvas makes available to your enrollment are shown.
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="flex flex-wrap gap-2">
+					{data.tabs.map((tab) => (
+						<Button
+							key={tab.id}
+							variant="outline"
+							render={
+								// biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+								<a
+									href={tab.html_url}
+									target="_blank"
+									rel="noreferrer"
+									aria-label={`Open ${tab.label} in Canvas`}
+								/>
+							}
+						>
+							{tab.label}
+							<ExternalLink />
+						</Button>
+					))}
 				</CardContent>
 			</Card>
 
@@ -396,9 +435,13 @@ function CourseDetail({
 					className="mb-4 max-w-full overflow-x-auto"
 				>
 					<TabsTab value="overview">Overview</TabsTab>
-					<TabsTab value="assignments">Assignments</TabsTab>
-					<TabsTab value="modules">Modules</TabsTab>
-					<TabsTab value="announcements">Announcements</TabsTab>
+					{hasAssignments ? (
+						<TabsTab value="assignments">Assignments</TabsTab>
+					) : null}
+					{hasModules ? <TabsTab value="modules">Modules</TabsTab> : null}
+					{hasAnnouncements ? (
+						<TabsTab value="announcements">Announcements</TabsTab>
+					) : null}
 				</TabsList>
 				<TabsPanel value="overview" className="grid gap-4 md:grid-cols-2">
 					<Card>
@@ -426,93 +469,102 @@ function CourseDetail({
 							)}
 						</CardContent>
 					</Card>
-					<Card>
-						<CardHeader>
-							<CardTitle>Module progress</CardTitle>
-							<CardDescription>
-								Completion requirements reported by Canvas.
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<Meter
-								value={moduleItems ? (completedItems / moduleItems) * 100 : 0}
-							>
-								<div className="flex justify-between">
-									<MeterLabel>Completed</MeterLabel>
-									<span className="text-sm tabular-nums">
-										{completedItems} of {moduleItems}
-									</span>
-								</div>
-								<MeterTrack>
-									<MeterIndicator />
-								</MeterTrack>
-							</Meter>
-						</CardContent>
-					</Card>
+					{hasModules ? (
+						<Card>
+							<CardHeader>
+								<CardTitle>Module progress</CardTitle>
+								<CardDescription>
+									Completion requirements reported by Canvas.
+								</CardDescription>
+							</CardHeader>
+							<CardContent>
+								<Meter
+									value={moduleItems ? (completedItems / moduleItems) * 100 : 0}
+								>
+									<div className="flex justify-between">
+										<MeterLabel>Completed</MeterLabel>
+										<span className="text-sm tabular-nums">
+											{completedItems} of {moduleItems}
+										</span>
+									</div>
+									<MeterTrack>
+										<MeterIndicator />
+									</MeterTrack>
+								</Meter>
+							</CardContent>
+						</Card>
+					) : null}
 				</TabsPanel>
-				<TabsPanel value="assignments">
-					<AssignmentsTable assignments={data.assignments} />
-				</TabsPanel>
-				<TabsPanel value="modules" className="grid gap-3">
-					{data.modules.length ? (
-						data.modules.map((module) => (
-							<Card key={module.id}>
-								<CardHeader>
-									<CardTitle>{module.name}</CardTitle>
-									<CardDescription>
-										{module.items?.length ?? module.items_count ?? 0} items
-									</CardDescription>
-								</CardHeader>
-								<CardContent className="flex flex-wrap gap-2">
-									{(module.items ?? []).map((item) => (
-										<Badge
-											key={item.id}
-											variant={
-												item.completion_requirement?.completed
-													? "success"
-													: "secondary"
-											}
-										>
-											{item.completion_requirement?.completed ? (
-												<CheckCircle2 />
-											) : null}
-											{item.title}
-										</Badge>
-									))}
-								</CardContent>
-							</Card>
-						))
-					) : (
-						<TabEmpty
-							icon={<Layers3 />}
-							title="No modules"
-							description="Canvas did not return any published modules."
-						/>
-					)}
-				</TabsPanel>
-				<TabsPanel value="announcements" className="grid gap-3">
-					{data.announcements.length ? (
-						data.announcements.map((announcement) => (
-							<Card key={announcement.id}>
-								<CardHeader>
-									<CardTitle>{announcement.title}</CardTitle>
-									<CardDescription>
-										{announcement.author?.display_name ?? "Course announcement"}
-										{announcement.posted_at
-											? ` · ${formatDate(announcement.posted_at)}`
-											: ""}
-									</CardDescription>
-								</CardHeader>
-							</Card>
-						))
-					) : (
-						<TabEmpty
-							icon={<Megaphone />}
-							title="No announcements"
-							description="There are no active announcements for this course."
-						/>
-					)}
-				</TabsPanel>
+				{hasAssignments ? (
+					<TabsPanel value="assignments">
+						<AssignmentsTable assignments={data.assignments} />
+					</TabsPanel>
+				) : null}
+				{hasModules ? (
+					<TabsPanel value="modules" className="grid gap-3">
+						{data.modules.length ? (
+							data.modules.map((module) => (
+								<Card key={module.id}>
+									<CardHeader>
+										<CardTitle>{module.name}</CardTitle>
+										<CardDescription>
+											{module.items?.length ?? module.items_count ?? 0} items
+										</CardDescription>
+									</CardHeader>
+									<CardContent className="flex flex-wrap gap-2">
+										{(module.items ?? []).map((item) => (
+											<Badge
+												key={item.id}
+												variant={
+													item.completion_requirement?.completed
+														? "success"
+														: "secondary"
+												}
+											>
+												{item.completion_requirement?.completed ? (
+													<CheckCircle2 />
+												) : null}
+												{item.title}
+											</Badge>
+										))}
+									</CardContent>
+								</Card>
+							))
+						) : (
+							<TabEmpty
+								icon={<Layers3 />}
+								title="No modules"
+								description="Canvas did not return any published modules."
+							/>
+						)}
+					</TabsPanel>
+				) : null}
+				{hasAnnouncements ? (
+					<TabsPanel value="announcements" className="grid gap-3">
+						{data.announcements.length ? (
+							data.announcements.map((announcement) => (
+								<Card key={announcement.id}>
+									<CardHeader>
+										<CardTitle>{announcement.title}</CardTitle>
+										<CardDescription>
+											{announcement.author?.display_name ??
+												"Course announcement"}
+											{announcement.posted_at
+												? ` · ${formatDate(announcement.posted_at)}`
+												: ""}
+										</CardDescription>
+									</CardHeader>
+								</Card>
+							))
+						) : (
+							<TabEmpty
+								icon={<Megaphone />}
+								title="No announcements"
+								description="There are no active announcements for this course."
+							/>
+						)}
+					</TabsPanel>
+				) : null}
 			</Tabs>
 		</>
 	);
