@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import type { inferRouterOutputs } from "@trpc/server";
 import {
 	CheckCircle2,
@@ -65,24 +66,52 @@ export function CourseNav({
 					{course.course_code}
 				</span>
 			</div>
-			{tabs.map((tab) => (
-				<Button
-					key={tab.id}
-					variant="link"
-					className="h-auto w-full justify-start whitespace-normal px-3 py-1.5 text-start"
-					render={
-						// biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-						<a
-							href={tab.html_url}
-							target="_blank"
-							rel="noreferrer"
-							aria-label={`Open ${tab.label} in Canvas`}
-						/>
-					}
-				>
-					{tab.label}
-				</Button>
-			))}
+			{tabs.map((tab) => {
+				const internalTo =
+					tab.id === "home"
+						? "/courses/$courseId"
+						: tab.id === "modules"
+							? "/courses/$courseId/modules"
+							: null;
+				const className =
+					"h-auto w-full justify-start whitespace-normal px-3 py-1.5 text-start";
+				if (internalTo) {
+					return (
+						<Button
+							key={tab.id}
+							variant="link"
+							className={`${className} data-[status=active]:underline`}
+							render={
+								<Link
+									to={internalTo}
+									params={{ courseId: course.id }}
+									activeOptions={{ exact: tab.id === "home" }}
+								/>
+							}
+						>
+							{tab.label}
+						</Button>
+					);
+				}
+				return (
+					<Button
+						key={tab.id}
+						variant="link"
+						className={className}
+						render={
+							// biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+							<a
+								href={tab.html_url}
+								target="_blank"
+								rel="noreferrer"
+								aria-label={`Open ${tab.label} in Canvas`}
+							/>
+						}
+					>
+						{tab.label}
+					</Button>
+				);
+			})}
 		</nav>
 	);
 }

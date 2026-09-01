@@ -106,12 +106,35 @@ const canvasModuleItemSchema = z
 	.object({
 		id: canvasIdSchema,
 		title: z.string(),
+		position: z.number().optional(),
+		indent: z.number().nullable().optional(),
+		/** File | Page | Discussion | Assignment | Quiz | SubHeader | ExternalUrl | ExternalTool */
 		type: z.string().optional(),
+		content_id: canvasIdSchema.optional(),
 		html_url: z.string().optional(),
+		external_url: z.string().optional(),
+		new_tab: z.boolean().nullable().optional(),
+		published: z.boolean().optional(),
 		completion_requirement: z
-			.object({ completed: z.boolean().optional() })
+			.object({
+				/** must_view | must_submit | must_contribute | min_score | min_percentage | must_mark_done */
+				type: z.string().optional(),
+				min_score: nullableNumberSchema,
+				completed: z.boolean().optional(),
+			})
 			.passthrough()
 			.nullable()
+			.optional(),
+		content_details: z
+			.object({
+				points_possible: nullableNumberSchema,
+				due_at: nullableStringSchema,
+				unlock_at: nullableStringSchema,
+				lock_at: nullableStringSchema,
+				locked_for_user: z.boolean().optional(),
+				lock_explanation: z.string().optional(),
+			})
+			.passthrough()
 			.optional(),
 	})
 	.passthrough();
@@ -121,9 +144,18 @@ const canvasModuleSchema = z
 		id: canvasIdSchema,
 		name: z.string(),
 		position: z.number().optional(),
+		/** Student progress: locked | unlocked | started | completed */
 		state: z.string().optional(),
+		unlock_at: nullableStringSchema,
+		require_sequential_progress: z.boolean().optional(),
+		/** all | one */
+		requirement_type: z.string().optional(),
+		prerequisite_module_ids: z.array(canvasIdSchema).optional(),
+		completed_at: nullableStringSchema,
+		published: z.boolean().optional(),
 		items_count: z.number().optional(),
-		items: z.array(canvasModuleItemSchema).optional(),
+		// Canvas omits inline items when a module is too large; see getCourseDetail.
+		items: z.array(canvasModuleItemSchema).nullable().optional(),
 	})
 	.passthrough();
 
@@ -391,6 +423,7 @@ export class CanvasClient {
 		});
 		const moduleParams = new URLSearchParams({ per_page: "100" });
 		moduleParams.append("include[]", "items");
+		moduleParams.append("include[]", "content_details");
 		const announcementParams = new URLSearchParams({
 			per_page: "50",
 			active_only: "true",
@@ -454,6 +487,23 @@ export class CanvasClient {
 				: [],
 		);
 		const [assignmentResult, moduleResult, announcementResult] = sectionResults;
+		// Canvas drops inline items for large modules even with include[]=items,
+		// so backfill each missing list from the module items endpoint.
+		const modules =
+			moduleResult.status === "fulfilled"
+				? await Promise.all(
+						moduleResult.value.map(async (module) =>
+							module.items != null
+								? module
+								: {
+										...module,
+										items: await this.getModuleItems(courseId, module.id).catch(
+											() => undefined,
+										),
+									},
+						),
+					)
+				: [];
 		devLog("course sections resolved", {
 			courseId,
 			assignments: assignmentResult.status,
@@ -467,13 +517,23 @@ export class CanvasClient {
 			tabs: tabs.filter((tab) => !tab.hidden && tab.visibility !== "admins"),
 			assignments:
 				assignmentResult.status === "fulfilled" ? assignmentResult.value : [],
-			modules: moduleResult.status === "fulfilled" ? moduleResult.value : [],
+			modules,
 			announcements:
 				announcementResult.status === "fulfilled"
 					? announcementResult.value
 					: [],
 			issues,
 		};
+	}
+
+	private async getModuleItems(courseId: string, moduleId: string) {
+		const params = new URLSearchParams({ per_page: "100" });
+		params.append("include[]", "content_details");
+		return this.fetchAllPages(
+			`/api/v1/courses/${encodeURIComponent(courseId)}/modules/${encodeURIComponent(moduleId)}/items?${params}`,
+			canvasModuleItemSchema,
+			"module item list",
+		);
 	}
 
 	async getUpcomingAssignments() {
