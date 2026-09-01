@@ -174,14 +174,12 @@ export function Dashboard({
 					className="mx-auto w-full max-w-6xl px-6 py-8 md:px-10"
 				>
 					<div className="mb-8 flex flex-col gap-1">
-						<p className="font-medium text-primary text-xs uppercase tracking-widest">
-							{weekday} overview
-						</p>
 						<h1 className="font-heading font-semibold text-3xl tracking-tight">
 							Good to see you, {firstName}.
 						</h1>
 						<p className="text-muted-foreground text-sm">
-							Here&rsquo;s what&rsquo;s happening across your Canvas courses.
+							Here&rsquo;s what&rsquo;s happening across your Canvas courses on{" "}
+							{weekday}.
 						</p>
 					</div>
 
@@ -230,29 +228,23 @@ export function Dashboard({
 
 					<div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(300px,0.9fr)]">
 						<section id="courses" aria-labelledby="courses-heading">
-							<div className="mb-4 flex items-end justify-between gap-4">
-								<div className="flex flex-col gap-1">
-									<p className="font-medium text-primary text-xs uppercase tracking-widest">
-										Current term
-									</p>
-									<h2
-										id="courses-heading"
-										className="font-heading font-semibold text-xl"
-									>
-										Your courses
-									</h2>
-								</div>
-								<span className="text-muted-foreground text-xs">
+							<div className="mb-4 flex items-baseline justify-between gap-4">
+								<h2
+									id="courses-heading"
+									className="font-heading font-semibold text-xl"
+								>
+									Your courses
+								</h2>
+								<span className="text-muted-foreground text-sm">
 									{data.courses.length} total
 								</span>
 							</div>
 							{data.courses.length ? (
 								<div className="grid gap-3 sm:grid-cols-2">
-									{data.courses.map((course, index) => (
+									{data.courses.map((course) => (
 										<CourseCard
 											key={course.id}
 											course={course}
-											index={index}
 											origin={data.origin}
 										/>
 									))}
@@ -280,10 +272,7 @@ export function Dashboard({
 							aria-labelledby="upcoming-heading"
 							className="min-w-0"
 						>
-							<div className="mb-4 flex flex-col gap-1">
-								<p className="font-medium text-primary text-xs uppercase tracking-widest">
-									Next in line
-								</p>
+							<div className="mb-4">
 								<h2
 									id="upcoming-heading"
 									className="font-heading font-semibold text-xl"

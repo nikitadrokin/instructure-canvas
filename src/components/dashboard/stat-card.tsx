@@ -1,5 +1,12 @@
 import type React from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+	Card,
+	CardAction,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 
 export function StatCard({
 	icon,
@@ -14,24 +21,15 @@ export function StatCard({
 }): React.ReactElement {
 	return (
 		<Card>
-			<CardContent className="flex items-center gap-4 p-5">
-				<span
-					aria-hidden="true"
-					className="grid size-10 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground [&_svg]:size-5"
-				>
+			<CardHeader>
+				<CardDescription>{label}</CardDescription>
+				<CardTitle className="text-3xl tabular-nums">{value}</CardTitle>
+				<CardAction className="text-muted-foreground [&_svg]:size-5">
 					{icon}
-				</span>
-				<div className="flex min-w-0 flex-col gap-0.5">
-					<span className="text-muted-foreground text-xs uppercase tracking-wide">
-						{label}
-					</span>
-					<strong className="font-heading font-semibold text-2xl tabular-nums">
-						{value}
-					</strong>
-					<small className="truncate text-muted-foreground text-xs">
-						{note}
-					</small>
-				</div>
+				</CardAction>
+			</CardHeader>
+			<CardContent className="text-muted-foreground text-sm">
+				{note}
 			</CardContent>
 		</Card>
 	);

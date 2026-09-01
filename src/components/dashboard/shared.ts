@@ -69,3 +69,13 @@ export function formatTime(date: string): string {
 		minute: "2-digit",
 	}).format(new Date(date));
 }
+
+export function formatDueLabel(date: string | null | undefined): string {
+	if (!date) return "No due date";
+	const parsed = new Date(date);
+	const day = new Intl.DateTimeFormat(undefined, {
+		month: "short",
+		day: "numeric",
+	}).format(parsed);
+	return `${day} · ${formatTime(date)}`;
+}

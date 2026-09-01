@@ -1,9 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import type React from "react";
 import {
-	formatDay,
-	formatMonth,
-	formatTime,
+	formatDueLabel,
 	type UpcomingItem,
 } from "@/components/dashboard/shared";
 
@@ -24,23 +22,12 @@ export function UpcomingRow({
 			href={href}
 			target="_blank"
 			rel="noreferrer"
-			className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+			className="flex items-center gap-3 px-6 py-3.5 outline-none transition-colors first:rounded-t-2xl last:rounded-b-2xl hover:bg-accent/40 focus-visible:bg-accent/40"
 		>
-			<div
-				aria-hidden="true"
-				className="flex size-11 shrink-0 flex-col items-center justify-center rounded-lg border bg-muted/40"
-			>
-				<span className="font-semibold text-[0.625rem] text-muted-foreground uppercase">
-					{dueAt ? formatMonth(dueAt) : "TBD"}
-				</span>
-				<strong className="font-heading text-base leading-none">
-					{dueAt ? formatDay(dueAt) : "—"}
-				</strong>
-			</div>
 			<div className="flex min-w-0 flex-col">
-				<strong className="truncate font-medium text-sm">{title}</strong>
+				<span className="truncate font-medium text-sm">{title}</span>
 				<span className="truncate text-muted-foreground text-xs">
-					{contextLabel} · {dueAt ? formatTime(dueAt) : "No due date"}
+					{contextLabel} · {formatDueLabel(dueAt)}
 				</span>
 			</div>
 			<ChevronRight className="ms-auto size-4 shrink-0 text-muted-foreground" />

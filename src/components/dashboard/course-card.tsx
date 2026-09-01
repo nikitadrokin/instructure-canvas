@@ -7,24 +7,21 @@ import {
 	getPrimaryEnrollment,
 } from "@/components/dashboard/shared";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-
-const TONES = [
-	"bg-chart-1",
-	"bg-chart-2",
-	"bg-chart-3",
-	"bg-chart-4",
-	"bg-chart-5",
-];
+import {
+	Card,
+	CardAction,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 
 export function CourseCard({
 	course,
-	index,
 	origin,
 }: {
 	course: Course;
-	index: number;
 	origin: string;
 }): React.ReactElement {
 	const enrollment = getPrimaryEnrollment(course);
@@ -32,7 +29,6 @@ export function CourseCard({
 	const grade = getEnrollmentGrade(enrollment);
 	const role = enrollment?.role?.replace("Enrollment", "") ?? "Member";
 	const href = course.html_url ?? `${origin}/courses/${course.id}`;
-	const tone = TONES[index % TONES.length];
 
 	return (
 		<Card
@@ -45,29 +41,28 @@ export function CourseCard({
 					aria-label={course.name ?? course.course_code}
 				/>
 			}
-			className="group flex-row overflow-hidden transition-shadow hover:shadow-md"
+			className="group outline-none transition-colors hover:border-ring/50 hover:bg-accent/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 		>
-			<span aria-hidden="true" className={cn("w-1.5 shrink-0", tone)} />
-			<div className="flex min-w-0 flex-1 flex-col p-4">
-				<div className="flex items-center justify-between gap-2">
-					<span className="truncate font-semibold text-muted-foreground text-xs uppercase tracking-wide">
-						{course.course_code}
-					</span>
-					<ExternalLink className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-				</div>
-				<h3 className="mt-3 line-clamp-2 font-semibold text-sm leading-snug">
+			<CardHeader>
+				<CardDescription className="truncate">
+					{course.course_code}
+				</CardDescription>
+				<CardTitle className="line-clamp-2 text-base leading-snug">
 					{course.name ?? course.course_code}
-				</h3>
-				<p className="mt-1 truncate text-muted-foreground text-xs">
-					{course.term?.name ?? "Current enrollment"}
-				</p>
-				<div className="mt-4 flex items-center justify-between gap-2 border-t pt-3">
-					<Badge variant="secondary">{role}</Badge>
-					<strong className="font-semibold text-sm tabular-nums">
-						{grade ?? (score === null ? "No grade" : `${Math.round(score)}%`)}
-					</strong>
-				</div>
-			</div>
+				</CardTitle>
+				<CardAction>
+					<ExternalLink className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+				</CardAction>
+			</CardHeader>
+			<CardContent className="text-muted-foreground text-sm">
+				{course.term?.name ?? "Current enrollment"}
+			</CardContent>
+			<CardFooter className="justify-between gap-2 border-t pt-4">
+				<Badge variant="secondary">{role}</Badge>
+				<span className="font-semibold text-sm tabular-nums">
+					{grade ?? (score === null ? "No grade" : `${Math.round(score)}%`)}
+				</span>
+			</CardFooter>
 		</Card>
 	);
 }
