@@ -1,18 +1,14 @@
-import { Link } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	BarChart3,
 	BookOpen,
-	Calendar,
 	CheckCircle2,
 	Clock,
-	GraduationCap,
-	LayoutGrid,
-	LogOut,
 	RefreshCw,
 } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
+import { AppSidebar } from "@/components/app-sidebar";
 import { CourseCard } from "@/components/dashboard/course-card";
 import {
 	type DashboardData,
@@ -33,26 +29,10 @@ import {
 } from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
 import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
-	SidebarGroup,
-	SidebarGroupContent,
-	SidebarGroupLabel,
-	SidebarHeader,
 	SidebarInset,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
 	SidebarProvider,
-	SidebarRail,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-
-const NAV_ITEMS = [
-	{ href: "#overview", icon: LayoutGrid, label: "Overview" },
-	{ href: "#upcoming", icon: Calendar, label: "Upcoming" },
-];
 
 export function Dashboard({
 	data,
@@ -87,84 +67,11 @@ export function Dashboard({
 
 	return (
 		<SidebarProvider>
-			<Sidebar collapsible="icon" variant="inset">
-				<SidebarHeader>
-					<div className="flex items-center gap-2 px-1 py-1.5">
-						<span
-							aria-hidden="true"
-							className="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground"
-						>
-							<GraduationCap className="size-4.5" />
-						</span>
-						<span className="font-semibold text-sm tracking-tight group-data-[collapsible=icon]:hidden">
-							Canvas Local
-						</span>
-					</div>
-				</SidebarHeader>
-
-				<SidebarContent>
-					<SidebarGroup>
-						<SidebarGroupLabel>Navigation</SidebarGroupLabel>
-						<SidebarGroupContent>
-							<SidebarMenu>
-								{NAV_ITEMS.map((item, index) => (
-									<SidebarMenuItem key={item.href}>
-										<SidebarMenuButton
-											isActive={index === 0}
-											tooltip={item.label}
-											// biome-ignore lint/a11y/useAnchorContent: link label is rendered as SidebarMenuButton children
-											render={<a href={item.href} />}
-										>
-											<item.icon />
-											<span>{item.label}</span>
-										</SidebarMenuButton>
-									</SidebarMenuItem>
-								))}
-							</SidebarMenu>
-						</SidebarGroupContent>
-					</SidebarGroup>
-					<SidebarGroup>
-						<SidebarGroupLabel>Explore</SidebarGroupLabel>
-						<SidebarGroupContent>
-							<SidebarMenu>
-								<SidebarMenuItem>
-									<SidebarMenuButton
-										tooltip="Course explorer"
-										render={<Link to="/courses" search={{}} />}
-									>
-										<BookOpen />
-										<span>Course explorer</span>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							</SidebarMenu>
-						</SidebarGroupContent>
-					</SidebarGroup>
-				</SidebarContent>
-
-				<SidebarFooter>
-					<div className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
-						<span
-							aria-hidden="true"
-							className="size-1.5 shrink-0 rounded-full bg-success"
-						/>
-						<div className="flex min-w-0 flex-col">
-							<span className="font-medium text-xs">Connected</span>
-							<span className="truncate text-muted-foreground text-xs">
-								{new URL(data.origin).hostname}
-							</span>
-						</div>
-					</div>
-					<SidebarMenu>
-						<SidebarMenuItem>
-							<SidebarMenuButton onClick={onDisconnect} tooltip="Disconnect">
-								<LogOut />
-								<span>Disconnect</span>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
-					</SidebarMenu>
-				</SidebarFooter>
-				<SidebarRail />
-			</Sidebar>
+			<AppSidebar
+				data={data}
+				activePage="overview"
+				onDisconnect={onDisconnect}
+			/>
 
 			<SidebarInset>
 				<header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">

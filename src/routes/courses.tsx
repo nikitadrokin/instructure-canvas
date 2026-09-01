@@ -2,17 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import type { inferRouterOutputs } from "@trpc/server";
 import {
-	BookOpen,
 	CheckCircle2,
 	ExternalLink,
 	FileText,
 	GraduationCap,
-	Home,
 	Layers3,
 	Megaphone,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
+import { AppSidebar } from "@/components/app-sidebar";
 import { getCourseScore } from "@/components/dashboard/shared";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -54,18 +53,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
-	Sidebar,
-	SidebarContent,
-	SidebarGroup,
-	SidebarGroupContent,
-	SidebarGroupLabel,
-	SidebarHeader,
 	SidebarInset,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
 	SidebarProvider,
-	SidebarRail,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -138,78 +127,31 @@ function CoursesPage() {
 	);
 
 	const options = (dashboard?.courses ?? []).map((course) => ({
-		label: course.name ?? course.course_code,
+		label: course.nickname ?? course.name ?? course.course_code,
 		value: course.id,
 	}));
 	const selectedCourse = dashboard?.courses.find(
 		(course) => course.id === selectedId,
 	);
+	async function disconnect() {
+		useCanvasStore.getState().forgetSession();
+		try {
+			await client.canvas.disconnect.mutate();
+		} finally {
+			await navigate({ to: "/" });
+		}
+	}
 
 	return (
 		<SidebarProvider>
-			<Sidebar collapsible="icon" variant="inset">
-				<SidebarHeader>
-					<div className="flex items-center gap-2 px-1 py-1.5">
-						<Badge size="lg" className="size-8 justify-center p-0">
-							<GraduationCap />
-						</Badge>
-						<span className="font-semibold text-sm group-data-[collapsible=icon]:hidden">
-							Canvas Local
-						</span>
-					</div>
-				</SidebarHeader>
-				<SidebarContent>
-					<SidebarGroup>
-						<SidebarGroupLabel>Navigation</SidebarGroupLabel>
-						<SidebarGroupContent>
-							<SidebarMenu>
-								<SidebarMenuItem>
-									<SidebarMenuButton
-										tooltip="Overview"
-										render={<Link to="/" />}
-									>
-										<Home />
-										<span>Overview</span>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-								<SidebarMenuItem>
-									<SidebarMenuButton isActive tooltip="Course explorer">
-										<BookOpen />
-										<span>Course explorer</span>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							</SidebarMenu>
-						</SidebarGroupContent>
-					</SidebarGroup>
-					{dashboard?.courses.length ? (
-						<SidebarGroup>
-							<SidebarGroupLabel>Your courses</SidebarGroupLabel>
-							<SidebarGroupContent>
-								<SidebarMenu>
-									{dashboard.courses.map((course) => (
-										<SidebarMenuItem key={course.id}>
-											<SidebarMenuButton
-												isActive={course.id === selectedId}
-												tooltip={course.name ?? course.course_code}
-												render={
-													<Link
-														to="/courses"
-														search={{ courseId: course.id }}
-													/>
-												}
-											>
-												<BookOpen />
-												<span>{course.course_code || course.name}</span>
-											</SidebarMenuButton>
-										</SidebarMenuItem>
-									))}
-								</SidebarMenu>
-							</SidebarGroupContent>
-						</SidebarGroup>
-					) : null}
-				</SidebarContent>
-				<SidebarRail />
-			</Sidebar>
+			{dashboard ? (
+				<AppSidebar
+					data={dashboard}
+					activePage="courses"
+					selectedCourseId={selectedId}
+					onDisconnect={() => void disconnect()}
+				/>
+			) : null}
 
 			<SidebarInset>
 				<header className="flex min-h-14 items-center gap-2 border-b px-4">

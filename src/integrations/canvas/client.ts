@@ -155,6 +155,13 @@ const canvasTabSchema = z
 	})
 	.passthrough();
 
+const canvasCourseNicknameSchema = z
+	.object({
+		course_id: canvasIdSchema,
+		nickname: z.string(),
+	})
+	.passthrough();
+
 const canvasUpcomingItemSchema = z
 	.object({
 		id: canvasIdSchema,
@@ -222,6 +229,7 @@ export type CanvasCourse = {
 	syllabus_body?: string | null;
 	public_description?: string | null;
 	default_view?: string | null;
+	nickname?: string;
 };
 
 /** Planner-style upcoming assignment or calendar event. */
@@ -364,6 +372,14 @@ export class CanvasClient {
 			`/api/v1/courses?${params}`,
 			canvasCourseSchema,
 			"course list",
+		);
+	}
+
+	async getCourseNicknames() {
+		return this.fetchAllPages(
+			"/api/v1/users/self/course_nicknames?per_page=100",
+			canvasCourseNicknameSchema,
+			"course nickname list",
 		);
 	}
 
@@ -605,7 +621,10 @@ function toProfile(user: z.infer<typeof canvasUserSchema>): CanvasProfile {
 	};
 }
 
-function toCourse(course: z.infer<typeof canvasCourseSchema>): CanvasCourse {
+function toCourse(
+	course: z.infer<typeof canvasCourseSchema>,
+	nickname?: string,
+): CanvasCourse {
 	return {
 		id: course.id,
 		name: course.name ?? null,
@@ -623,6 +642,7 @@ function toCourse(course: z.infer<typeof canvasCourseSchema>): CanvasCourse {
 				}
 			: course.term,
 		enrollments: course.enrollments,
+		nickname,
 	};
 }
 
@@ -671,17 +691,23 @@ export async function getCanvasDashboard(input: {
 	});
 
 	try {
-		const [user, courses, upcoming] = await Promise.all([
+		const [user, courses, upcoming, nicknames] = await Promise.all([
 			client.getCurrentUser(),
 			client.getCourses("active"),
 			client.getUpcomingAssignments(),
+			client.getCourseNicknames().catch(() => []),
 		]);
+		const nicknamesByCourse = new Map(
+			nicknames.map((item) => [item.course_id, item.nickname]),
+		);
 
 		return {
 			origin,
 			connectedAt: new Date(),
 			profile: toProfile(user),
-			courses: courses.map(toCourse),
+			courses: courses.map((course) =>
+				toCourse(course, nicknamesByCourse.get(course.id)),
+			),
 			upcoming: upcoming.map(toUpcomingItem).sort((a, b) => {
 				const aTime = a.assignment?.due_at ?? a.start_at;
 				const bTime = b.assignment?.due_at ?? b.start_at;
