@@ -239,6 +239,10 @@ export type CanvasCourseDetail = {
 	assignments: Array<z.infer<typeof canvasAssignmentSchema>>;
 	modules: Array<z.infer<typeof canvasModuleSchema>>;
 	announcements: Array<z.infer<typeof canvasAnnouncementSchema>>;
+	issues: Array<{
+		section: "assignments" | "modules" | "announcements";
+		message: string;
+	}>;
 };
 
 /**
@@ -359,12 +363,12 @@ export class CanvasClient {
 		});
 		announcementParams.append("context_codes[]", `course_${courseId}`);
 
-		const [course, assignments, modules, announcements] = await Promise.all([
-			this.parseResponse(
-				canvasCourseSchema,
-				await this.request(`/api/v1/courses/${encodedId}`),
-				"course",
-			),
+		const course = await this.parseResponse(
+			canvasCourseSchema,
+			await this.request(`/api/v1/courses/${encodedId}`),
+			"course",
+		);
+		const sectionResults = await Promise.allSettled([
 			this.fetchAllPages(
 				`/api/v1/courses/${encodedId}/assignments?${assignmentParams}`,
 				canvasAssignmentSchema,
@@ -381,8 +385,30 @@ export class CanvasClient {
 				"announcement list",
 			),
 		]);
+		const sections = ["assignments", "modules", "announcements"] as const;
+		const issues = sectionResults.flatMap((result, index) =>
+			result.status === "rejected"
+				? [
+						{
+							section: sections[index],
+							message: getSafeSectionError(result.reason),
+						},
+					]
+				: [],
+		);
+		const [assignmentResult, moduleResult, announcementResult] = sectionResults;
 
-		return { course, assignments, modules, announcements };
+		return {
+			course,
+			assignments:
+				assignmentResult.status === "fulfilled" ? assignmentResult.value : [],
+			modules: moduleResult.status === "fulfilled" ? moduleResult.value : [],
+			announcements:
+				announcementResult.status === "fulfilled"
+					? announcementResult.value
+					: [],
+			issues,
+		};
 	}
 
 	async getUpcomingAssignments() {
@@ -479,6 +505,17 @@ export class CanvasClient {
 function compactString(value: string | null | undefined) {
 	if (!value) return undefined;
 	return value;
+}
+
+function getSafeSectionError(error: unknown) {
+	if (error instanceof CanvasApiError) {
+		if (error.status === 403)
+			return "Canvas does not allow this account to view this section.";
+		if (error.status === 401)
+			return "Canvas requires this account to sign in again for this section.";
+		return error.message;
+	}
+	return "Canvas could not load this section.";
 }
 
 function toProfile(user: z.infer<typeof canvasUserSchema>): CanvasProfile {

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import type { inferRouterOutputs } from "@trpc/server";
 import {
@@ -11,7 +11,7 @@ import {
 	Layers3,
 	Megaphone,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { getCourseScore } from "@/components/dashboard/shared";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -79,7 +79,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { useCanvasStore } from "@/integrations/canvas/store";
-import { useTRPC } from "@/integrations/trpc/react";
+import { useTRPC, useTRPCClient } from "@/integrations/trpc/react";
 import type { TRPCRouter } from "@/integrations/trpc/router";
 
 const courseSearchSchema = z.object({ courseId: z.string().optional() });
@@ -93,8 +93,15 @@ function CoursesPage() {
 	const { courseId } = Route.useSearch();
 	const navigate = useNavigate({ from: "/courses" });
 	const trpc = useTRPC();
+	const client = useTRPCClient();
+	const queryClient = useQueryClient();
+	const restoreAttempted = useRef(false);
 	const dashboard = useCanvasStore((state) => state.dashboard);
 	const hasHydrated = useCanvasStore((state) => state.hasHydrated);
+	const storedUrl = useCanvasStore((state) => state.canvasUrl);
+	const storedToken = useCanvasStore((state) => state.token);
+	const rememberSession = useCanvasStore((state) => state.rememberSession);
+	const [isRestoring, setIsRestoring] = useState(false);
 
 	useEffect(() => {
 		if (!hasHydrated) void useCanvasStore.persist.rehydrate();
@@ -104,9 +111,52 @@ function CoursesPage() {
 	const detail = useQuery(
 		trpc.canvas.courseDetail.queryOptions(
 			{ courseId: selectedId ?? "" },
-			{ enabled: Boolean(selectedId), retry: false, staleTime: 60_000 },
+			{
+				enabled: Boolean(selectedId),
+				retry: false,
+				staleTime: 5 * 60_000,
+				gcTime: 60 * 60_000,
+			},
 		),
 	);
+
+	useEffect(() => {
+		if (
+			!detail.isError ||
+			restoreAttempted.current ||
+			!storedUrl ||
+			!storedToken ||
+			!detail.error.message.includes("Connect to Canvas")
+		)
+			return;
+
+		restoreAttempted.current = true;
+		setIsRestoring(true);
+		void client.canvas.connect
+			.mutate({ canvasUrl: storedUrl, token: storedToken })
+			.then(async (restoredDashboard) => {
+				rememberSession({
+					canvasUrl: storedUrl,
+					token: storedToken,
+					dashboard: restoredDashboard,
+				});
+				queryClient.setQueryData(
+					trpc.canvas.dashboard.queryKey(),
+					restoredDashboard,
+				);
+				await detail.refetch();
+			})
+			.catch(() => undefined)
+			.finally(() => setIsRestoring(false));
+	}, [
+		client,
+		detail,
+		queryClient,
+		rememberSession,
+		storedToken,
+		storedUrl,
+		trpc,
+	]);
 
 	const options = (dashboard?.courses ?? []).map((course) => ({
 		label: course.name ?? course.course_code,
@@ -237,9 +287,11 @@ function CoursesPage() {
 						) : null}
 					</div>
 
-					{!hasHydrated || detail.isPending ? <CourseSkeleton /> : null}
+					{!hasHydrated || detail.isPending || isRestoring ? (
+						<CourseSkeleton />
+					) : null}
 					{hasHydrated && !dashboard ? <DisconnectedState /> : null}
-					{detail.error ? (
+					{detail.error && !isRestoring ? (
 						<Alert variant="error">
 							<AlertTitle>Couldn&rsquo;t load this course</AlertTitle>
 							<AlertDescription>{detail.error.message}</AlertDescription>
@@ -283,6 +335,16 @@ function CourseDetail({
 
 	return (
 		<>
+			{data.issues.length ? (
+				<Alert variant="warning" className="mb-6">
+					<AlertTitle>Some course sections are unavailable</AlertTitle>
+					<AlertDescription>
+						{data.issues
+							.map((issue) => `${issue.section}: ${issue.message}`)
+							.join(" ")}
+					</AlertDescription>
+				</Alert>
+			) : null}
 			<Card className="mb-6">
 				<CardHeader>
 					<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
