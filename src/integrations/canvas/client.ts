@@ -93,12 +93,82 @@ const canvasAssignmentSchema = z
 	.object({
 		id: canvasIdSchema,
 		name: z.string(),
+		description: nullableStringSchema,
 		due_at: nullableStringSchema,
+		unlock_at: nullableStringSchema,
+		lock_at: nullableStringSchema,
 		points_possible: nullableNumberSchema,
 		html_url: z.string().optional(),
 		submission_types: z.array(z.string()).optional(),
 		workflow_state: z.string().optional(),
 		has_submitted_submissions: z.boolean().optional(),
+		locked_for_user: z.boolean().optional(),
+		lock_explanation: nullableStringSchema,
+	})
+	.passthrough();
+
+const canvasPageSchema = z
+	.object({
+		page_id: canvasIdSchema,
+		url: z.string().optional(),
+		title: z.string(),
+		body: nullableStringSchema,
+		html_url: z.string().optional(),
+		updated_at: nullableStringSchema,
+		locked_for_user: z.boolean().optional(),
+		lock_explanation: nullableStringSchema,
+	})
+	.passthrough();
+
+const canvasDiscussionTopicSchema = z
+	.object({
+		id: canvasIdSchema,
+		title: z.string(),
+		message: nullableStringSchema,
+		html_url: z.string().optional(),
+		posted_at: nullableStringSchema,
+		discussion_subentry_count: z.number().optional(),
+		author: z
+			.object({
+				display_name: nullableStringSchema,
+				avatar_image_url: nullableStringSchema,
+			})
+			.passthrough()
+			.nullable()
+			.optional(),
+		locked_for_user: z.boolean().optional(),
+		lock_explanation: nullableStringSchema,
+	})
+	.passthrough();
+
+const canvasQuizSchema = z
+	.object({
+		id: canvasIdSchema,
+		title: z.string(),
+		description: nullableStringSchema,
+		html_url: z.string().optional(),
+		quiz_type: z.string().optional(),
+		due_at: nullableStringSchema,
+		points_possible: nullableNumberSchema,
+		question_count: z.number().optional(),
+		time_limit: nullableNumberSchema,
+		allowed_attempts: z.number().optional(),
+		locked_for_user: z.boolean().optional(),
+		lock_explanation: nullableStringSchema,
+	})
+	.passthrough();
+
+const canvasFileSchema = z
+	.object({
+		id: canvasIdSchema,
+		display_name: z.string(),
+		filename: z.string().optional(),
+		"content-type": z.string().optional(),
+		url: z.string().optional(),
+		size: z.number().nullable().optional(),
+		updated_at: nullableStringSchema,
+		locked_for_user: z.boolean().optional(),
+		lock_explanation: nullableStringSchema,
 	})
 	.passthrough();
 
@@ -112,6 +182,7 @@ const canvasModuleItemSchema = z
 		type: z.string().optional(),
 		content_id: canvasIdSchema.optional(),
 		html_url: z.string().optional(),
+		page_url: z.string().optional(),
 		external_url: z.string().optional(),
 		new_tab: z.boolean().nullable().optional(),
 		published: z.boolean().optional(),
@@ -291,6 +362,14 @@ export type CanvasDashboard = {
 	courses: CanvasCourse[];
 	upcoming: CanvasUpcomingItem[];
 };
+
+/** Content behind a module item, keyed by the item's Canvas type. */
+export type CanvasModuleItemContent =
+	| { kind: "page"; page: z.infer<typeof canvasPageSchema> }
+	| { kind: "assignment"; assignment: z.infer<typeof canvasAssignmentSchema> }
+	| { kind: "discussion"; topic: z.infer<typeof canvasDiscussionTopicSchema> }
+	| { kind: "quiz"; quiz: z.infer<typeof canvasQuizSchema> }
+	| { kind: "file"; file: z.infer<typeof canvasFileSchema> };
 
 export type CanvasCourseDetail = {
 	course: z.infer<typeof canvasCourseSchema>;
@@ -524,6 +603,84 @@ export class CanvasClient {
 					: [],
 			issues,
 		};
+	}
+
+	/**
+	 * Loads the content behind a module item using the type-specific Canvas
+	 * endpoint (pages, assignments, discussion topics, quizzes, files).
+	 */
+	async getModuleItemContent(
+		courseId: string,
+		input: { type: string; contentId?: string; pageUrl?: string },
+	): Promise<CanvasModuleItemContent> {
+		const course = encodeURIComponent(courseId);
+		const contentId = input.contentId
+			? encodeURIComponent(input.contentId)
+			: null;
+
+		switch (input.type) {
+			case "Page": {
+				if (!input.pageUrl)
+					throw new CanvasApiError("This page has no Canvas URL.", 400);
+				const page = await this.parseResponse(
+					canvasPageSchema,
+					await this.request(
+						`/api/v1/courses/${course}/pages/${encodeURIComponent(input.pageUrl)}`,
+					),
+					"page",
+				);
+				return { kind: "page", page };
+			}
+			case "Assignment": {
+				if (!contentId)
+					throw new CanvasApiError("This assignment has no Canvas id.", 400);
+				const assignment = await this.parseResponse(
+					canvasAssignmentSchema,
+					await this.request(
+						`/api/v1/courses/${course}/assignments/${contentId}`,
+					),
+					"assignment",
+				);
+				return { kind: "assignment", assignment };
+			}
+			case "Discussion": {
+				if (!contentId)
+					throw new CanvasApiError("This discussion has no Canvas id.", 400);
+				const topic = await this.parseResponse(
+					canvasDiscussionTopicSchema,
+					await this.request(
+						`/api/v1/courses/${course}/discussion_topics/${contentId}`,
+					),
+					"discussion",
+				);
+				return { kind: "discussion", topic };
+			}
+			case "Quiz": {
+				if (!contentId)
+					throw new CanvasApiError("This quiz has no Canvas id.", 400);
+				const quiz = await this.parseResponse(
+					canvasQuizSchema,
+					await this.request(`/api/v1/courses/${course}/quizzes/${contentId}`),
+					"quiz",
+				);
+				return { kind: "quiz", quiz };
+			}
+			case "File": {
+				if (!contentId)
+					throw new CanvasApiError("This file has no Canvas id.", 400);
+				const file = await this.parseResponse(
+					canvasFileSchema,
+					await this.request(`/api/v1/courses/${course}/files/${contentId}`),
+					"file",
+				);
+				return { kind: "file", file };
+			}
+			default:
+				throw new CanvasApiError(
+					"This item type can only be opened in Canvas.",
+					400,
+				);
+		}
 	}
 
 	private async getModuleItems(courseId: string, moduleId: string) {

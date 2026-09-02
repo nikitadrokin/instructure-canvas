@@ -228,6 +228,53 @@
 	--sidebar-ring: var(--color-neutral-400);
 }
 
+/* Typography for HTML bodies returned by the Canvas API (pages, assignment
+   descriptions, discussion messages). */
+@layer components {
+	.canvas-content {
+		@apply text-foreground text-sm leading-relaxed;
+	}
+	.canvas-content :is(h1, h2, h3, h4, h5, h6) {
+		@apply mt-6 mb-2 font-heading font-semibold first:mt-0;
+	}
+	.canvas-content h1 { @apply text-2xl; }
+	.canvas-content h2 { @apply text-xl; }
+	.canvas-content h3 { @apply text-lg; }
+	.canvas-content p {
+		@apply my-3 first:mt-0 last:mb-0;
+	}
+	.canvas-content a {
+		@apply text-primary underline underline-offset-4;
+	}
+	.canvas-content :is(ul, ol) {
+		@apply my-3 ps-6;
+	}
+	.canvas-content ul { @apply list-disc; }
+	.canvas-content ol { @apply list-decimal; }
+	.canvas-content li { @apply my-1; }
+	.canvas-content blockquote {
+		@apply my-4 border-s-2 ps-4 text-muted-foreground italic;
+	}
+	.canvas-content :is(img, video, iframe) {
+		@apply my-4 h-auto max-w-full rounded-lg;
+	}
+	.canvas-content table {
+		@apply my-4 w-full border-collapse text-sm;
+	}
+	.canvas-content :is(th, td) {
+		@apply border px-3 py-2 text-start;
+	}
+	.canvas-content th {
+		@apply bg-muted font-medium;
+	}
+	.canvas-content pre {
+		@apply my-4 overflow-x-auto rounded-lg bg-muted p-4 text-xs;
+	}
+	.canvas-content hr {
+		@apply my-6;
+	}
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

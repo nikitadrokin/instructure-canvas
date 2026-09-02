@@ -130,6 +130,45 @@ export const canvasRouter = createTRPCRouter({
 				client.forgetCredentials();
 			}
 		}),
+	moduleItemContent: publicProcedure
+		.input(
+			z.object({
+				courseId: z.string().min(1),
+				type: z.string().min(1),
+				contentId: z.string().optional(),
+				pageUrl: z.string().optional(),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			const session =
+				getCanvasSession(ctx.canvasSessionId) ?? ctx.canvasCredentials;
+			if (!session) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "Connect to Canvas to view this item.",
+				});
+			}
+			const client = new CanvasClient({
+				baseUrl: normalizeCanvasBaseUrl(session.canvasUrl),
+				accessToken: session.token,
+			});
+			try {
+				return await client.getModuleItemContent(input.courseId, {
+					type: input.type,
+					contentId: input.contentId,
+					pageUrl: input.pageUrl,
+				});
+			} catch (error) {
+				devLog("module item content failed", {
+					courseId: input.courseId,
+					type: input.type,
+					error: error instanceof Error ? error.message : "Unknown error",
+				});
+				throw toTrpcError(error);
+			} finally {
+				client.forgetCredentials();
+			}
+		}),
 	disconnect: publicProcedure.mutation(({ ctx }) => {
 		destroyCanvasSession(ctx.canvasSessionId);
 		ctx.resHeaders.append("Set-Cookie", createSessionCookie(null));

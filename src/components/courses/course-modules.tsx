@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import {
 	Blocks,
 	CheckCircle2,
@@ -43,8 +44,8 @@ import {
 	MeterTrack,
 } from "@/components/ui/meter";
 
-type CourseModule = CourseDetailData["modules"][number];
-type CourseModuleItem = NonNullable<CourseModule["items"]>[number];
+export type CourseModule = CourseDetailData["modules"][number];
+export type CourseModuleItem = NonNullable<CourseModule["items"]>[number];
 
 const ITEM_ICONS: Record<string, React.ReactNode> = {
 	Assignment: <FileText />,
@@ -55,6 +56,31 @@ const ITEM_ICONS: Record<string, React.ReactNode> = {
 	ExternalUrl: <Link2 />,
 	ExternalTool: <Blocks />,
 };
+
+export const MODULE_ITEM_TYPE_LABELS: Record<string, string> = {
+	Assignment: "Assignment",
+	Quiz: "Quiz",
+	Discussion: "Discussion",
+	Page: "Page",
+	File: "File",
+	ExternalUrl: "External link",
+	ExternalTool: "External tool",
+};
+
+export function moduleItemIcon(type?: string) {
+	return ITEM_ICONS[type ?? ""] ?? <CircleDashed />;
+}
+
+/** Item types this app can render itself; everything else opens in Canvas. */
+export function isInternalModuleItemType(type?: string) {
+	return (
+		type === "Page" ||
+		type === "Assignment" ||
+		type === "Discussion" ||
+		type === "Quiz" ||
+		type === "File"
+	);
+}
 
 export function CourseModules({
 	course,
@@ -135,6 +161,7 @@ export function CourseModules({
 						{modules.map((module) => (
 							<ModuleSection
 								key={module.id}
+								courseId={course.id}
 								module={module}
 								moduleNames={moduleNames}
 							/>
@@ -161,9 +188,11 @@ export function CourseModules({
 }
 
 function ModuleSection({
+	courseId,
 	module,
 	moduleNames,
 }: {
+	courseId: string;
 	module: CourseModule;
 	moduleNames: Map<string, string>;
 }) {
@@ -203,7 +232,7 @@ function ModuleSection({
 				{items.length ? (
 					<ul className="flex flex-col">
 						{items.map((item) => (
-							<ModuleItemRow key={item.id} item={item} />
+							<ModuleItemRow key={item.id} courseId={courseId} item={item} />
 						))}
 					</ul>
 				) : (
@@ -241,7 +270,13 @@ function ModuleStateBadge({ module }: { module: CourseModule }) {
 	}
 }
 
-function ModuleItemRow({ item }: { item: CourseModuleItem }) {
+function ModuleItemRow({
+	courseId,
+	item,
+}: {
+	courseId: string;
+	item: CourseModuleItem;
+}) {
 	const indent = Math.max(item.indent ?? 0, 0);
 
 	if (item.type === "SubHeader") {
@@ -260,6 +295,8 @@ function ModuleItemRow({ item }: { item: CourseModuleItem }) {
 	const locked = item.content_details?.locked_for_user;
 	const details = item.content_details;
 	const requirement = item.completion_requirement;
+	const internal = isInternalModuleItemType(item.type) && !locked;
+	const externalHref = item.external_url ?? item.html_url;
 	const meta = [
 		details?.points_possible != null ? `${details.points_possible} pts` : null,
 		details?.due_at ? `Due ${formatDate(details.due_at)}` : null,
@@ -275,14 +312,23 @@ function ModuleItemRow({ item }: { item: CourseModuleItem }) {
 				<span className="shrink-0 text-muted-foreground [&_svg]:size-4">
 					{ITEM_ICONS[item.type ?? ""] ?? <CircleDashed />}
 				</span>
-				{item.html_url && !locked ? (
-					<a
-						href={item.html_url}
-						target="_blank"
-						rel="noreferrer"
+				{internal ? (
+					<Link
+						to="/courses/$courseId/modules/items/$itemId"
+						params={{ courseId, itemId: item.id }}
 						className="min-w-0 break-words underline-offset-4 hover:underline"
 					>
 						{item.title}
+					</Link>
+				) : externalHref && !locked ? (
+					<a
+						href={externalHref}
+						target="_blank"
+						rel="noreferrer"
+						className="group inline-flex min-w-0 items-center gap-1.5 underline-offset-4 hover:underline"
+					>
+						<span className="min-w-0 break-words">{item.title}</span>
+						<ExternalLink className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
 					</a>
 				) : (
 					<span
@@ -322,7 +368,7 @@ function ModuleItemRow({ item }: { item: CourseModuleItem }) {
 	);
 }
 
-function requirementLabel(
+export function requirementLabel(
 	requirement: NonNullable<CourseModuleItem["completion_requirement"]>,
 ) {
 	switch (requirement.type) {

@@ -16,6 +16,7 @@ import { Route as CoursesCourseIdRouteImport } from './routes/courses.$courseId'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as CoursesCourseIdIndexRouteImport } from './routes/courses.$courseId.index'
 import { Route as CoursesCourseIdModulesRouteImport } from './routes/courses.$courseId.modules'
+import { Route as CoursesCourseIdModulesItemsItemIdRouteImport } from './routes/courses.$courseId.modules_.items.$itemId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +53,12 @@ const CoursesCourseIdModulesRoute = CoursesCourseIdModulesRouteImport.update({
   path: '/modules',
   getParentRoute: () => CoursesCourseIdRoute,
 } as any)
+const CoursesCourseIdModulesItemsItemIdRoute =
+  CoursesCourseIdModulesItemsItemIdRouteImport.update({
+    id: '/modules_/items/$itemId',
+    path: '/modules/items/$itemId',
+    getParentRoute: () => CoursesCourseIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
+  '/courses/$courseId/modules/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,6 +76,7 @@ export interface FileRoutesByTo {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
   '/courses/$courseId': typeof CoursesCourseIdIndexRoute
+  '/courses/$courseId/modules/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,6 +87,7 @@ export interface FileRoutesById {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
+  '/courses/$courseId/modules_/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/courses/$courseId/modules'
     | '/courses/$courseId/'
+    | '/courses/$courseId/modules/items/$itemId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/courses/$courseId/modules'
     | '/courses/$courseId'
+    | '/courses/$courseId/modules/items/$itemId'
   id:
     | '__root__'
     | '/'
@@ -105,6 +117,7 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/courses/$courseId/modules'
     | '/courses/$courseId/'
+    | '/courses/$courseId/modules_/items/$itemId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -164,17 +177,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesCourseIdModulesRouteImport
       parentRoute: typeof CoursesCourseIdRoute
     }
+    '/courses/$courseId/modules_/items/$itemId': {
+      id: '/courses/$courseId/modules_/items/$itemId'
+      path: '/modules/items/$itemId'
+      fullPath: '/courses/$courseId/modules/items/$itemId'
+      preLoaderRoute: typeof CoursesCourseIdModulesItemsItemIdRouteImport
+      parentRoute: typeof CoursesCourseIdRoute
+    }
   }
 }
 
 interface CoursesCourseIdRouteChildren {
   CoursesCourseIdModulesRoute: typeof CoursesCourseIdModulesRoute
   CoursesCourseIdIndexRoute: typeof CoursesCourseIdIndexRoute
+  CoursesCourseIdModulesItemsItemIdRoute: typeof CoursesCourseIdModulesItemsItemIdRoute
 }
 
 const CoursesCourseIdRouteChildren: CoursesCourseIdRouteChildren = {
   CoursesCourseIdModulesRoute: CoursesCourseIdModulesRoute,
   CoursesCourseIdIndexRoute: CoursesCourseIdIndexRoute,
+  CoursesCourseIdModulesItemsItemIdRoute:
+    CoursesCourseIdModulesItemsItemIdRoute,
 }
 
 const CoursesCourseIdRouteWithChildren = CoursesCourseIdRoute._addFileChildren(
