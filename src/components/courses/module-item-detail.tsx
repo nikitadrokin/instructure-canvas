@@ -164,10 +164,7 @@ export function ModuleItemDetail({
 						) : null}
 						{requirement ? (
 							requirement.completed ? (
-								<Badge variant="success">
-									<CheckCircle2 />
-									Completed
-								</Badge>
+								<Badge>Completed</Badge>
 							) : (
 								<Badge variant="outline">{requirementLabel(requirement)}</Badge>
 							)
