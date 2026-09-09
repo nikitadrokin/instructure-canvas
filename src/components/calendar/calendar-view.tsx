@@ -205,51 +205,49 @@ export function CalendarView() {
       />
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]">
-        <Card className="min-w-0 overflow-hidden">
-          <CardPanel className="flex min-w-0 flex-col gap-3">
-            <CalendarToolbar
-              heading={
-                view === "week"
-                  ? formatWeekHeading(selectedDate)
-                  : formatMonthHeading(month)
-              }
-              view={view}
-              prevLabel={view === "week" ? "Previous week" : "Previous month"}
-              nextLabel={view === "week" ? "Next week" : "Next month"}
-              onViewChange={setView}
-              onPrev={() => shift(-1)}
-              onNext={() => shift(1)}
-              onToday={jumpToToday}
+        <div className="flex min-w-0 flex-col gap-3">
+          <CalendarToolbar
+            heading={
+              view === "week"
+                ? formatWeekHeading(selectedDate)
+                : formatMonthHeading(month)
+            }
+            view={view}
+            prevLabel={view === "week" ? "Previous week" : "Previous month"}
+            nextLabel={view === "week" ? "Next week" : "Next month"}
+            onViewChange={setView}
+            onPrev={() => shift(-1)}
+            onNext={() => shift(1)}
+            onToday={jumpToToday}
+          />
+          {view === "week" ? (
+            <WeekView
+              selectedDate={selectedDate}
+              selectedEventId={selectedEventId}
+              itemsByDay={itemsByDay}
+              customColors={customColors}
+              onSelectDay={selectDay}
+              onSelectEvent={(date, item) => {
+                setSelectedDate(date);
+                setSelectedEventId(item.id);
+              }}
             />
-            {view === "week" ? (
-              <WeekView
-                selectedDate={selectedDate}
-                selectedEventId={selectedEventId}
-                itemsByDay={itemsByDay}
-                customColors={customColors}
-                onSelectDay={selectDay}
-                onSelectEvent={(date, item) => {
-                  setSelectedDate(date);
-                  setSelectedEventId(item.id);
-                }}
-              />
-            ) : (
-              <MonthGrid
-                month={month}
-                selectedDate={selectedDate}
-                selectedEventId={selectedEventId}
-                itemsByDay={itemsByDay}
-                customColors={customColors}
-                compact={isCompactGrid}
-                onSelectDay={selectDay}
-                onSelectEvent={(date, item) => {
-                  setSelectedDate(date);
-                  setSelectedEventId(item.id);
-                }}
-              />
-            )}
-          </CardPanel>
-        </Card>
+          ) : (
+            <MonthGrid
+              month={month}
+              selectedDate={selectedDate}
+              selectedEventId={selectedEventId}
+              itemsByDay={itemsByDay}
+              customColors={customColors}
+              compact={isCompactGrid}
+              onSelectDay={selectDay}
+              onSelectEvent={(date, item) => {
+                setSelectedDate(date);
+                setSelectedEventId(item.id);
+              }}
+            />
+          )}
+        </div>
 
         <div className="flex min-w-0 flex-col gap-6">
           <DayAgendaCard
