@@ -40,7 +40,7 @@ import {
   ComboboxSeparator,
   ComboboxValue,
   useComboboxFilter,
-} from "@/components/ui/combobox"
+} from '@/components/ui/combobox';
 ```
 
 ## Minimal pattern
@@ -78,11 +78,15 @@ Combobox with label in a Field:
 <Field>
   <FieldLabel>Framework</FieldLabel>
   <Combobox items={items}>
-    <ComboboxInput placeholder="Search..." />
+    <ComboboxInput placeholder='Search...' />
     <ComboboxPopup>
       <ComboboxEmpty>No results found.</ComboboxEmpty>
       <ComboboxList>
-        {(item) => <ComboboxItem key={item.value} value={item}>{item.label}</ComboboxItem>}
+        {(item) => (
+          <ComboboxItem key={item.value} value={item}>
+            {item.label}
+          </ComboboxItem>
+        )}
       </ComboboxList>
     </ComboboxPopup>
   </Combobox>
