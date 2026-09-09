@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { cn } from "#/lib/utils";
 import type { CourseDetailData } from "@/components/courses/course-detail";
 import { Button } from "@/components/ui/button";
 
@@ -36,7 +37,7 @@ export function CourseSidebar({ course, tabs }: CourseSidebarProps) {
             <Button
               key={tab.id}
               variant="link"
-              className={`${className} data-[status=active]:underline`}
+              className={cn(className, "data-[status=active]:underline")}
               render={
                 <Link
                   to={internalTo}
