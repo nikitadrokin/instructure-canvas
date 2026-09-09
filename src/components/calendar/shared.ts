@@ -43,6 +43,49 @@ export function monthRange(month: Date): {
   return { startDate: toDateKey(start), endDate: toDateKey(end) };
 }
 
+/** Sunday-start six-week grid that a month view actually displays. */
+export function visibleGridRange(month: Date): {
+  startDate: string;
+  endDate: string;
+} {
+  const days = monthGridDays(month);
+  const start = days[0];
+  const end = days[days.length - 1];
+  if (!start || !end) return monthRange(month);
+  return { startDate: toDateKey(start), endDate: toDateKey(end) };
+}
+
+/** 42 local dates covering the visible month grid, starting on Sunday. */
+export function monthGridDays(month: Date): Date[] {
+  const first = new Date(month.getFullYear(), month.getMonth(), 1);
+  const start = new Date(first);
+  start.setDate(first.getDate() - first.getDay());
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    return date;
+  });
+}
+
+/** Localized short weekday labels starting on Sunday. */
+export function weekdayLabels(): string[] {
+  const formatter = new Intl.DateTimeFormat(undefined, { weekday: "short" });
+  return Array.from({ length: 7 }, (_, index) =>
+    formatter.format(new Date(2023, 0, 1 + index)),
+  );
+}
+
+export function isSameDay(left: Date, right: Date): boolean {
+  return toDateKey(left) === toDateKey(right);
+}
+
+export function isSameMonth(left: Date, right: Date): boolean {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth()
+  );
+}
+
 /** Local day key for a calendar item, preferring Canvas all-day dates. */
 export function itemDateKey(item: CalendarItem): string | null {
   if (item.all_day_date && dateKeyPattern.test(item.all_day_date)) {

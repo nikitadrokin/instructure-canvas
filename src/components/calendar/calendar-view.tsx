@@ -5,6 +5,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { MonthGrid } from "@/components/calendar/month-grid";
 import {
   type CalendarItem,
   calendarContextCodes,
@@ -12,14 +13,13 @@ import {
   formatEventTime,
   formatMonthHeading,
   groupItemsByDay,
-  monthRange,
   toDateKey,
+  visibleGridRange,
 } from "@/components/calendar/shared";
 import { DisconnectedState } from "@/components/courses/course-detail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardAction,
@@ -61,9 +61,10 @@ export function CalendarView() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedEventId, setSelectedEventId] = useState<string>();
   const isLarge = useMediaQuery("lg");
-  const isWide = useMediaQuery("2xl");
+  const isWide = useMediaQuery("xl");
+  const isCompactGrid = !useMediaQuery("md");
 
-  const range = monthRange(month);
+  const range = visibleGridRange(month);
   const contextCodes = useMemo(
     () =>
       dashboard
@@ -86,25 +87,27 @@ export function CalendarView() {
   );
   const selectedKey = toDateKey(selectedDate);
   const dayItems = itemsByDay.get(selectedKey) ?? [];
-  const selectedEvent = dayItems.find((item) => item.id === selectedEventId);
-  const eventDates = useMemo(
-    () =>
-      [...itemsByDay.keys()].flatMap((key) => {
-        const [year, monthNumber, day] = key.split("-").map(Number);
-        if (
-          year === undefined ||
-          monthNumber === undefined ||
-          day === undefined
-        ) {
-          return [];
-        }
-        return [new Date(year, monthNumber - 1, day)];
-      }),
-    [itemsByDay],
+  const selectedEvent = (events.data ?? []).find(
+    (item) => item.id === selectedEventId,
   );
 
   if (!hasHydrated || isRestoring) return <CalendarSkeleton />;
-  if (!dashboard) return <DisconnectedState />;
+  if (!dashboard) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="font-heading font-semibold text-3xl tracking-tight">
+            Calendar
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Connect to Canvas to see assignments and events on a local month
+            view.
+          </p>
+        </div>
+        <DisconnectedState />
+      </div>
+    );
+  }
 
   function selectDay(date: Date) {
     setSelectedDate(date);
@@ -145,8 +148,8 @@ export function CalendarView() {
       <div
         className={
           selectedEvent && isWide
-            ? "grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(17rem,21rem)_minmax(20rem,26rem)]"
-            : "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]"
+            ? "grid items-start gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(16rem,20rem)_minmax(20rem,24rem)]"
+            : "grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]"
         }
       >
         <Card className="min-w-0">
@@ -155,27 +158,21 @@ export function CalendarView() {
             <CardDescription>
               {events.isPending
                 ? "Loading events"
-                : `${events.data?.length ?? 0} items this month`}
+                : `${events.data?.length ?? 0} items in this view`}
             </CardDescription>
           </CardHeader>
-          <CardPanel className="flex justify-center overflow-x-auto pt-4">
-            <Calendar
-              mode="single"
+          <CardPanel>
+            <MonthGrid
               month={month}
+              selectedDate={selectedDate}
+              selectedEventId={selectedEventId}
+              itemsByDay={itemsByDay}
+              compact={isCompactGrid}
               onMonthChange={setMonth}
-              selected={selectedDate}
-              onSelect={(date) => {
-                if (date) selectDay(date);
-              }}
-              modifiers={{ hasEvents: eventDates }}
-              modifiersClassNames={{
-                hasEvents:
-                  "*:before:pointer-events-none *:before:absolute *:before:top-1 *:before:start-1/2 *:before:z-1 *:before:size-1.5 *:before:-translate-x-1/2 *:before:rounded-full *:before:bg-primary [&[data-selected]:not(.range-middle)>*]:before:bg-primary-foreground",
-              }}
-              className="w-full max-w-none [--cell-size:--spacing(11)] sm:[--cell-size:--spacing(10)] lg:[--cell-size:--spacing(12)]"
-              classNames={{
-                month: "w-full",
-                months: "w-full",
+              onSelectDay={selectDay}
+              onSelectEvent={(date, item) => {
+                setSelectedDate(date);
+                setSelectedEventId(item.id);
               }}
             />
           </CardPanel>
@@ -287,7 +284,7 @@ function DayAgendaCard({
                   <button
                     type="button"
                     onClick={() => onSelectEvent(item.id)}
-                    className="flex w-full items-start gap-3 px-6 py-3.5 text-start outline-none transition-colors hover:bg-accent/40 focus-visible:bg-accent/40"
+                    className="flex w-full items-start gap-3 px-6 py-3.5 text-start outline-none transition-colors hover:bg-accent/40 focus-visible:bg-accent/40 data-selected:bg-accent/70"
                     data-selected={selected ? "true" : undefined}
                   >
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
