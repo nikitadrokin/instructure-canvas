@@ -89,6 +89,105 @@ const canvasCourseSchema = z
 	})
 	.passthrough();
 
+const canvasFileSchema = z
+	.object({
+		id: canvasIdSchema,
+		display_name: z.string(),
+		filename: z.string().optional(),
+		"content-type": z.string().optional(),
+		url: z.string().optional(),
+		size: z.number().nullable().optional(),
+		created_at: nullableStringSchema,
+		updated_at: nullableStringSchema,
+		folder_id: canvasIdSchema.nullable().optional(),
+		mime_class: z.string().optional(),
+		thumbnail_url: nullableStringSchema,
+		locked: z.boolean().optional(),
+		hidden: z.boolean().optional(),
+		locked_for_user: z.boolean().optional(),
+		lock_explanation: nullableStringSchema,
+	})
+	.passthrough();
+
+const canvasCommentAuthorSchema = z
+	.object({
+		id: canvasIdSchema.optional(),
+		display_name: nullableStringSchema,
+		avatar_image_url: nullableStringSchema,
+	})
+	.passthrough();
+
+const canvasSubmissionCommentSchema = z
+	.object({
+		id: canvasIdSchema,
+		author_name: nullableStringSchema,
+		comment: nullableStringSchema,
+		created_at: nullableStringSchema,
+		author: canvasCommentAuthorSchema.nullable().optional(),
+	})
+	.passthrough();
+
+/** The current user's submission for an assignment. */
+const canvasSubmissionSchema = z
+	.object({
+		id: canvasIdSchema.optional(),
+		assignment_id: canvasIdSchema.optional(),
+		attempt: nullableNumberSchema,
+		score: nullableNumberSchema,
+		grade: nullableStringSchema,
+		submitted_at: nullableStringSchema,
+		graded_at: nullableStringSchema,
+		posted_at: nullableStringSchema,
+		/** submitted | unsubmitted | graded | pending_review */
+		workflow_state: z.string().optional(),
+		submission_type: nullableStringSchema,
+		late: z.boolean().optional(),
+		missing: z.boolean().optional(),
+		excused: z.boolean().nullable().optional(),
+		late_policy_status: nullableStringSchema,
+		seconds_late: z.number().optional(),
+		preview_url: z.string().optional(),
+		body: nullableStringSchema,
+		url: nullableStringSchema,
+		grade_matches_current_submission: z.boolean().optional(),
+		attachments: z.array(canvasFileSchema).optional(),
+		submission_comments: z.array(canvasSubmissionCommentSchema).optional(),
+		rubric_assessment: z
+			.record(
+				z.string(),
+				z
+					.object({
+						points: nullableNumberSchema,
+						rating_id: nullableStringSchema,
+						comments: nullableStringSchema,
+					})
+					.passthrough(),
+			)
+			.nullable()
+			.optional(),
+	})
+	.passthrough();
+
+const canvasRubricRatingSchema = z
+	.object({
+		id: canvasIdSchema,
+		description: nullableStringSchema,
+		long_description: nullableStringSchema,
+		points: nullableNumberSchema,
+	})
+	.passthrough();
+
+const canvasRubricCriterionSchema = z
+	.object({
+		id: canvasIdSchema,
+		description: nullableStringSchema,
+		long_description: nullableStringSchema,
+		points: nullableNumberSchema,
+		ignore_for_scoring: z.boolean().optional(),
+		ratings: z.array(canvasRubricRatingSchema).optional(),
+	})
+	.passthrough();
+
 const canvasAssignmentSchema = z
 	.object({
 		id: canvasIdSchema,
@@ -100,10 +199,44 @@ const canvasAssignmentSchema = z
 		points_possible: nullableNumberSchema,
 		html_url: z.string().optional(),
 		submission_types: z.array(z.string()).optional(),
+		allowed_extensions: z.array(z.string()).optional(),
+		allowed_attempts: z.number().optional(),
+		/** points | percent | letter_grade | gpa_scale | pass_fail | not_graded */
+		grading_type: z.string().optional(),
+		assignment_group_id: canvasIdSchema.optional(),
+		position: z.number().optional(),
 		workflow_state: z.string().optional(),
+		published: z.boolean().optional(),
 		has_submitted_submissions: z.boolean().optional(),
+		omit_from_final_grade: z.boolean().optional(),
+		peer_reviews: z.boolean().optional(),
+		is_quiz_assignment: z.boolean().optional(),
+		quiz_id: canvasIdSchema.optional(),
+		discussion_topic: z
+			.object({ id: canvasIdSchema })
+			.passthrough()
+			.nullable()
+			.optional(),
+		external_tool_tag_attributes: z
+			.object({ url: z.string().optional() })
+			.passthrough()
+			.nullable()
+			.optional(),
 		locked_for_user: z.boolean().optional(),
 		lock_explanation: nullableStringSchema,
+		use_rubric_for_grading: z.boolean().optional(),
+		rubric: z.array(canvasRubricCriterionSchema).nullable().optional(),
+		rubric_settings: z
+			.object({
+				id: canvasIdSchema.optional(),
+				title: nullableStringSchema,
+				points_possible: nullableNumberSchema,
+				free_form_criterion_comments: z.boolean().optional(),
+			})
+			.passthrough()
+			.nullable()
+			.optional(),
+		submission: canvasSubmissionSchema.nullable().optional(),
 	})
 	.passthrough();
 
@@ -114,7 +247,10 @@ const canvasPageSchema = z
 		title: z.string(),
 		body: nullableStringSchema,
 		html_url: z.string().optional(),
+		created_at: nullableStringSchema,
 		updated_at: nullableStringSchema,
+		front_page: z.boolean().optional(),
+		published: z.boolean().optional(),
 		locked_for_user: z.boolean().optional(),
 		lock_explanation: nullableStringSchema,
 	})
@@ -127,17 +263,55 @@ const canvasDiscussionTopicSchema = z
 		message: nullableStringSchema,
 		html_url: z.string().optional(),
 		posted_at: nullableStringSchema,
+		last_reply_at: nullableStringSchema,
+		delayed_post_at: nullableStringSchema,
 		discussion_subentry_count: z.number().optional(),
-		author: z
-			.object({
-				display_name: nullableStringSchema,
-				avatar_image_url: nullableStringSchema,
-			})
-			.passthrough()
-			.nullable()
-			.optional(),
+		unread_count: z.number().optional(),
+		/** read | unread */
+		read_state: z.string().optional(),
+		pinned: z.boolean().optional(),
+		locked: z.boolean().optional(),
+		published: z.boolean().optional(),
+		is_announcement: z.boolean().optional(),
+		assignment_id: canvasIdSchema.nullable().optional(),
+		author: canvasCommentAuthorSchema.nullable().optional(),
+		attachments: z.array(canvasFileSchema).optional(),
 		locked_for_user: z.boolean().optional(),
 		lock_explanation: nullableStringSchema,
+	})
+	.passthrough();
+
+/** One reply in a discussion thread, as returned by the `/view` endpoint. */
+export type CanvasDiscussionEntry = {
+	id: string;
+	user_id?: string;
+	parent_id?: string | null;
+	created_at?: string | null;
+	updated_at?: string | null;
+	message?: string | null;
+	deleted?: boolean;
+	replies?: CanvasDiscussionEntry[];
+};
+
+const canvasDiscussionEntrySchema: z.ZodType<CanvasDiscussionEntry> = z.lazy(
+	() =>
+		z.object({
+			id: canvasIdSchema,
+			user_id: canvasIdSchema.optional(),
+			parent_id: canvasIdSchema.nullable().optional(),
+			created_at: nullableStringSchema,
+			updated_at: nullableStringSchema,
+			message: nullableStringSchema,
+			deleted: z.boolean().optional(),
+			replies: z.array(canvasDiscussionEntrySchema).optional(),
+		}),
+);
+
+const canvasDiscussionViewSchema = z
+	.object({
+		unread_entries: z.array(canvasIdSchema).optional(),
+		participants: z.array(canvasCommentAuthorSchema).optional(),
+		view: z.array(canvasDiscussionEntrySchema).optional(),
 	})
 	.passthrough();
 
@@ -147,26 +321,17 @@ const canvasQuizSchema = z
 		title: z.string(),
 		description: nullableStringSchema,
 		html_url: z.string().optional(),
+		/** practice_quiz | assignment | graded_survey | survey */
 		quiz_type: z.string().optional(),
+		assignment_id: canvasIdSchema.nullable().optional(),
 		due_at: nullableStringSchema,
+		unlock_at: nullableStringSchema,
+		lock_at: nullableStringSchema,
 		points_possible: nullableNumberSchema,
 		question_count: z.number().optional(),
 		time_limit: nullableNumberSchema,
 		allowed_attempts: z.number().optional(),
-		locked_for_user: z.boolean().optional(),
-		lock_explanation: nullableStringSchema,
-	})
-	.passthrough();
-
-const canvasFileSchema = z
-	.object({
-		id: canvasIdSchema,
-		display_name: z.string(),
-		filename: z.string().optional(),
-		"content-type": z.string().optional(),
-		url: z.string().optional(),
-		size: z.number().nullable().optional(),
-		updated_at: nullableStringSchema,
+		published: z.boolean().optional(),
 		locked_for_user: z.boolean().optional(),
 		lock_explanation: nullableStringSchema,
 	})
@@ -363,13 +528,26 @@ export type CanvasDashboard = {
 	upcoming: CanvasUpcomingItem[];
 };
 
+export type CanvasAssignment = z.infer<typeof canvasAssignmentSchema>;
+export type CanvasSubmission = z.infer<typeof canvasSubmissionSchema>;
+export type CanvasPage = z.infer<typeof canvasPageSchema>;
+export type CanvasDiscussionTopic = z.infer<typeof canvasDiscussionTopicSchema>;
+export type CanvasQuiz = z.infer<typeof canvasQuizSchema>;
+export type CanvasFile = z.infer<typeof canvasFileSchema>;
+export type CanvasRubricCriterion = z.infer<typeof canvasRubricCriterionSchema>;
+
 /** Content behind a module item, keyed by the item's Canvas type. */
 export type CanvasModuleItemContent =
-	| { kind: "page"; page: z.infer<typeof canvasPageSchema> }
-	| { kind: "assignment"; assignment: z.infer<typeof canvasAssignmentSchema> }
-	| { kind: "discussion"; topic: z.infer<typeof canvasDiscussionTopicSchema> }
-	| { kind: "quiz"; quiz: z.infer<typeof canvasQuizSchema> }
-	| { kind: "file"; file: z.infer<typeof canvasFileSchema> };
+	| { kind: "page"; page: CanvasPage }
+	| { kind: "assignment"; assignment: CanvasAssignment }
+	| {
+			kind: "discussion";
+			topic: CanvasDiscussionTopic;
+			entries: CanvasDiscussionEntry[];
+			participants: Array<z.infer<typeof canvasCommentAuthorSchema>>;
+	  }
+	| { kind: "quiz"; quiz: CanvasQuiz }
+	| { kind: "file"; file: CanvasFile };
 
 export type CanvasCourseDetail = {
 	course: z.infer<typeof canvasCourseSchema>;
@@ -634,10 +812,13 @@ export class CanvasClient {
 			case "Assignment": {
 				if (!contentId)
 					throw new CanvasApiError("This assignment has no Canvas id.", 400);
+				const params = new URLSearchParams();
+				params.append("include[]", "submission");
+				params.append("include[]", "rubric_assessment");
 				const assignment = await this.parseResponse(
 					canvasAssignmentSchema,
 					await this.request(
-						`/api/v1/courses/${course}/assignments/${contentId}`,
+						`/api/v1/courses/${course}/assignments/${contentId}?${params}`,
 					),
 					"assignment",
 				);
@@ -653,7 +834,30 @@ export class CanvasClient {
 					),
 					"discussion",
 				);
-				return { kind: "discussion", topic };
+				// The topic view (threaded replies) is best-effort: some topics
+				// have no readable view yet, and Canvas returns 403 for those.
+				const view = await this.request(
+					`/api/v1/courses/${course}/discussion_topics/${contentId}/view`,
+				)
+					.then((response) =>
+						this.parseResponse(
+							canvasDiscussionViewSchema,
+							response,
+							"discussion view",
+						),
+					)
+					.catch(() => ({
+						view: [] as CanvasDiscussionEntry[],
+						participants: [] as Array<
+							z.infer<typeof canvasCommentAuthorSchema>
+						>,
+					}));
+				return {
+					kind: "discussion",
+					topic,
+					entries: view.view ?? [],
+					participants: view.participants ?? [],
+				};
 			}
 			case "Quiz": {
 				if (!contentId)

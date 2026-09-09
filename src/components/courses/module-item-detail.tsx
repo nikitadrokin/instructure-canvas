@@ -2,14 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
 	ArrowLeft,
-	CheckCircle2,
 	ChevronLeft,
 	ChevronRight,
-	Download,
 	ExternalLink,
 	Layers3,
 	Lock,
 } from "lucide-react";
+import type React from "react";
 import {
 	type CourseModule,
 	type CourseModuleItem,
@@ -18,6 +17,12 @@ import {
 	moduleItemIcon,
 	requirementLabel,
 } from "@/components/courses/course-modules";
+import { AssignmentView } from "@/components/courses/items/assignment-view";
+import { DiscussionView } from "@/components/courses/items/discussion-view";
+import { FileView } from "@/components/courses/items/file-view";
+import { PageView } from "@/components/courses/items/page-view";
+import { QuizView } from "@/components/courses/items/quiz-view";
+import { formatDateTime } from "@/components/courses/items/shared";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +40,6 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CanvasModuleItemContent } from "@/integrations/canvas/client";
 import { useCanvasStore } from "@/integrations/canvas/store";
@@ -50,7 +54,7 @@ export function ModuleItemDetail({
 	courseId: string;
 	itemId: string;
 	origin: string;
-}) {
+}): React.ReactElement {
 	const trpc = useTRPC();
 	const sessionReady = useCanvasStore((state) => state.sessionReady);
 	const detail = useCourseDetail(courseId);
@@ -153,58 +157,49 @@ export function ModuleItemDetail({
 							Open in Canvas
 						</Button>
 					</div>
-					<div className="mt-2 flex flex-wrap items-center gap-2">
-						{details?.points_possible != null ? (
-							<Badge variant="secondary">{details.points_possible} pts</Badge>
-						) : null}
-						{details?.due_at ? (
-							<Badge variant="secondary">
-								Due {formatDateTime(details.due_at)}
-							</Badge>
-						) : null}
-						{requirement ? (
-							requirement.completed ? (
-								<Badge>Completed</Badge>
-							) : (
-								<Badge variant="outline">{requirementLabel(requirement)}</Badge>
-							)
-						) : null}
-						{details?.locked_for_user ? (
-							<Badge variant="secondary">
-								<Lock />
-								Locked
-							</Badge>
-						) : null}
-					</div>
-				</CardHeader>
-				<CardContent>
-					{details?.locked_for_user ? (
-						<Alert variant="warning">
-							<AlertTitle>This item is locked</AlertTitle>
-							<AlertDescription>
-								{details.lock_explanation ??
-									"Canvas has not unlocked this item for you yet."}
-							</AlertDescription>
-						</Alert>
-					) : !internal ? (
-						<ExternalItemBody item={item} canvasUrl={canvasUrl} />
-					) : content.isPending ? (
-						<div className="flex flex-col gap-3">
-							<Skeleton className="h-4 w-full" />
-							<Skeleton className="h-4 w-11/12" />
-							<Skeleton className="h-4 w-4/5" />
-							<Skeleton className="h-4 w-2/3" />
+					{details?.points_possible != null ||
+					details?.due_at ||
+					requirement ||
+					details?.locked_for_user ? (
+						<div className="mt-2 flex flex-wrap items-center gap-2">
+							{details?.points_possible != null ? (
+								<Badge variant="secondary">{details.points_possible} pts</Badge>
+							) : null}
+							{details?.due_at ? (
+								<Badge variant="secondary">
+									Due {formatDateTime(details.due_at)}
+								</Badge>
+							) : null}
+							{requirement ? (
+								requirement.completed ? (
+									<Badge variant="success">Completed</Badge>
+								) : (
+									<Badge variant="outline">
+										{requirementLabel(requirement)}
+									</Badge>
+								)
+							) : null}
+							{details?.locked_for_user ? (
+								<Badge variant="secondary">
+									<Lock />
+									Locked
+								</Badge>
+							) : null}
 						</div>
-					) : content.error ? (
-						<Alert variant="error">
-							<AlertTitle>Couldn&rsquo;t load this item</AlertTitle>
-							<AlertDescription>{content.error.message}</AlertDescription>
-						</Alert>
-					) : content.data ? (
-						<ItemContent content={content.data} />
 					) : null}
-				</CardContent>
+				</CardHeader>
 			</Card>
+
+			<ItemBody
+				item={item}
+				courseId={courseId}
+				origin={origin}
+				canvasUrl={canvasUrl}
+				internal={internal}
+				content={content.data}
+				isPending={content.isPending}
+				error={content.error?.message}
+			/>
 
 			<ModuleItemPager
 				courseId={courseId}
@@ -215,154 +210,124 @@ export function ModuleItemDetail({
 	);
 }
 
+function ItemBody({
+	item,
+	courseId,
+	origin,
+	canvasUrl,
+	internal,
+	content,
+	isPending,
+	error,
+}: {
+	item: CourseModuleItem;
+	courseId: string;
+	origin: string;
+	canvasUrl: string;
+	internal: boolean;
+	content: CanvasModuleItemContent | undefined;
+	isPending: boolean;
+	error?: string;
+}): React.ReactElement {
+	if (item.content_details?.locked_for_user) {
+		return (
+			<Alert variant="warning">
+				<AlertTitle>This item is locked</AlertTitle>
+				<AlertDescription>
+					{item.content_details.lock_explanation ??
+						"Canvas has not unlocked this item for you yet."}
+				</AlertDescription>
+			</Alert>
+		);
+	}
+
+	if (!internal) {
+		return <ExternalItemBody item={item} canvasUrl={canvasUrl} />;
+	}
+
+	if (isPending) {
+		return (
+			<Card>
+				<CardContent className="flex flex-col gap-3 pt-6">
+					<Skeleton className="h-4 w-full" />
+					<Skeleton className="h-4 w-11/12" />
+					<Skeleton className="h-4 w-4/5" />
+					<Skeleton className="h-4 w-2/3" />
+				</CardContent>
+			</Card>
+		);
+	}
+
+	if (error) {
+		return (
+			<Alert variant="error">
+				<AlertTitle>Couldn&rsquo;t load this item</AlertTitle>
+				<AlertDescription>{error}</AlertDescription>
+			</Alert>
+		);
+	}
+
+	if (!content) return <span />;
+
+	switch (content.kind) {
+		case "page":
+			return <PageView page={content.page} />;
+		case "assignment":
+			return (
+				<AssignmentView
+					assignment={content.assignment}
+					origin={origin}
+					courseId={courseId}
+				/>
+			);
+		case "discussion":
+			return (
+				<DiscussionView
+					topic={content.topic}
+					entries={content.entries}
+					participants={content.participants}
+				/>
+			);
+		case "quiz":
+			return <QuizView quiz={content.quiz} />;
+		case "file":
+			return <FileView file={content.file} />;
+	}
+}
+
 function ExternalItemBody({
 	item,
 	canvasUrl,
 }: {
 	item: CourseModuleItem;
 	canvasUrl: string;
-}) {
+}): React.ReactElement {
 	const href = item.external_url ?? canvasUrl;
 	return (
-		<div className="flex flex-col items-start gap-3">
-			<p className="text-muted-foreground text-sm">
-				{item.type === "ExternalUrl"
-					? "This item links to an external site."
-					: "This item type can only be opened in Canvas."}
-			</p>
-			<Button
-				render={
-					// biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-					<a
-						href={href}
-						target="_blank"
-						rel="noreferrer"
-						aria-label={`Open ${item.title}`}
-					/>
-				}
-			>
-				<ExternalLink />
-				Open {item.type === "ExternalUrl" ? "link" : "in Canvas"}
-			</Button>
-		</div>
+		<Card>
+			<CardContent className="flex flex-col items-start gap-3 pt-6">
+				<p className="text-muted-foreground text-sm">
+					{item.type === "ExternalUrl"
+						? "This item links to an external site."
+						: "This item type can only be opened in Canvas."}
+				</p>
+				<Button
+					render={
+						// biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+						<a
+							href={href}
+							target="_blank"
+							rel="noreferrer"
+							aria-label={`Open ${item.title}`}
+						/>
+					}
+				>
+					<ExternalLink />
+					Open {item.type === "ExternalUrl" ? "link" : "in Canvas"}
+				</Button>
+			</CardContent>
+		</Card>
 	);
-}
-
-function ItemContent({ content }: { content: CanvasModuleItemContent }) {
-	switch (content.kind) {
-		case "page":
-			return (
-				<div className="flex flex-col gap-4">
-					{content.page.body ? (
-						<CanvasHtml html={content.page.body} />
-					) : (
-						<p className="text-muted-foreground text-sm">This page is empty.</p>
-					)}
-					{content.page.updated_at ? (
-						<p className="text-muted-foreground text-xs">
-							Last updated {formatDateTime(content.page.updated_at)}
-						</p>
-					) : null}
-				</div>
-			);
-		case "assignment":
-			return (
-				<div className="flex flex-col gap-4">
-					{content.assignment.submission_types?.length ? (
-						<p className="text-muted-foreground text-sm">
-							Submit via{" "}
-							{content.assignment.submission_types
-								.map((type) => type.replaceAll("_", " "))
-								.join(", ")}
-							.
-						</p>
-					) : null}
-					{content.assignment.description ? (
-						<CanvasHtml html={content.assignment.description} />
-					) : (
-						<p className="text-muted-foreground text-sm">
-							This assignment has no description.
-						</p>
-					)}
-				</div>
-			);
-		case "discussion":
-			return (
-				<div className="flex flex-col gap-4">
-					<p className="text-muted-foreground text-sm">
-						{content.topic.author?.display_name ?? "Discussion"}
-						{content.topic.posted_at
-							? ` · ${formatDateTime(content.topic.posted_at)}`
-							: ""}
-						{content.topic.discussion_subentry_count
-							? ` · ${content.topic.discussion_subentry_count} replies`
-							: ""}
-					</p>
-					{content.topic.message ? (
-						<CanvasHtml html={content.topic.message} />
-					) : (
-						<p className="text-muted-foreground text-sm">
-							This discussion has no prompt text.
-						</p>
-					)}
-				</div>
-			);
-		case "quiz":
-			return (
-				<div className="flex flex-col gap-4">
-					<p className="text-muted-foreground text-sm">
-						{[
-							content.quiz.question_count != null
-								? `${content.quiz.question_count} questions`
-								: null,
-							content.quiz.time_limit != null
-								? `${content.quiz.time_limit} minute limit`
-								: null,
-							content.quiz.allowed_attempts != null
-								? content.quiz.allowed_attempts === -1
-									? "Unlimited attempts"
-									: `${content.quiz.allowed_attempts} attempts`
-								: null,
-						]
-							.filter(Boolean)
-							.join(" · ") || "Quiz details unavailable."}
-					</p>
-					{content.quiz.description ? (
-						<CanvasHtml html={content.quiz.description} />
-					) : null}
-				</div>
-			);
-		case "file":
-			return (
-				<div className="flex flex-col items-start gap-3">
-					<p className="text-muted-foreground text-sm">
-						{[
-							content.file.filename ?? content.file.display_name,
-							content.file["content-type"],
-							content.file.size != null ? formatBytes(content.file.size) : null,
-						]
-							.filter(Boolean)
-							.join(" · ")}
-					</p>
-					{content.file.url ? (
-						<Button
-							render={
-								// biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-								<a
-									href={content.file.url}
-									target="_blank"
-									rel="noreferrer"
-									aria-label={`Download ${content.file.display_name}`}
-								/>
-							}
-						>
-							<Download />
-							Download
-						</Button>
-					) : null}
-				</div>
-			);
-	}
 }
 
 function ModuleItemPager({
@@ -373,7 +338,7 @@ function ModuleItemPager({
 	courseId: string;
 	module: CourseModule;
 	itemId: string;
-}) {
+}): React.ReactElement | null {
 	const sequence = (module.items ?? []).filter(
 		(entry) => entry.type !== "SubHeader",
 	);
@@ -408,7 +373,7 @@ function PagerButton({
 	courseId: string;
 	item: CourseModuleItem;
 	direction: "previous" | "next";
-}) {
+}): React.ReactElement {
 	const internal =
 		isInternalModuleItemType(item.type) &&
 		!item.content_details?.locked_for_user;
@@ -455,40 +420,4 @@ function PagerButton({
 			{label}
 		</Button>
 	);
-}
-
-function CanvasHtml({ html }: { html: string }) {
-	return (
-		<>
-			<Separator className="mb-4" />
-			<div
-				className="canvas-content"
-				// biome-ignore lint/security/noDangerouslySetInnerHtml: Canvas sanitizes rich content server-side before the API returns it
-				dangerouslySetInnerHTML={{ __html: html }}
-			/>
-		</>
-	);
-}
-
-function formatBytes(size: number) {
-	if (size < 1024) return `${size} B`;
-	const units = ["KB", "MB", "GB"];
-	let value = size;
-	let unit = "B";
-	for (const next of units) {
-		if (value < 1024) break;
-		value /= 1024;
-		unit = next;
-	}
-	return `${value.toFixed(value >= 10 ? 0 : 1)} ${unit}`;
-}
-
-function formatDateTime(value: string) {
-	return new Intl.DateTimeFormat(undefined, {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-	}).format(new Date(value));
 }
