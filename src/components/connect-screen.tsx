@@ -65,7 +65,12 @@ export function ConnectScreen({
             <CardTitle>Connect to Canvas</CardTitle>
             <CardDescription>
               Use a{" "}
-              <a href={TOKEN_HELP_URL} target="_blank" rel="noreferrer">
+              <a
+                href={TOKEN_HELP_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline-offset-4 not-[&:hover]:underline"
+              >
                 personal access
               </a>{" "}
               token from your own account.
