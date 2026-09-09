@@ -144,56 +144,52 @@ export function CourseDetail({
           </AlertDescription>
         </Alert>
       ) : null}
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <CardDescription>{course.course_code}</CardDescription>
-              <CardTitle className="mt-1 text-2xl">
-                {course.name ?? course.course_code}
-              </CardTitle>
-            </div>
-            <Button
-              variant="outline"
-              render={
-                // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-                <a
-                  href={courseUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Open this course in Canvas"
-                />
-              }
-            >
-              <ExternalLink />
-              Open in Canvas
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {hasAssignments ? (
-            <Summary
-              icon={<FileText />}
-              label="Assignments"
-              value={String(data.assignments.length)}
+      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <CardDescription>{course.course_code}</CardDescription>
+          <CardTitle className="mt-1 text-2xl">
+            {course.name ?? course.course_code}
+          </CardTitle>
+        </div>
+        <Button
+          variant="outline"
+          render={
+            // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+            <a
+              href={courseUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open this course in Canvas"
             />
-          ) : null}
-          {hasModules ? (
-            <Summary
-              icon={<Layers3 />}
-              label="Module items"
-              value={String(moduleItems)}
-            />
-          ) : null}
-          {hasAnnouncements ? (
-            <Summary
-              icon={<Megaphone />}
-              label="Announcements"
-              value={String(data.announcements.length)}
-            />
-          ) : null}
-        </CardContent>
-      </Card>
+          }
+        >
+          <ExternalLink />
+          Open in Canvas
+        </Button>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 border-b pb-6 mb-6">
+        {hasAssignments ? (
+          <Summary
+            icon={<FileText />}
+            label="Assignments"
+            value={String(data.assignments.length)}
+          />
+        ) : null}
+        {hasModules ? (
+          <Summary
+            icon={<Layers3 />}
+            label="Module items"
+            value={String(moduleItems)}
+          />
+        ) : null}
+        {hasAnnouncements ? (
+          <Summary
+            icon={<Megaphone />}
+            label="Announcements"
+            value={String(data.announcements.length)}
+          />
+        ) : null}
+      </div>
 
       <Tabs defaultValue="overview">
         <TabsList
