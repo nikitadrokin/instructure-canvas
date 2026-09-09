@@ -144,7 +144,7 @@ export function CourseDetail({
           </AlertDescription>
         </Alert>
       ) : null}
-      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-6 flex flex-col gap-4 border-b py-4 pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <CardDescription>{course.course_code}</CardDescription>
           <CardTitle className="mt-1 text-2xl">
@@ -166,29 +166,6 @@ export function CourseDetail({
           <ExternalLink />
           Open in Canvas
         </Button>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 border-b pb-6 mb-6">
-        {hasAssignments ? (
-          <Summary
-            icon={<FileText />}
-            label="Assignments"
-            value={String(data.assignments.length)}
-          />
-        ) : null}
-        {hasModules ? (
-          <Summary
-            icon={<Layers3 />}
-            label="Module items"
-            value={String(moduleItems)}
-          />
-        ) : null}
-        {hasAnnouncements ? (
-          <Summary
-            icon={<Megaphone />}
-            label="Announcements"
-            value={String(data.announcements.length)}
-          />
-        ) : null}
       </div>
 
       <Tabs defaultValue="overview">
@@ -329,30 +306,6 @@ export function CourseDetail({
         ) : null}
       </Tabs>
     </>
-  );
-}
-
-function Summary({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <Card>
-      <CardHeader className="flex-row items-center gap-3">
-        <Badge variant="secondary" size="lg">
-          {icon}
-        </Badge>
-        <div>
-          <CardDescription>{label}</CardDescription>
-          <CardTitle className="text-xl tabular-nums">{value}</CardTitle>
-        </div>
-      </CardHeader>
-    </Card>
   );
 }
 
