@@ -40,8 +40,8 @@ export function WeekView({
   const today = new Date();
 
   return (
-    <ScrollArea className="h-[min(42rem,70vh)]">
-      <div className="min-w-[52rem]">
+    <ScrollArea className="h-[min(42rem,70vh)]" clampContentMinWidth={false}>
+      <div className="min-w-[44rem] lg:min-w-0">
         <div className="grid grid-cols-[3.5rem_repeat(7,minmax(0,1fr))] border-b">
           <div aria-hidden />
           {days.map((date, index) => {
@@ -147,7 +147,7 @@ export function WeekView({
                     <button
                       key={`${item.kind}-${item.id}`}
                       type="button"
-                      className="absolute inset-x-0.5 overflow-hidden rounded-md px-1 py-0.5 text-start outline-none ring-ring focus-visible:ring-2"
+                      className="absolute inset-x-0.5 overflow-hidden rounded-md px-1 py-0.5 text-start outline-none ring-ring focus-visible:ring-2 [&>span]:pointer-events-none"
                       style={{
                         top: `${layout.top}%`,
                         height: `${layout.height}%`,
