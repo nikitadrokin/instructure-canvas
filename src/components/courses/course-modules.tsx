@@ -24,13 +24,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import {
   Empty,
   EmptyDescription,
@@ -105,52 +99,49 @@ export function CourseModules({
   );
 
   return (
-    <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <CardDescription>
-                {course.name ?? course.course_code}
-              </CardDescription>
-              <CardTitle className="mt-1 text-2xl">Modules</CardTitle>
+    <>
+      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <CardDescription>{course.name ?? course.course_code}</CardDescription>
+          <CardTitle className="mt-1 text-2xl">Modules</CardTitle>
+        </div>
+        <Button
+          variant="outline"
+          render={
+            // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+            <a
+              href={`${origin}/courses/${course.id}/modules`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open modules in Canvas"
+            />
+          }
+        >
+          <ExternalLink />
+          Open in Canvas
+        </Button>
+      </div>
+
+      {trackedItems.length ? (
+        <div className="mb-6 border-b pb-6">
+          <Meter value={(completedItems / trackedItems.length) * 100}>
+            <div className="flex justify-between">
+              <MeterLabel>Requirements completed</MeterLabel>
+              <span className="text-sm tabular-nums">
+                {completedItems} of {trackedItems.length}
+              </span>
             </div>
-            <Button
-              variant="outline"
-              render={
-                // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-                <a
-                  href={`${origin}/courses/${course.id}/modules`}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Open modules in Canvas"
-                />
-              }
-            >
-              <ExternalLink />
-              Open in Canvas
-            </Button>
-          </div>
-        </CardHeader>
-        {trackedItems.length ? (
-          <CardContent>
-            <Meter value={(completedItems / trackedItems.length) * 100}>
-              <div className="flex justify-between">
-                <MeterLabel>Requirements completed</MeterLabel>
-                <span className="text-sm tabular-nums">
-                  {completedItems} of {trackedItems.length}
-                </span>
-              </div>
-              <MeterTrack>
-                <MeterIndicator />
-              </MeterTrack>
-            </Meter>
-          </CardContent>
-        ) : null}
-      </Card>
+            <MeterTrack>
+              <MeterIndicator />
+            </MeterTrack>
+          </Meter>
+        </div>
+      ) : (
+        <div className="mb-6 border-b" />
+      )}
 
       {issue ? (
-        <Alert variant="warning">
+        <Alert variant="warning" className="mb-6">
           <AlertTitle>Modules may be incomplete</AlertTitle>
           <AlertDescription>{issue}</AlertDescription>
         </Alert>
@@ -182,7 +173,7 @@ export function CourseModules({
           </Empty>
         </Card>
       )}
-    </div>
+    </>
   );
 }
 
