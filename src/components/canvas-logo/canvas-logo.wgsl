@@ -89,28 +89,6 @@ fn sdCanvasMark(p: vec2f) -> f32 {
   return min(head, body);
 }
 
-fn srgbToLinear(channel: f32) -> f32 {
-  if (channel <= 0.04045) {
-    return channel / 12.92;
-  }
-  return pow((channel + 0.055) / 1.055, 2.4);
-}
-
-fn srgbToLinear3(value: vec3f) -> vec3f {
-  return vec3f(srgbToLinear(value.x), srgbToLinear(value.y), srgbToLinear(value.z));
-}
-
-fn linearToSrgb(channel: f32) -> f32 {
-  if (channel <= 0.0031308) {
-    return channel * 12.92;
-  }
-  return 1.055 * pow(channel, 1.0 / 2.4) - 0.055;
-}
-
-fn linearToSrgb3(value: vec3f) -> vec3f {
-  return vec3f(linearToSrgb(value.x), linearToSrgb(value.y), linearToSrgb(value.z));
-}
-
 @fragment
 fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let aspect = params.texel.y / max(params.texel.x, 1.0e-6);
@@ -124,39 +102,21 @@ fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let d = sdCanvasMark(p);
   let pixel = max(max(fwidth(d), length(params.texel) * 1.6), 0.0015);
   let fill = 1.0 - smoothstep(-pixel, pixel, d);
-  let rim = exp(-abs(d) * 42.0) * (1.0 - fill * 0.35);
-  let glow = exp(-max(d, 0.0) * 7.4) * (0.42 + 0.18 * sin(clock * 1.15));
-  let halo = exp(-max(d, 0.0) * 2.8) * 0.16;
+  let glow = exp(-max(d, 0.0) * 26.0) * (0.22 + 0.06 * sin(clock * 1.15));
+  let coverage = clamp(max(fill, glow), 0.0, 1.0);
 
   let warp = vec2f(
     fbm3(vec3f(p * 2.4, clock * 0.22)) - 0.5,
     fbm3(vec3f(p * 2.4 + 17.0, clock * 0.18)) - 0.5,
   );
   let field = fbm3(vec3f(p * 3.2 + warp * 0.85, clock * 0.35));
-  let veins = smoothstep(0.32, 0.78, field);
-  let spark = pow(hash21(floor(p * 48.0 + clock * 2.0)), 14.0);
+  let veins = smoothstep(0.32, 0.78, field) * fill;
+  let spark = pow(hash21(floor(p * 48.0 + clock * 2.0)), 14.0) * fill;
 
-  let canvasRed = srgbToLinear3(vec3f(0.882, 0.247, 0.169));
-  let ember = srgbToLinear3(vec3f(1.0, 0.55, 0.28));
-  let core = srgbToLinear3(vec3f(0.55, 0.05, 0.08));
+  let canvasRed = vec3f(0.882, 0.247, 0.169);
+  let ember = vec3f(1.0, 0.55, 0.28);
+  var rgb = mix(canvasRed, ember, veins * 0.45 + spark * 0.3);
 
-  var albedo = mix(core, canvasRed, 0.72 + 0.28 * veins);
-  albedo = mix(albedo, ember, veins * 0.45);
-  albedo += ember * spark * fill * 0.35;
-
-  let lightDir = normalize(vec2f(0.35, 0.82));
-  let shade = 0.78 + 0.22 * clamp(dot(normalize(p + vec2f(0.001)), lightDir), 0.0, 1.0);
-  albedo *= shade;
-
-  var color = albedo * fill;
-  color += canvasRed * rim * 1.15;
-  color += mix(canvasRed, ember, 0.4) * glow;
-  color += canvasRed * halo;
-
-  var alpha = max(max(fill, rim * 0.85), glow * 0.9);
-  alpha = max(alpha, halo * 0.7);
-  alpha = clamp(alpha, 0.0, 1.0);
-
-  let display = clamp(linearToSrgb3(color), vec3f(0.0), vec3f(1.2));
-  return vec4f(display * alpha, alpha);
+  // Premultiply with the same coverage so faint edges stay red, not gray.
+  return vec4f(rgb * coverage, coverage);
 }
