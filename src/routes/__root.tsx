@@ -53,6 +53,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        {process.env.NODE_ENV === "development" && (
+          <script
+            crossOrigin="anonymous"
+            data-enabled="true"
+            src="//unpkg.com/react-grab/dist/index.global.js"
+          />
+        )}
         {children}
         <TanStackDevtools
           config={{
