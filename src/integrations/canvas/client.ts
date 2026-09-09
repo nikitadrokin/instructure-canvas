@@ -454,6 +454,43 @@ const canvasUpcomingItemSchema = z
 	})
 	.passthrough();
 
+/**
+ * CalendarEvent and AssignmentEvent from GET /api/v1/calendar_events.
+ * @see https://developerdocs.instructure.com/services/canvas/resources/calendar_events
+ */
+const canvasCalendarEventSchema = z
+	.object({
+		id: canvasIdSchema,
+		title: z.string().optional(),
+		start_at: nullableStringSchema,
+		end_at: nullableStringSchema,
+		location_name: nullableStringSchema,
+		location_address: nullableStringSchema,
+		context_code: z.string().optional(),
+		context_name: nullableStringSchema,
+		html_url: z.string().optional(),
+		url: z.string().optional(),
+		all_day: z.boolean().optional(),
+		all_day_date: nullableStringSchema,
+		workflow_state: z.string().optional(),
+		hidden: z.boolean().optional(),
+		assignment: z
+			.object({
+				id: canvasIdSchema,
+				name: z.string().optional(),
+				due_at: nullableStringSchema,
+				points_possible: nullableNumberSchema,
+				html_url: z.string().optional(),
+			})
+			.passthrough()
+			.nullable()
+			.optional(),
+	})
+	.passthrough();
+
+/** Canvas calendar query type. Assignments are a separate list from events. */
+export type CanvasCalendarKind = "event" | "assignment";
+
 const canvasErrorSchema = z.object({
 	errors: z
 		.array(
@@ -498,6 +535,25 @@ export type CanvasCourse = {
 	public_description?: string | null;
 	default_view?: string | null;
 	nickname?: string;
+};
+
+/**
+ * One dated item on the local calendar, normalized from Canvas events or
+ * assignment due dates. Description HTML is omitted on purpose.
+ */
+export type CanvasCalendarItem = {
+	id: string;
+	kind: CanvasCalendarKind;
+	title: string;
+	start_at?: string | null;
+	end_at?: string | null;
+	all_day: boolean;
+	all_day_date?: string | null;
+	location_name?: string;
+	context_code?: string;
+	context_name?: string | null;
+	html_url?: string;
+	points_possible?: number | null;
 };
 
 /** Planner-style upcoming assignment or calendar event. */
@@ -906,6 +962,62 @@ export class CanvasClient {
 		);
 	}
 
+	/**
+	 * Loads dated calendar events and assignment due dates for a range.
+	 * Canvas accepts at most 10 `context_codes[]` per request, so larger
+	 * course lists are fetched in sequential batches.
+	 */
+	async getCalendarEvents(input: {
+		startDate: string;
+		endDate: string;
+		contextCodes: string[];
+	}): Promise<CanvasCalendarItem[]> {
+		const kinds: CanvasCalendarKind[] = ["event", "assignment"];
+		const batches = chunkArray(input.contextCodes, 10);
+		const seen = new Set<string>();
+		const items: CanvasCalendarItem[] = [];
+
+		for (const contextCodes of batches) {
+			for (const kind of kinds) {
+				const params = new URLSearchParams({
+					type: kind,
+					start_date: input.startDate,
+					end_date: input.endDate,
+					per_page: "100",
+				});
+				params.append("excludes[]", "description");
+				params.append("excludes[]", "child_events");
+				for (const code of contextCodes) {
+					params.append("context_codes[]", code);
+				}
+
+				const page = await this.fetchAllPages(
+					`/api/v1/calendar_events?${params}`,
+					canvasCalendarEventSchema,
+					`${kind} calendar list`,
+				);
+				for (const event of page) {
+					const item = toCalendarItem(event, kind);
+					if (!item) continue;
+					const key = `${item.kind}:${item.id}`;
+					if (seen.has(key)) continue;
+					seen.add(key);
+					items.push(item);
+				}
+			}
+		}
+
+		return items.sort((a, b) => {
+			const aTime = a.start_at ?? a.all_day_date;
+			const bTime = b.start_at ?? b.all_day_date;
+			if (!aTime) return 1;
+			if (!bTime) return -1;
+			const byTime = new Date(aTime).getTime() - new Date(bTime).getTime();
+			if (byTime !== 0) return byTime;
+			return a.title.localeCompare(b.title);
+		});
+	}
+
 	private async fetchAllPages<T>(
 		path: string,
 		schema: z.ZodType<T>,
@@ -1016,6 +1128,38 @@ export class CanvasClient {
 function compactString(value: string | null | undefined) {
 	if (!value) return undefined;
 	return value;
+}
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+	if (size < 1) return [items];
+	const chunks: T[][] = [];
+	for (let index = 0; index < items.length; index += size) {
+		chunks.push(items.slice(index, index + size));
+	}
+	return chunks.length > 0 ? chunks : [[]];
+}
+
+function toCalendarItem(
+	event: z.infer<typeof canvasCalendarEventSchema>,
+	kind: CanvasCalendarKind,
+): CanvasCalendarItem | null {
+	if (event.hidden || event.workflow_state === "deleted") return null;
+
+	const assignmentName = event.assignment?.name;
+	return {
+		id: event.id,
+		kind,
+		title: assignmentName ?? event.title ?? "Canvas event",
+		start_at: event.start_at,
+		end_at: event.end_at,
+		all_day: event.all_day ?? false,
+		all_day_date: event.all_day_date,
+		location_name: compactString(event.location_name),
+		context_code: event.context_code,
+		context_name: event.context_name,
+		html_url: event.html_url ?? event.url ?? event.assignment?.html_url,
+		points_possible: event.assignment?.points_possible,
+	};
 }
 
 function getSafeSectionError(error: unknown) {

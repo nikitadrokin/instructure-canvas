@@ -130,6 +130,53 @@ export const canvasRouter = createTRPCRouter({
 				client.forgetCredentials();
 			}
 		}),
+	calendarEvents: publicProcedure
+		.input(
+			z.object({
+				startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+				endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+				contextCodes: z
+					.array(z.string().regex(/^(user|course|group)_\d+$/))
+					.max(50),
+			}),
+		)
+		.query(async ({ ctx, input }) => {
+			const startMs = Date.parse(`${input.startDate}T00:00:00`);
+			const endMs = Date.parse(`${input.endDate}T00:00:00`);
+			if (Number.isNaN(startMs) || Number.isNaN(endMs) || endMs < startMs) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Choose a valid calendar date range.",
+				});
+			}
+			if ((endMs - startMs) / 86_400_000 > 62) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Calendar range is too large.",
+				});
+			}
+
+			const session =
+				getCanvasSession(ctx.canvasSessionId) ?? ctx.canvasCredentials;
+			if (!session) {
+				throw new TRPCError({
+					code: "UNAUTHORIZED",
+					message: "Connect to Canvas to view the calendar.",
+				});
+			}
+
+			const client = new CanvasClient({
+				baseUrl: normalizeCanvasBaseUrl(session.canvasUrl),
+				accessToken: session.token,
+			});
+			try {
+				return await client.getCalendarEvents(input);
+			} catch (error) {
+				throw toTrpcError(error);
+			} finally {
+				client.forgetCredentials();
+			}
+		}),
 	moduleItemContent: publicProcedure
 		.input(
 			z.object({
