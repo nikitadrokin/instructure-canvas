@@ -1,9 +1,9 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import {
-	CourseNav,
 	CourseSkeleton,
 	DisconnectedState,
 } from "@/components/courses/course-detail";
+import { CourseSidebar } from "@/components/courses/course-sidebar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCanvasStore } from "@/integrations/canvas/store";
 import { useCourseDetail } from "@/integrations/canvas/use-course-detail";
@@ -23,7 +23,7 @@ function CourseDetailLayout() {
 	return (
 		<div className="flex flex-col gap-8 md:flex-row md:items-start">
 			{detail.data && dashboard ? (
-				<CourseNav course={detail.data.course} tabs={detail.data.tabs} />
+				<CourseSidebar course={detail.data.course} tabs={detail.data.tabs} />
 			) : null}
 
 			<div className="min-w-0 flex-1">
