@@ -5,10 +5,17 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  CalendarColorDot,
+  CalendarFilters,
+} from "@/components/calendar/calendar-filters";
 import { MonthGrid } from "@/components/calendar/month-grid";
 import {
   type CalendarItem,
   calendarContextCodes,
+  calendarSources,
+  calendarSwatch,
+  filterItemsByContext,
   formatDayHeading,
   formatEventTime,
   formatMonthHeading,
@@ -47,6 +54,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useCanvasStore } from "@/integrations/canvas/store";
+import { useCalendarColors } from "@/integrations/canvas/use-calendar-colors";
 import { useCalendarEvents } from "@/integrations/canvas/use-calendar-events";
 
 /**
@@ -60,10 +68,23 @@ export function CalendarView() {
   const [month, setMonth] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedEventId, setSelectedEventId] = useState<string>();
+  const [visibleCodes, setVisibleCodes] = useState<string[]>();
   const isLarge = useMediaQuery("lg");
   const isCompactGrid = !useMediaQuery("md");
+  const colorsQuery = useCalendarColors();
+  const customColors = colorsQuery.data ?? {};
 
   const range = visibleGridRange(month);
+  const sources = useMemo(
+    () =>
+      dashboard
+        ? calendarSources({
+            userId: dashboard.profile.id,
+            courses: dashboard.courses,
+          })
+        : [],
+    [dashboard],
+  );
   const contextCodes = useMemo(
     () =>
       dashboard
@@ -74,19 +95,28 @@ export function CalendarView() {
         : [],
     [dashboard],
   );
+  const allCodes = useMemo(
+    () => sources.map((source) => source.code),
+    [sources],
+  );
+  const activeCodes = visibleCodes ?? allCodes;
   const events = useCalendarEvents({
     startDate: range.startDate,
     endDate: range.endDate,
     contextCodes,
   });
 
+  const visibleItems = useMemo(
+    () => filterItemsByContext(events.data ?? [], new Set(activeCodes)),
+    [events.data, activeCodes],
+  );
   const itemsByDay = useMemo(
-    () => groupItemsByDay(events.data ?? []),
-    [events.data],
+    () => groupItemsByDay(visibleItems),
+    [visibleItems],
   );
   const selectedKey = toDateKey(selectedDate);
   const dayItems = itemsByDay.get(selectedKey) ?? [];
-  const selectedEvent = (events.data ?? []).find(
+  const selectedEvent = visibleItems.find(
     (item) => item.id === selectedEventId,
   );
 
@@ -141,6 +171,13 @@ export function CalendarView() {
         </Alert>
       ) : null}
 
+      <CalendarFilters
+        sources={sources}
+        value={activeCodes}
+        customColors={customColors}
+        onValueChange={setVisibleCodes}
+      />
+
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]">
         <Card className="min-w-0 overflow-hidden">
           <CardPanel>
@@ -149,6 +186,7 @@ export function CalendarView() {
               selectedDate={selectedDate}
               selectedEventId={selectedEventId}
               itemsByDay={itemsByDay}
+              customColors={customColors}
               compact={isCompactGrid}
               onMonthChange={setMonth}
               onSelectDay={selectDay}
@@ -167,6 +205,7 @@ export function CalendarView() {
             items={dayItems}
             isLoading={events.isPending}
             selectedEventId={selectedEventId}
+            customColors={customColors}
             onSelectEvent={setSelectedEventId}
           />
           {selectedEvent && isLarge ? (
@@ -217,12 +256,14 @@ function DayAgendaCard({
   items,
   isLoading,
   selectedEventId,
+  customColors,
   onSelectEvent,
 }: {
   date: Date;
   items: CalendarItem[];
   isLoading: boolean;
   selectedEventId?: string;
+  customColors: Record<string, string>;
   onSelectEvent: (id: string) => void;
 }) {
   return (
@@ -256,6 +297,9 @@ function DayAgendaCard({
                     className="flex w-full items-start gap-3 px-6 py-3.5 text-start outline-none transition-colors hover:bg-accent/40 focus-visible:bg-accent/40 data-selected:bg-accent/70"
                     data-selected={selected ? "true" : undefined}
                   >
+                    <CalendarColorDot
+                      swatch={calendarSwatch(item.context_code, customColors)}
+                    />
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="truncate font-medium text-sm">
                         {item.title}

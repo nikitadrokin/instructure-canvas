@@ -162,3 +162,109 @@ export function formatEventTime(item: CalendarItem): string {
   }).format(end);
   return `${startLabel} – ${endLabel}`;
 }
+
+const hexPattern = /^#([\da-f]{3}|[\da-f]{6})$/i;
+
+/** Canvas-like fallbacks when a context has no saved custom color. */
+const fallbackPalette = [
+  "#394B9F",
+  "#3B80D1",
+  "#0097C7",
+  "#009788",
+  "#43A047",
+  "#7CB342",
+  "#F4511F",
+  "#E53935",
+  "#D81B60",
+  "#8E24AA",
+] as const;
+
+/** Course or personal calendar the user can show or hide. */
+export type CalendarSource = {
+  code: string;
+  label: string;
+};
+
+/** Safe hex plus contrasting label color for colored chips. */
+export type CalendarSwatch = {
+  hex: string;
+  foreground: "#0a0a0a" | "#ffffff";
+};
+
+/** Personal calendar plus each enrolled course, matching Canvas context codes. */
+export function calendarSources(input: {
+  userId: string;
+  courses: Array<{ id: string; name: string | null; course_code: string }>;
+}): CalendarSource[] {
+  return [
+    { code: `user_${input.userId}`, label: "Personal calendar" },
+    ...input.courses.map((course) => ({
+      code: `course_${course.id}`,
+      label: course.name?.trim() || course.course_code,
+    })),
+  ].filter((source) => /^(user|course|group)_\d+$/.test(source.code));
+}
+
+/** Accepts only `#rgb` / `#rrggbb` so API values cannot inject CSS. */
+export function parseCalendarHex(value: string): string | null {
+  const trimmed = value.trim();
+  if (!hexPattern.test(trimmed)) return null;
+  if (trimmed.length === 4) {
+    const r = trimmed[1];
+    const g = trimmed[2];
+    const b = trimmed[3];
+    if (!r || !g || !b) return null;
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+  return trimmed.toLowerCase();
+}
+
+function hashCode(value: string): number {
+  let hash = 0;
+  for (const char of value) {
+    hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function relativeLuminance(hex: string): number {
+  const red = Number.parseInt(hex.slice(1, 3), 16) / 255;
+  const green = Number.parseInt(hex.slice(3, 5), 16) / 255;
+  const blue = Number.parseInt(hex.slice(5, 7), 16) / 255;
+  const toLinear = (channel: number) =>
+    channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  return (
+    0.2126 * toLinear(red) + 0.7152 * toLinear(green) + 0.0722 * toLinear(blue)
+  );
+}
+
+/**
+ * Color for a Canvas context. Uses GET /users/self/colors when present,
+ * otherwise a stable hash into a fallback palette.
+ */
+export function calendarSwatch(
+  contextCode: string | undefined,
+  customColors: Record<string, string>,
+): CalendarSwatch {
+  const raw = contextCode ? customColors[contextCode] : undefined;
+  const custom = raw ? parseCalendarHex(raw) : null;
+  const fallback =
+    fallbackPalette[hashCode(contextCode ?? "user") % fallbackPalette.length] ??
+    "#394B9F";
+  const hex = custom ?? fallback;
+  return {
+    hex,
+    foreground: relativeLuminance(hex) > 0.55 ? "#0a0a0a" : "#ffffff",
+  };
+}
+
+/** Client-side calendar filter. Items without a context stay visible. */
+export function filterItemsByContext(
+  items: CalendarItem[],
+  visibleCodes: ReadonlySet<string>,
+): CalendarItem[] {
+  return items.filter((item) => {
+    if (!item.context_code) return true;
+    return visibleCodes.has(item.context_code);
+  });
+}

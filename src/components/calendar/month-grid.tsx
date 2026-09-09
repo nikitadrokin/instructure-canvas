@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   type CalendarItem,
+  calendarSwatch,
   formatMonthHeading,
   isSameDay,
   isSameMonth,
@@ -22,6 +23,7 @@ export function MonthGrid({
   selectedDate,
   selectedEventId,
   itemsByDay,
+  customColors,
   compact,
   onMonthChange,
   onSelectDay,
@@ -32,6 +34,7 @@ export function MonthGrid({
   selectedDate: Date;
   selectedEventId?: string;
   itemsByDay: Map<string, CalendarItem[]>;
+  customColors: Record<string, string>;
   compact: boolean;
   onMonthChange: (month: Date) => void;
   onSelectDay: (date: Date) => void;
@@ -137,7 +140,20 @@ export function MonthGrid({
 
               {compact ? (
                 items.length > 0 ? (
-                  <span className="mx-auto size-1.5 rounded-full bg-primary">
+                  <span className="mx-auto flex items-center justify-center gap-0.5">
+                    {items.slice(0, 3).map((item) => {
+                      const swatch = calendarSwatch(
+                        item.context_code,
+                        customColors,
+                      );
+                      return (
+                        <span
+                          key={`${item.kind}-${item.id}`}
+                          className="size-1.5 rounded-full"
+                          style={{ backgroundColor: swatch.hex }}
+                        />
+                      );
+                    })}
                     <span className="sr-only">
                       {items.length === 1 ? "1 item" : `${items.length} items`}
                     </span>
@@ -145,24 +161,32 @@ export function MonthGrid({
                 ) : null
               ) : (
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0.5">
-                  {items.slice(0, previewLimit).map((item) => (
-                    <Badge
-                      key={`${item.kind}-${item.id}`}
-                      size="sm"
-                      variant={
-                        item.id === selectedEventId
-                          ? "default"
-                          : item.kind === "assignment"
-                            ? "info"
-                            : "secondary"
-                      }
-                      className="w-full min-w-0 justify-start truncate px-1"
-                      render={<button type="button" />}
-                      onClick={() => onSelectEvent(date, item)}
-                    >
-                      {item.title}
-                    </Badge>
-                  ))}
+                  {items.slice(0, previewLimit).map((item) => {
+                    const swatch = calendarSwatch(
+                      item.context_code,
+                      customColors,
+                    );
+                    const selected = item.id === selectedEventId;
+                    return (
+                      <Badge
+                        key={`${item.kind}-${item.id}`}
+                        size="sm"
+                        variant="secondary"
+                        className="w-full min-w-0 justify-start truncate border-transparent px-1 hover:opacity-90"
+                        style={{
+                          backgroundColor: swatch.hex,
+                          color: swatch.foreground,
+                          boxShadow: selected
+                            ? "inset 0 0 0 2px var(--color-ring)"
+                            : undefined,
+                        }}
+                        render={<button type="button" />}
+                        onClick={() => onSelectEvent(date, item)}
+                      >
+                        {item.title}
+                      </Badge>
+                    );
+                  })}
                   {hiddenCount > 0 ? (
                     <Button
                       type="button"
