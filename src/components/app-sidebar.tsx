@@ -97,9 +97,14 @@ export function AppSidebar({
         <div className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
           <div className="flex min-w-0 flex-col">
             <span className="font-medium text-xs">Connected at</span>
-            <span className="truncate text-foreground text-xs">
+            <a
+              href={data.origin}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="truncate text-foreground text-xs hover:underline"
+            >
               {new URL(data.origin).hostname}
-            </span>
+            </a>
           </div>
         </div>
         <SidebarMenu>
