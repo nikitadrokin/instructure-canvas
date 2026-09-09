@@ -61,7 +61,6 @@ export function CalendarView() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedEventId, setSelectedEventId] = useState<string>();
   const isLarge = useMediaQuery("lg");
-  const isWide = useMediaQuery("xl");
   const isCompactGrid = !useMediaQuery("md");
 
   const range = visibleGridRange(month);
@@ -132,9 +131,6 @@ export function CalendarView() {
             {formatMonthHeading(month)}.
           </p>
         </div>
-        <Button type="button" variant="outline" onClick={jumpToToday}>
-          Today
-        </Button>
       </div>
 
       {events.error ? (
@@ -145,22 +141,8 @@ export function CalendarView() {
         </Alert>
       ) : null}
 
-      <div
-        className={
-          selectedEvent && isWide
-            ? "grid items-start gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(16rem,20rem)_minmax(20rem,24rem)]"
-            : "grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]"
-        }
-      >
-        <Card className="min-w-0">
-          <CardHeader className="border-b">
-            <CardTitle>Month</CardTitle>
-            <CardDescription>
-              {events.isPending
-                ? "Loading events"
-                : `${events.data?.length ?? 0} items in this view`}
-            </CardDescription>
-          </CardHeader>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]">
+        <Card className="min-w-0 overflow-hidden">
           <CardPanel>
             <MonthGrid
               month={month}
@@ -170,6 +152,7 @@ export function CalendarView() {
               compact={isCompactGrid}
               onMonthChange={setMonth}
               onSelectDay={selectDay}
+              onJumpToToday={jumpToToday}
               onSelectEvent={(date, item) => {
                 setSelectedDate(date);
                 setSelectedEventId(item.id);
@@ -178,28 +161,7 @@ export function CalendarView() {
           </CardPanel>
         </Card>
 
-        {selectedEvent && isWide ? (
-          <>
-            <DayAgendaCard
-              date={selectedDate}
-              items={dayItems}
-              isLoading={events.isPending}
-              selectedEventId={selectedEvent.id}
-              onSelectEvent={setSelectedEventId}
-            />
-            <EventDetailCard
-              item={selectedEvent}
-              origin={dashboard.origin}
-              onBack={() => setSelectedEventId(undefined)}
-            />
-          </>
-        ) : selectedEvent && isLarge ? (
-          <EventDetailCard
-            item={selectedEvent}
-            origin={dashboard.origin}
-            onBack={() => setSelectedEventId(undefined)}
-          />
-        ) : (
+        <div className="flex min-w-0 flex-col gap-6">
           <DayAgendaCard
             date={selectedDate}
             items={dayItems}
@@ -207,7 +169,14 @@ export function CalendarView() {
             selectedEventId={selectedEventId}
             onSelectEvent={setSelectedEventId}
           />
-        )}
+          {selectedEvent && isLarge ? (
+            <EventDetailCard
+              item={selectedEvent}
+              origin={dashboard.origin}
+              onBack={() => setSelectedEventId(undefined)}
+            />
+          ) : null}
+        </div>
       </div>
 
       <Sheet

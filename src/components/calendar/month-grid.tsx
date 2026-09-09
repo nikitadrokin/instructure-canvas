@@ -25,6 +25,7 @@ export function MonthGrid({
   compact,
   onMonthChange,
   onSelectDay,
+  onJumpToToday,
   onSelectEvent,
 }: {
   month: Date;
@@ -34,6 +35,7 @@ export function MonthGrid({
   compact: boolean;
   onMonthChange: (month: Date) => void;
   onSelectDay: (date: Date) => void;
+  onJumpToToday: () => void;
   onSelectEvent: (date: Date, item: CalendarItem) => void;
 }) {
   const days = monthGridDays(month);
@@ -42,40 +44,50 @@ export function MonthGrid({
   const previewLimit = compact ? 0 : 3;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
+    <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Previous month"
+            onClick={() =>
+              onMonthChange(
+                new Date(month.getFullYear(), month.getMonth() - 1, 1),
+              )
+            }
+          >
+            <ChevronLeft />
+          </Button>
+          <h2 className="min-w-36 text-center font-heading font-semibold text-lg">
+            {formatMonthHeading(month)}
+          </h2>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Next month"
+            onClick={() =>
+              onMonthChange(
+                new Date(month.getFullYear(), month.getMonth() + 1, 1),
+              )
+            }
+          >
+            <ChevronRight />
+          </Button>
+        </div>
         <Button
           type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Previous month"
-          onClick={() =>
-            onMonthChange(
-              new Date(month.getFullYear(), month.getMonth() - 1, 1),
-            )
-          }
+          variant="outline"
+          size="sm"
+          onClick={onJumpToToday}
         >
-          <ChevronLeft />
-        </Button>
-        <h2 className="font-heading font-semibold text-lg">
-          {formatMonthHeading(month)}
-        </h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Next month"
-          onClick={() =>
-            onMonthChange(
-              new Date(month.getFullYear(), month.getMonth() + 1, 1),
-            )
-          }
-        >
-          <ChevronRight />
+          Today
         </Button>
       </div>
 
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border">
+      <div className="grid min-w-0 grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border">
         {labels.map((label) => (
           <div
             key={label}
@@ -96,7 +108,7 @@ export function MonthGrid({
             <div
               key={key}
               className={cn(
-                "flex min-h-14 flex-col gap-1 bg-card p-1 sm:min-h-16 lg:min-h-28",
+                "flex min-h-14 min-w-0 flex-col gap-1 overflow-hidden bg-card p-1 sm:min-h-16 lg:min-h-28",
                 !inMonth && "bg-muted/40",
                 selected && "ring-2 ring-ring ring-inset",
               )}
@@ -132,7 +144,7 @@ export function MonthGrid({
                   </span>
                 ) : null
               ) : (
-                <div className="flex min-h-0 flex-1 flex-col gap-0.5">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0.5">
                   {items.slice(0, previewLimit).map((item) => (
                     <Badge
                       key={`${item.kind}-${item.id}`}
@@ -144,7 +156,7 @@ export function MonthGrid({
                             ? "info"
                             : "secondary"
                       }
-                      className="max-w-full justify-start truncate px-1"
+                      className="w-full min-w-0 justify-start truncate px-1"
                       render={<button type="button" />}
                       onClick={() => onSelectEvent(date, item)}
                     >
