@@ -1,5 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, GraduationCap, Home, LogOut } from "lucide-react";
+import {
+  BookOpen,
+  CalendarDays,
+  GraduationCap,
+  Home,
+  LogOut,
+} from "lucide-react";
 import type { DashboardData } from "@/components/dashboard/shared";
 import {
   Sidebar,
@@ -22,7 +28,7 @@ export function AppSidebar({
   onDisconnect,
 }: {
   data: DashboardData;
-  activePage: "overview" | "courses";
+  activePage: "overview" | "courses" | "calendar";
   selectedCourseId?: string;
   onDisconnect: () => void;
 }) {
@@ -54,6 +60,16 @@ export function AppSidebar({
                 >
                   <Home />
                   <span>Overview</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={activePage === "calendar"}
+                  tooltip="Calendar"
+                  render={<Link to="/calendar" />}
+                >
+                  <CalendarDays />
+                  <span>Calendar</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
