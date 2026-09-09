@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Brand } from "#/components/brand";
+import { CanvasLogo } from "#/components/canvas-logo/canvas-logo";
 import { ConnectScreen } from "#/components/connect-screen";
 import { Dashboard } from "#/components/dashboard/dashboard";
 import { Spinner } from "#/components/ui/spinner";
@@ -163,7 +163,8 @@ function LoadingScreen() {
 			className="flex min-h-screen flex-col items-center justify-center gap-6"
 			aria-label="Loading your Canvas session"
 		>
-			<Brand />
+			<CanvasLogo decorative size="lg" />
+			<p className="font-semibold text-sm tracking-tight">Canvas Local</p>
 			<Spinner className="size-6 text-muted-foreground" />
 		</output>
 	);

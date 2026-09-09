@@ -1,3 +1,5 @@
 allowBuilds:
+  '@vgpu/adapter-node': false
   esbuild: true
   lightningcss: true
+  webgpu: false

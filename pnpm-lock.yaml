@@ -80,6 +80,9 @@ importers:
       tailwindcss:
         specifier: ^4.1.18
         version: 4.3.3
+      vgpu:
+        specifier: ^0.4.1
+        version: 0.4.1
       zod:
         specifier: ^4.3.6
         version: 4.5.4
@@ -343,6 +346,14 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@modelcontextprotocol/core@2.0.0':
+    resolution: {integrity: sha512-pJCEwGG7Lfr/+PQp9ZTwKXNeO5wzbfKL7H3MYpCorM4oFBoQrdjnBgEoqG+RjhsvS1FKrDbKux+M1HhlnGWqcA==}
+    engines: {node: '>=20'}
+
+  '@modelcontextprotocol/server@2.0.0':
+    resolution: {integrity: sha512-YhHWdHfpFMQfd0prsEnxKeS3Qz3ytIGmsS0sth4KDjnacIT7hxk6hXHkJ9KysxlkvTM+WZAtQbbcUhdoP4Hvtw==}
+    engines: {node: '>=20'}
 
   '@napi-rs/wasm-runtime@1.2.3':
     resolution: {integrity: sha512-UMduMbqO5s5zF2NkNacMT/yK5Y5QiKvWr2+50bzIIxFDwVJ2h49b+oyjaCGPhJxd2/gC2x39EHv/gHVuu36x2Q==}
@@ -1026,6 +1037,26 @@ packages:
   '@types/react@19.2.18':
     resolution: {integrity: sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w==}
 
+  '@vgpu/adapter-mock@0.4.1':
+    resolution: {integrity: sha512-4w6FHutvlno5nAYt/SYDB5TJlXVwL7liZeBo79jKkjOKJoIrtTO8jf9ny9M5lrLcdpzKdBcdLY1UPJRHZ+DbkQ==}
+
+  '@vgpu/adapter-node@0.4.1':
+    resolution: {integrity: sha512-fZgokRT/oTodHqCgyrqtKOrqw7TO+1qxW8gcW5A30wcKnjjAj+4sRHytaJTQkJCYDpZeOHp7B2lhvAxrv1zINg==}
+
+  '@vgpu/core@0.4.1':
+    resolution: {integrity: sha512-cWETNNvNrobCjGGKbWxujEjNgH8QCz+sTbz3zecKtq/P6V5iB8f6tFrKGmQNvc084R+XJLOAoLY/gGCo8KTbTQ==}
+
+  '@vgpu/wgsl-std@0.4.1':
+    resolution: {integrity: sha512-K6qB9qTBXP/G0uhiJZ9cKt0MEH/bHFrcD0t3+xyjkA7QxNPMXqx7LniMHMIz3T0pC47ujCLaBRyOuHwyOqV0EA==}
+
+  '@vgpu/wgsl@0.4.1':
+    resolution: {integrity: sha512-wcK3y+bSVkFhcDPxbGKVNi1tATGA8TdqdmrAuBtRhv2LXi2cEgK5VOZ5k4y5G7yX5+4T5mml9nGO3fQdGDD6WQ==}
+    peerDependencies:
+      '@vgpu/adapter-node': '>=0.1.6 <1.0.0'
+    peerDependenciesMeta:
+      '@vgpu/adapter-node':
+        optional: true
+
   '@vitejs/plugin-react@6.1.1':
     resolution: {integrity: sha512-yxLaQV9gkhS8ezJqCM6+ndU7mDY6gqAg75NQ+0IjwEI8IYOmQCgkRwHKVSfWXW076DsqMo0Dk+0FK1U+M5RgFw==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1041,6 +1072,9 @@ packages:
         optional: true
       oxc-transform-react:
         optional: true
+
+  '@webgpu/types@0.1.72':
+    resolution: {integrity: sha512-0cF7RFM2edNoiIS1ODJp0/Gzv4/xSXhwoR0YCza+OWpJWtn4wmo9DvK91aLlH9+uUnwIriP7ZiC3WitmyhuzBw==}
 
   ansi-regex@5.0.1:
     resolution: {integrity: sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==}
@@ -1527,6 +1561,14 @@ packages:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
 
+  pixelmatch@7.2.0:
+    resolution: {integrity: sha512-xhcb4yHu9sM/G7foGzoLtXYcC0zHEaOXXjRKhGup0fw78Nf2Tkiapv4EQyMzrbcmQPsllAI7DbFY2UT7PlI9Pg==}
+    hasBin: true
+
+  pngjs@7.0.0:
+    resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
+    engines: {node: '>=14.19.0'}
+
   postcss@8.5.26:
     resolution: {integrity: sha512-u82N74LFzG8ca+dD8puPnplTXoGH4fTPpVGuIbt36G3qvNlkvfD0lEAZSxaly3KX8TS/L1A1gsCEmvKmBcVbkQ==}
     engines: {node: ^10 || ^12 || >=14}
@@ -1785,6 +1827,15 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
+  vgpu@0.4.1:
+    resolution: {integrity: sha512-Kq2W2Y7Z0hZnSp4Hdf3jaoVL7oHjFypZapwGcMYYVkTfRXqAISmklGl3yd6wmte8yFwOhAkhJErPKZjWJBGpzA==}
+    hasBin: true
+    peerDependencies:
+      three: '>=0.180.0 <0.200.0'
+    peerDependenciesMeta:
+      three:
+        optional: true
+
   vite@8.2.2:
     resolution: {integrity: sha512-cFKLV/PRgAUlIRm5WjMjJ86jrftzpqcgH+Us+DS8mI3CDNiH30Whrz8uHL3+MOLPAgqbMBAqWdAHAphOAM+z/Q==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1836,8 +1887,14 @@ packages:
       vite:
         optional: true
 
+  webgpu@0.4.0:
+    resolution: {integrity: sha512-F5pimn3Aoi0zWjuRdiVs5TnrUwSzD2lESBohsIUsqyitWkGRQlXU2fhV6ycXlQTa1bvAf3sjqiUpBEpmSQ5ptA==}
+
   webpack-virtual-modules@0.6.2:
     resolution: {integrity: sha512-66/V2i5hQanC51vBQKPH4aI8NMAcBW59FVBs+rC7eGHupMyfn34q7rZIE+ETlJ+XTevqfUhVVBgSUNSW2flEUQ==}
+
+  wgpu-matrix@3.4.2:
+    resolution: {integrity: sha512-IfZFbG7olEYBD76VCZy2TzqM57GKy3LT++AZh37tMHPPByO6R2h61zXGBZFNPi2IzxNivNi8y5dvze5PjaczjA==}
 
   wrap-ansi@7.0.0:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
@@ -2129,6 +2186,15 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  '@modelcontextprotocol/core@2.0.0':
+    dependencies:
+      zod: 4.5.4
+
+  '@modelcontextprotocol/server@2.0.0':
+    dependencies:
+      '@modelcontextprotocol/core': 2.0.0
+      zod: 4.5.4
 
   '@napi-rs/wasm-runtime@1.2.3(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)':
     dependencies:
@@ -2776,6 +2842,33 @@ snapshots:
     dependencies:
       csstype: 3.2.3
 
+  '@vgpu/adapter-mock@0.4.1(@vgpu/adapter-node@0.4.1)':
+    dependencies:
+      '@vgpu/core': 0.4.1(@vgpu/adapter-node@0.4.1)
+    transitivePeerDependencies:
+      - '@vgpu/adapter-node'
+
+  '@vgpu/adapter-node@0.4.1':
+    dependencies:
+      '@vgpu/core': 0.4.1(@vgpu/adapter-node@0.4.1)
+      webgpu: 0.4.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@vgpu/core@0.4.1(@vgpu/adapter-node@0.4.1)':
+    dependencies:
+      '@vgpu/wgsl': 0.4.1(@vgpu/adapter-node@0.4.1)
+    transitivePeerDependencies:
+      - '@vgpu/adapter-node'
+
+  '@vgpu/wgsl-std@0.4.1': {}
+
+  '@vgpu/wgsl@0.4.1(@vgpu/adapter-node@0.4.1)':
+    dependencies:
+      '@vgpu/wgsl-std': 0.4.1
+    optionalDependencies:
+      '@vgpu/adapter-node': 0.4.1
+
   '@vitejs/plugin-react@6.1.1(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.2.6)(vite@8.2.2(@types/node@22.20.1)(jiti@2.7.0)))(babel-plugin-react-compiler@1.0.0)(vite@8.2.2(@types/node@22.20.1)(jiti@2.7.0))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
@@ -2783,6 +2876,8 @@ snapshots:
     optionalDependencies:
       '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.2.6)(vite@8.2.2(@types/node@22.20.1)(jiti@2.7.0))
       babel-plugin-react-compiler: 1.0.0
+
+  '@webgpu/types@0.1.72': {}
 
   ansi-regex@5.0.1: {}
 
@@ -3160,6 +3255,12 @@ snapshots:
 
   picomatch@4.0.7: {}
 
+  pixelmatch@7.2.0:
+    dependencies:
+      pngjs: 7.0.0
+
+  pngjs@7.0.0: {}
+
   postcss@8.5.26:
     dependencies:
       nanoid: 3.3.18
@@ -3307,6 +3408,22 @@ snapshots:
     dependencies:
       react: 19.2.8
 
+  vgpu@0.4.1:
+    dependencies:
+      '@modelcontextprotocol/server': 2.0.0
+      '@vgpu/adapter-mock': 0.4.1(@vgpu/adapter-node@0.4.1)
+      '@vgpu/adapter-node': 0.4.1
+      '@vgpu/core': 0.4.1(@vgpu/adapter-node@0.4.1)
+      '@vgpu/wgsl': 0.4.1(@vgpu/adapter-node@0.4.1)
+      '@vgpu/wgsl-std': 0.4.1
+      '@webgpu/types': 0.1.72
+      pixelmatch: 7.2.0
+      pngjs: 7.0.0
+      wgpu-matrix: 3.4.2
+      zod: 4.5.4
+    transitivePeerDependencies:
+      - supports-color
+
   vite@8.2.2(@types/node@22.20.1)(jiti@2.7.0):
     dependencies:
       lightningcss: 1.33.0
@@ -3323,7 +3440,16 @@ snapshots:
     optionalDependencies:
       vite: 8.2.2(@types/node@22.20.1)(jiti@2.7.0)
 
+  webgpu@0.4.0:
+    dependencies:
+      '@webgpu/types': 0.1.72
+      debug: 4.4.3
+    transitivePeerDependencies:
+      - supports-color
+
   webpack-virtual-modules@0.6.2: {}
+
+  wgpu-matrix@3.4.2: {}
 
   wrap-ansi@7.0.0:
     dependencies:
