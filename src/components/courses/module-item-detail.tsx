@@ -30,7 +30,6 @@ import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
 import {
@@ -126,69 +125,65 @@ export function ModuleItemDetail({
 				</Button>
 			</div>
 
-			<Card>
-				<CardHeader>
-					<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-						<div className="min-w-0">
-							<CardDescription className="flex items-center gap-1.5">
-								<span className="[&_svg]:size-3.5">
-									{moduleItemIcon(item.type)}
-								</span>
-								{found.module.name} · {typeLabel}
-							</CardDescription>
-							<CardTitle className="mt-1 break-words text-2xl">
-								{item.title}
-							</CardTitle>
-						</div>
-						<Button
-							variant="outline"
-							className="shrink-0"
-							render={
-								// biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-								<a
-									href={canvasUrl}
-									target="_blank"
-									rel="noreferrer"
-									aria-label={`Open ${item.title} in Canvas`}
-								/>
-							}
-						>
-							<ExternalLink />
-							Open in Canvas
-						</Button>
+			<div className="border-b pb-4">
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+					<div className="min-w-0">
+						<CardDescription className="flex items-center gap-1.5">
+							<span className="[&_svg]:size-3.5">
+								{moduleItemIcon(item.type)}
+							</span>
+							{found.module.name} · {typeLabel}
+						</CardDescription>
+						<CardTitle className="mt-1 break-words text-2xl">
+							{item.title}
+						</CardTitle>
 					</div>
-					{details?.points_possible != null ||
-					details?.due_at ||
-					requirement ||
-					details?.locked_for_user ? (
-						<div className="mt-2 flex flex-wrap items-center gap-2">
-							{details?.points_possible != null ? (
-								<Badge variant="secondary">{details.points_possible} pts</Badge>
-							) : null}
-							{details?.due_at ? (
-								<Badge variant="secondary">
-									Due {formatDateTime(details.due_at)}
-								</Badge>
-							) : null}
-							{requirement ? (
-								requirement.completed ? (
-									<Badge variant="success">Completed</Badge>
-								) : (
-									<Badge variant="outline">
-										{requirementLabel(requirement)}
-									</Badge>
-								)
-							) : null}
-							{details?.locked_for_user ? (
-								<Badge variant="secondary">
-									<Lock />
-									Locked
-								</Badge>
-							) : null}
-						</div>
-					) : null}
-				</CardHeader>
-			</Card>
+					<Button
+						variant="outline"
+						className="shrink-0"
+						render={
+							// biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+							<a
+								href={canvasUrl}
+								target="_blank"
+								rel="noreferrer"
+								aria-label={`Open ${item.title} in Canvas`}
+							/>
+						}
+					>
+						<ExternalLink />
+						Open in Canvas
+					</Button>
+				</div>
+				{details?.points_possible != null ||
+				details?.due_at ||
+				requirement ||
+				details?.locked_for_user ? (
+					<div className="mt-3 flex flex-wrap items-center gap-2">
+						{details?.points_possible != null ? (
+							<Badge variant="secondary">{details.points_possible} pts</Badge>
+						) : null}
+						{details?.due_at ? (
+							<Badge variant="secondary">
+								Due {formatDateTime(details.due_at)}
+							</Badge>
+						) : null}
+						{requirement ? (
+							requirement.completed ? (
+								<Badge variant="success">Completed</Badge>
+							) : (
+								<Badge variant="outline">{requirementLabel(requirement)}</Badge>
+							)
+						) : null}
+						{details?.locked_for_user ? (
+							<Badge variant="secondary">
+								<Lock />
+								Locked
+							</Badge>
+						) : null}
+					</div>
+				) : null}
+			</div>
 
 			<ItemBody
 				item={item}
