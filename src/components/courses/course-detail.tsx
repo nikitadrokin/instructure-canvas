@@ -56,16 +56,8 @@ export function CourseNav({
   return (
     <nav
       aria-label="Course navigation"
-      className="flex shrink-0 flex-col gap-1 md:sticky md:top-8 md:w-52"
+      className="flex shrink-0 flex-col gap-1 md:sticky md:top-8 md:w-52 pt-6"
     >
-      <div className="mb-1 flex min-w-0 flex-col px-3">
-        <span className="truncate font-semibold text-sm">
-          {course.name ?? course.course_code}
-        </span>
-        <span className="truncate text-muted-foreground text-xs">
-          {course.course_code}
-        </span>
-      </div>
       {tabs.map((tab) => {
         const internalTo =
           tab.id === "home"
