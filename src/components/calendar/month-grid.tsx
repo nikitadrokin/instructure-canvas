@@ -1,8 +1,6 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   type CalendarItem,
   calendarSwatch,
-  formatMonthHeading,
   isSameDay,
   isSameMonth,
   monthGridDays,
@@ -25,9 +23,7 @@ export function MonthGrid({
   itemsByDay,
   customColors,
   compact,
-  onMonthChange,
   onSelectDay,
-  onJumpToToday,
   onSelectEvent,
 }: {
   month: Date;
@@ -36,9 +32,7 @@ export function MonthGrid({
   itemsByDay: Map<string, CalendarItem[]>;
   customColors: Record<string, string>;
   compact: boolean;
-  onMonthChange: (month: Date) => void;
   onSelectDay: (date: Date) => void;
-  onJumpToToday: () => void;
   onSelectEvent: (date: Date, item: CalendarItem) => void;
 }) {
   const days = monthGridDays(month);
@@ -47,163 +41,119 @@ export function MonthGrid({
   const previewLimit = compact ? 0 : 3;
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Previous month"
-            onClick={() =>
-              onMonthChange(
-                new Date(month.getFullYear(), month.getMonth() - 1, 1),
-              )
-            }
-          >
-            <ChevronLeft />
-          </Button>
-          <h2 className="min-w-36 text-center font-heading font-semibold text-lg">
-            {formatMonthHeading(month)}
-          </h2>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Next month"
-            onClick={() =>
-              onMonthChange(
-                new Date(month.getFullYear(), month.getMonth() + 1, 1),
-              )
-            }
-          >
-            <ChevronRight />
-          </Button>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onJumpToToday}
+    <div className="grid min-w-0 grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border">
+      {labels.map((label) => (
+        <div
+          key={label}
+          className="bg-muted/80 px-1 py-2 text-center font-medium text-muted-foreground text-xs"
         >
-          Today
-        </Button>
-      </div>
+          {label}
+        </div>
+      ))}
+      {days.map((date) => {
+        const key = toDateKey(date);
+        const items = itemsByDay.get(key) ?? [];
+        const inMonth = isSameMonth(date, month);
+        const selected = isSameDay(date, selectedDate);
+        const isToday = isSameDay(date, today);
+        const hiddenCount = Math.max(0, items.length - previewLimit);
 
-      <div className="grid min-w-0 grid-cols-7 gap-px overflow-hidden rounded-xl border bg-border">
-        {labels.map((label) => (
+        return (
           <div
-            key={label}
-            className="bg-muted/80 px-1 py-2 text-center font-medium text-muted-foreground text-xs"
+            key={key}
+            className={cn(
+              "flex min-h-14 min-w-0 flex-col gap-1 overflow-hidden bg-card p-1 sm:min-h-16 lg:min-h-28",
+              !inMonth && "bg-muted/40",
+              selected && "ring-2 ring-ring ring-inset",
+            )}
           >
-            {label}
-          </div>
-        ))}
-        {days.map((date) => {
-          const key = toDateKey(date);
-          const items = itemsByDay.get(key) ?? [];
-          const inMonth = isSameMonth(date, month);
-          const selected = isSameDay(date, selectedDate);
-          const isToday = isSameDay(date, today);
-          const hiddenCount = Math.max(0, items.length - previewLimit);
-
-          return (
-            <div
-              key={key}
+            <Button
+              type="button"
+              variant={selected ? "default" : "ghost"}
+              size="icon-xs"
+              aria-label={date.toLocaleDateString(undefined, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+              aria-pressed={selected}
               className={cn(
-                "flex min-h-14 min-w-0 flex-col gap-1 overflow-hidden bg-card p-1 sm:min-h-16 lg:min-h-28",
-                !inMonth && "bg-muted/40",
-                selected && "ring-2 ring-ring ring-inset",
+                "self-end sm:self-start",
+                isToday &&
+                  !selected &&
+                  "text-primary underline decoration-primary underline-offset-4",
+                !inMonth && "text-muted-foreground",
               )}
+              onClick={() => onSelectDay(date)}
             >
-              <Button
-                type="button"
-                variant={selected ? "default" : "ghost"}
-                size="icon-xs"
-                aria-label={date.toLocaleDateString(undefined, {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
-                aria-pressed={selected}
-                className={cn(
-                  "self-end sm:self-start",
-                  isToday &&
-                    !selected &&
-                    "text-primary underline decoration-primary underline-offset-4",
-                  !inMonth && "text-muted-foreground",
-                )}
-                onClick={() => onSelectDay(date)}
-              >
-                {date.getDate()}
-              </Button>
+              {date.getDate()}
+            </Button>
 
-              {compact ? (
-                items.length > 0 ? (
-                  <span className="mx-auto flex items-center justify-center gap-0.5">
-                    {items.slice(0, 3).map((item) => {
-                      const swatch = calendarSwatch(
-                        item.context_code,
-                        customColors,
-                      );
-                      return (
-                        <span
-                          key={`${item.kind}-${item.id}`}
-                          className="size-1.5 rounded-full"
-                          style={{ backgroundColor: swatch.hex }}
-                        />
-                      );
-                    })}
-                    <span className="sr-only">
-                      {items.length === 1 ? "1 item" : `${items.length} items`}
-                    </span>
-                  </span>
-                ) : null
-              ) : (
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0.5">
-                  {items.slice(0, previewLimit).map((item) => {
+            {compact ? (
+              items.length > 0 ? (
+                <span className="mx-auto flex items-center justify-center gap-0.5">
+                  {items.slice(0, 3).map((item) => {
                     const swatch = calendarSwatch(
                       item.context_code,
                       customColors,
                     );
-                    const selected = item.id === selectedEventId;
                     return (
-                      <Badge
+                      <span
                         key={`${item.kind}-${item.id}`}
-                        size="sm"
-                        variant="secondary"
-                        className="w-full min-w-0 justify-start truncate border-transparent px-1 hover:opacity-90"
-                        style={{
-                          backgroundColor: swatch.hex,
-                          color: swatch.foreground,
-                          boxShadow: selected
-                            ? "inset 0 0 0 2px var(--color-ring)"
-                            : undefined,
-                        }}
-                        render={<button type="button" />}
-                        onClick={() => onSelectEvent(date, item)}
-                      >
-                        {item.title}
-                      </Badge>
+                        className="size-1.5 rounded-full"
+                        style={{ backgroundColor: swatch.hex }}
+                      />
                     );
                   })}
-                  {hiddenCount > 0 ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      className="h-5 justify-start px-1 text-muted-foreground"
-                      onClick={() => onSelectDay(date)}
+                  <span className="sr-only">
+                    {items.length === 1 ? "1 item" : `${items.length} items`}
+                  </span>
+                </span>
+              ) : null
+            ) : (
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-0.5">
+                {items.slice(0, previewLimit).map((item) => {
+                  const swatch = calendarSwatch(
+                    item.context_code,
+                    customColors,
+                  );
+                  const selected = item.id === selectedEventId;
+                  return (
+                    <Badge
+                      key={`${item.kind}-${item.id}`}
+                      size="sm"
+                      variant="secondary"
+                      className="w-full min-w-0 justify-start truncate border-transparent px-1 hover:opacity-90"
+                      style={{
+                        backgroundColor: swatch.hex,
+                        color: swatch.foreground,
+                        boxShadow: selected
+                          ? "inset 0 0 0 2px var(--color-ring)"
+                          : undefined,
+                      }}
+                      render={<button type="button" />}
+                      onClick={() => onSelectEvent(date, item)}
                     >
-                      +{hiddenCount} more
-                    </Button>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                      {item.title}
+                    </Badge>
+                  );
+                })}
+                {hiddenCount > 0 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    className="h-5 justify-start px-1 text-muted-foreground"
+                    onClick={() => onSelectDay(date)}
+                  >
+                    +{hiddenCount} more
+                  </Button>
+                ) : null}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

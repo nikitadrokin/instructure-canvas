@@ -268,3 +268,98 @@ export function filterItemsByContext(
     return visibleCodes.has(item.context_code);
   });
 }
+
+/** Sunday of the week that contains `date`. */
+export function startOfWeek(date: Date): Date {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  start.setDate(start.getDate() - start.getDay());
+  return start;
+}
+
+/** Seven local dates for the week containing `date`, starting Sunday. */
+export function weekDays(date: Date): Date[] {
+  const start = startOfWeek(date);
+  return Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(start);
+    day.setDate(start.getDate() + index);
+    return day;
+  });
+}
+
+/** Inclusive Canvas `start_date` / `end_date` for the visible week. */
+export function weekRange(date: Date): { startDate: string; endDate: string } {
+  const days = weekDays(date);
+  const start = days[0];
+  const end = days[6];
+  if (!start || !end) {
+    const key = toDateKey(date);
+    return { startDate: key, endDate: key };
+  }
+  return { startDate: toDateKey(start), endDate: toDateKey(end) };
+}
+
+export function formatWeekHeading(date: Date): string {
+  const days = weekDays(date);
+  const start = days[0];
+  const end = days[6];
+  if (!start || !end) return formatMonthHeading(date);
+  const startLabel = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: start.getFullYear() === end.getFullYear() ? undefined : "numeric",
+  }).format(start);
+  const endLabel = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(end);
+  return `${startLabel} – ${endLabel}`;
+}
+
+export function formatHourLabel(hour: number): string {
+  return new Intl.DateTimeFormat(undefined, { hour: "numeric" }).format(
+    new Date(2023, 0, 1, hour),
+  );
+}
+
+export const weekDayStartMinutes = 7 * 60;
+export const weekDayEndMinutes = 21 * 60;
+export const weekDaySpanMinutes = weekDayEndMinutes - weekDayStartMinutes;
+
+export function isUntimedItem(item: CalendarItem): boolean {
+  return item.all_day || !item.start_at;
+}
+
+/**
+ * Positions a timed event in the 7:00–21:00 week column.
+ * Events outside that window are clamped so they stay visible.
+ */
+export function timedEventLayout(
+  item: CalendarItem,
+  day: Date,
+): { top: number; height: number } | null {
+  if (isUntimedItem(item) || !item.start_at) return null;
+  const start = new Date(item.start_at);
+  if (Number.isNaN(start.getTime()) || toDateKey(start) !== toDateKey(day)) {
+    return null;
+  }
+  const end = item.end_at
+    ? new Date(item.end_at)
+    : new Date(start.getTime() + 60 * 60 * 1000);
+  const startMin = start.getHours() * 60 + start.getMinutes();
+  const endMin = Number.isNaN(end.getTime())
+    ? startMin + 60
+    : end.getHours() * 60 + end.getMinutes();
+  const clampedStart = Math.min(
+    weekDayEndMinutes - 20,
+    Math.max(weekDayStartMinutes, startMin),
+  );
+  const clampedEnd = Math.min(
+    weekDayEndMinutes,
+    Math.max(clampedStart + 20, endMin),
+  );
+  return {
+    top: ((clampedStart - weekDayStartMinutes) / weekDaySpanMinutes) * 100,
+    height: ((clampedEnd - clampedStart) / weekDaySpanMinutes) * 100,
+  };
+}

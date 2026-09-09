@@ -9,6 +9,10 @@ import {
   CalendarColorDot,
   CalendarFilters,
 } from "@/components/calendar/calendar-filters";
+import {
+  CalendarToolbar,
+  type CalendarViewMode,
+} from "@/components/calendar/calendar-toolbar";
 import { MonthGrid } from "@/components/calendar/month-grid";
 import {
   type CalendarItem,
@@ -19,10 +23,13 @@ import {
   formatDayHeading,
   formatEventTime,
   formatMonthHeading,
+  formatWeekHeading,
   groupItemsByDay,
   toDateKey,
   visibleGridRange,
+  weekRange,
 } from "@/components/calendar/shared";
+import { WeekView } from "@/components/calendar/week-view";
 import { DisconnectedState } from "@/components/courses/course-detail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -58,8 +65,8 @@ import { useCalendarColors } from "@/integrations/canvas/use-calendar-colors";
 import { useCalendarEvents } from "@/integrations/canvas/use-calendar-events";
 
 /**
- * Month calendar plus a day agenda. On large screens an opened event stays
- * beside the month; on small screens it uses a sheet.
+ * Month or week calendar plus a day agenda. On large screens an opened event
+ * stays beside the grid; on small screens it uses a sheet.
  */
 export function CalendarView() {
   const dashboard = useCanvasStore((state) => state.dashboard);
@@ -69,12 +76,14 @@ export function CalendarView() {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [selectedEventId, setSelectedEventId] = useState<string>();
   const [visibleCodes, setVisibleCodes] = useState<string[]>();
+  const [view, setView] = useState<CalendarViewMode>("month");
   const isLarge = useMediaQuery("lg");
   const isCompactGrid = !useMediaQuery("md");
   const colorsQuery = useCalendarColors();
   const customColors = colorsQuery.data ?? {};
 
-  const range = visibleGridRange(month);
+  const range =
+    view === "week" ? weekRange(selectedDate) : visibleGridRange(month);
   const sources = useMemo(
     () =>
       dashboard
@@ -129,8 +138,7 @@ export function CalendarView() {
             Calendar
           </h1>
           <p className="text-muted-foreground text-sm">
-            Connect to Canvas to see assignments and events on a local month
-            view.
+            Connect to Canvas to see assignments and events on a local calendar.
           </p>
         </div>
         <DisconnectedState />
@@ -143,10 +151,25 @@ export function CalendarView() {
     setSelectedEventId(undefined);
   }
 
+  function syncMonth(date: Date) {
+    setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+  }
+
   function jumpToToday() {
     const today = new Date();
-    setMonth(today);
+    syncMonth(today);
     selectDay(today);
+  }
+
+  function shift(delta: number) {
+    if (view === "week") {
+      const next = new Date(selectedDate);
+      next.setDate(selectedDate.getDate() + delta * 7);
+      selectDay(next);
+      syncMonth(next);
+      return;
+    }
+    setMonth(new Date(month.getFullYear(), month.getMonth() + delta, 1));
   }
 
   return (
@@ -158,7 +181,10 @@ export function CalendarView() {
           </h1>
           <p className="text-muted-foreground text-sm">
             Assignments and events from your Canvas calendars for{" "}
-            {formatMonthHeading(month)}.
+            {view === "week"
+              ? formatWeekHeading(selectedDate)
+              : formatMonthHeading(month)}
+            .
           </p>
         </div>
       </div>
@@ -166,7 +192,7 @@ export function CalendarView() {
       {events.error ? (
         <Alert variant="error">
           <AlertCircle />
-          <AlertTitle>Couldn&rsquo;t load this month</AlertTitle>
+          <AlertTitle>Couldn&rsquo;t load the calendar</AlertTitle>
           <AlertDescription>{events.error.message}</AlertDescription>
         </Alert>
       ) : null}
@@ -180,22 +206,48 @@ export function CalendarView() {
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]">
         <Card className="min-w-0 overflow-hidden">
-          <CardPanel>
-            <MonthGrid
-              month={month}
-              selectedDate={selectedDate}
-              selectedEventId={selectedEventId}
-              itemsByDay={itemsByDay}
-              customColors={customColors}
-              compact={isCompactGrid}
-              onMonthChange={setMonth}
-              onSelectDay={selectDay}
-              onJumpToToday={jumpToToday}
-              onSelectEvent={(date, item) => {
-                setSelectedDate(date);
-                setSelectedEventId(item.id);
-              }}
+          <CardPanel className="flex min-w-0 flex-col gap-3">
+            <CalendarToolbar
+              heading={
+                view === "week"
+                  ? formatWeekHeading(selectedDate)
+                  : formatMonthHeading(month)
+              }
+              view={view}
+              prevLabel={view === "week" ? "Previous week" : "Previous month"}
+              nextLabel={view === "week" ? "Next week" : "Next month"}
+              onViewChange={setView}
+              onPrev={() => shift(-1)}
+              onNext={() => shift(1)}
+              onToday={jumpToToday}
             />
+            {view === "week" ? (
+              <WeekView
+                selectedDate={selectedDate}
+                selectedEventId={selectedEventId}
+                itemsByDay={itemsByDay}
+                customColors={customColors}
+                onSelectDay={selectDay}
+                onSelectEvent={(date, item) => {
+                  setSelectedDate(date);
+                  setSelectedEventId(item.id);
+                }}
+              />
+            ) : (
+              <MonthGrid
+                month={month}
+                selectedDate={selectedDate}
+                selectedEventId={selectedEventId}
+                itemsByDay={itemsByDay}
+                customColors={customColors}
+                compact={isCompactGrid}
+                onSelectDay={selectDay}
+                onSelectEvent={(date, item) => {
+                  setSelectedDate(date);
+                  setSelectedEventId(item.id);
+                }}
+              />
+            )}
           </CardPanel>
         </Card>
 
