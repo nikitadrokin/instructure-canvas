@@ -46,6 +46,33 @@ function toTrpcError(error: unknown) {
 }
 
 export const canvasRouter = createTRPCRouter({
+  toolLaunch: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string().min(1),
+        toolId: z.string().regex(/^\d+$/),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const session =
+        getCanvasSession(ctx.canvasSessionId) ?? ctx.canvasCredentials;
+      if (!session)
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Connect to Canvas to open this tool.",
+        });
+      const client = new CanvasClient({
+        baseUrl: normalizeCanvasBaseUrl(session.canvasUrl),
+        accessToken: session.token,
+      });
+      try {
+        return await client.getToolLaunch(input.courseId, input.toolId);
+      } catch (error) {
+        throw toTrpcError(error);
+      } finally {
+        client.forgetCredentials();
+      }
+    }),
   courseSection: publicProcedure
     .input(
       z.object({

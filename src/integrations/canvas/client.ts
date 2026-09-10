@@ -148,7 +148,7 @@ const canvasSubmissionSchema = z
     excused: z.boolean().nullable().optional(),
     late_policy_status: nullableStringSchema,
     seconds_late: z.number().optional(),
-    preview_url: z.string().optional(),
+    preview_url: nullableStringSchema,
     body: nullableStringSchema,
     url: nullableStringSchema,
     grade_matches_current_submission: z.boolean().optional(),
@@ -201,8 +201,8 @@ const canvasAssignmentSchema = z
     points_possible: nullableNumberSchema,
     html_url: z.string().optional(),
     submission_types: z.array(z.string()).optional(),
-    allowed_extensions: z.array(z.string()).optional(),
-    allowed_attempts: z.number().optional(),
+    allowed_extensions: z.array(z.string()).nullable().optional(),
+    allowed_attempts: nullableNumberSchema,
     /** points | percent | letter_grade | gpa_scale | pass_fail | not_graded */
     grading_type: z.string().optional(),
     assignment_group_id: canvasIdSchema.optional(),
@@ -213,7 +213,7 @@ const canvasAssignmentSchema = z
     omit_from_final_grade: z.boolean().optional(),
     peer_reviews: z.boolean().optional(),
     is_quiz_assignment: z.boolean().optional(),
-    quiz_id: canvasIdSchema.optional(),
+    quiz_id: canvasIdSchema.nullable().optional(),
     discussion_topic: z
       .object({ id: canvasIdSchema })
       .passthrough()
@@ -713,9 +713,18 @@ function parseList<T>(schema: z.ZodType<T>, data: unknown, label: string) {
     throw new CanvasApiError(`Canvas returned an unexpected ${label}.`, 502);
   }
 
-  const items = data.flatMap((item) => {
+  const items = data.map((item) => {
     const parsed = schema.safeParse(item);
-    return parsed.success ? [parsed.data] : [];
+    if (!parsed.success) {
+      const fields = [
+        ...new Set(parsed.error.issues.map((issue) => issue.path.join("."))),
+      ].join(", ");
+      throw new CanvasApiError(
+        `Canvas returned an unexpected ${label} (${fields}).`,
+        502,
+      );
+    }
+    return parsed.data;
   });
 
   if (data.length > 0 && items.length === 0) {
@@ -840,6 +849,27 @@ export class CanvasClient {
     );
   }
 
+  async getToolLaunch(courseId: string, toolId: string) {
+    const params = new URLSearchParams({
+      id: toolId,
+      launch_type: "course_navigation",
+    });
+    const result = await this.parseResponse(
+      z.object({ url: z.string().url() }),
+      await this.request(
+        `/api/v1/courses/${encodeURIComponent(courseId)}/external_tools/sessionless_launch?${params}`,
+      ),
+      "tool launch",
+    );
+    const url = new URL(result.url);
+    if (url.protocol !== "https:" || url.origin !== this.baseUrl)
+      throw new CanvasApiError(
+        "Canvas returned an unsupported tool launch URL.",
+        502,
+      );
+    return { url: url.toString() };
+  }
+
   async getCourseDetail(courseId: string): Promise<CanvasCourseDetail> {
     const encodedId = encodeURIComponent(courseId);
     const assignmentParams = new URLSearchParams({
@@ -859,7 +889,9 @@ export class CanvasClient {
     const [course, tabs] = await Promise.all([
       this.parseResponse(
         canvasCourseSchema,
-        await this.request(`/api/v1/courses/${encodedId}`),
+        await this.request(
+          `/api/v1/courses/${encodedId}?include[]=syllabus_body`,
+        ),
         "course",
       ),
       this.fetchAllPages(
