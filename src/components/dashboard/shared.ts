@@ -6,6 +6,7 @@ export type DashboardData = NonNullable<
 >;
 export type Course = DashboardData["courses"][number];
 export type UpcomingItem = DashboardData["upcoming"][number];
+export type MissingItem = DashboardData["missing"][number];
 export type Enrollment = NonNullable<Course["enrollments"]>[number];
 
 export function getPrimaryEnrollment(course: Course): Enrollment | undefined {
@@ -92,4 +93,16 @@ export function formatDueLabel(date: string | null | undefined): string {
     day: "numeric",
   }).format(parsed);
   return `${day} · ${formatTime(date)}`;
+}
+
+/** How late a past-due assignment is, for the missing-work list. */
+export function formatOverdueLabel(date: string | null | undefined): string {
+  if (!date) return "Past due";
+  const due = new Date(date);
+  if (Number.isNaN(due.getTime())) return "Past due";
+  const days = Math.floor((Date.now() - due.getTime()) / 86_400_000);
+  if (days < 1) return `Due ${formatTime(date)}`;
+  if (days === 1) return "1 day late";
+  if (days < 14) return `${days} days late`;
+  return formatDueLabel(date);
 }

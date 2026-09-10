@@ -68,7 +68,7 @@ The detailed API findings, official source links, security considerations, and r
 
 ## Next milestones
 
-1. Add planner items and missing-submission views.
+1. Add planner items and recent graded submissions.
 2. Add course detail pages for assignments and modules.
 3. Add tests for pagination, redirects, cookie sessions, and Canvas error mapping.
 4. Package the app locally with OS keychain storage, or implement Canvas OAuth before supporting multiple users.

@@ -3,6 +3,7 @@ import {
   BarChart3,
   BookOpen,
   CheckCircle2,
+  CircleAlert,
   Clock,
   RefreshCw,
 } from "lucide-react";
@@ -10,6 +11,7 @@ import type React from "react";
 import { useMemo } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CourseCard } from "@/components/dashboard/course-card";
+import { MissingRow } from "@/components/dashboard/missing-row";
 import {
   type Course,
   type DashboardData,
@@ -49,6 +51,7 @@ export function Dashboard({
   onDisconnect: () => void;
   onRefresh: () => void;
 }): React.ReactElement {
+  const missing = data.missing ?? [];
   const { starred, other } = useMemo(
     () => partitionCourses(data.courses),
     [data.courses],
@@ -124,7 +127,7 @@ export function Dashboard({
 
           <section
             aria-label="Dashboard summary"
-            className="mb-8 grid gap-4 sm:grid-cols-3"
+            className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
           >
             <StatCard
               icon={<BookOpen />}
@@ -137,6 +140,22 @@ export function Dashboard({
               }
             />
             <StatCard
+              icon={<CircleAlert />}
+              label="Missing"
+              value={String(missing.length)}
+              note={
+                missing.length === 1
+                  ? "assignment still unsubmitted"
+                  : "assignments still unsubmitted"
+              }
+            />
+            <StatCard
+              icon={<Clock />}
+              label="Coming up"
+              value={String(data.upcoming.length)}
+              note="assignments and events"
+            />
+            <StatCard
               icon={<BarChart3 />}
               label="Average score"
               value={average === null ? "—" : `${average}%`}
@@ -145,12 +164,6 @@ export function Dashboard({
                   ? `across ${scores.length} graded courses`
                   : "No scores released yet"
               }
-            />
-            <StatCard
-              icon={<Clock />}
-              label="Coming up"
-              value={String(data.upcoming.length)}
-              note="assignments and events"
             />
           </section>
 
@@ -175,46 +188,89 @@ export function Dashboard({
               ) : null}
             </div>
 
-            <section
-              id="upcoming"
-              aria-labelledby="upcoming-heading"
-              className="min-w-0"
-            >
-              <div className="mb-4">
-                <h2
-                  id="upcoming-heading"
-                  className="font-heading font-semibold text-xl"
-                >
-                  Upcoming
-                </h2>
-              </div>
-              {data.upcoming.length ? (
-                <Card className="divide-y overflow-hidden">
-                  {data.upcoming.slice(0, 7).map((item) => (
-                    <UpcomingRow
-                      key={`${item.type}-${item.id}`}
-                      item={item}
-                      origin={data.origin}
-                    />
-                  ))}
-                </Card>
-              ) : (
-                <Card>
-                  <Empty>
-                    <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <CheckCircle2 />
-                      </EmptyMedia>
-                      <EmptyTitle>You&rsquo;re all clear</EmptyTitle>
-                      <EmptyDescription>
-                        Canvas has no upcoming assignments or calendar events
-                        for you.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                </Card>
-              )}
-            </section>
+            <div className="flex min-w-0 flex-col gap-8">
+              <section
+                id="missing"
+                aria-labelledby="missing-heading"
+                className="min-w-0"
+              >
+                <div className="mb-4">
+                  <h2
+                    id="missing-heading"
+                    className="font-heading font-semibold text-xl"
+                  >
+                    Missing
+                  </h2>
+                </div>
+                {missing.length ? (
+                  <Card className="divide-y overflow-hidden">
+                    {missing.slice(0, 7).map((item) => (
+                      <MissingRow
+                        key={item.id}
+                        item={item}
+                        origin={data.origin}
+                      />
+                    ))}
+                  </Card>
+                ) : (
+                  <Card>
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <CheckCircle2 />
+                        </EmptyMedia>
+                        <EmptyTitle>You&rsquo;re caught up</EmptyTitle>
+                        <EmptyDescription>
+                          Canvas has no past-due assignments waiting on a
+                          submission.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  </Card>
+                )}
+              </section>
+
+              <section
+                id="upcoming"
+                aria-labelledby="upcoming-heading"
+                className="min-w-0"
+              >
+                <div className="mb-4">
+                  <h2
+                    id="upcoming-heading"
+                    className="font-heading font-semibold text-xl"
+                  >
+                    Upcoming
+                  </h2>
+                </div>
+                {data.upcoming.length ? (
+                  <Card className="divide-y overflow-hidden">
+                    {data.upcoming.slice(0, 7).map((item) => (
+                      <UpcomingRow
+                        key={`${item.type}-${item.id}`}
+                        item={item}
+                        origin={data.origin}
+                      />
+                    ))}
+                  </Card>
+                ) : (
+                  <Card>
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <CheckCircle2 />
+                        </EmptyMedia>
+                        <EmptyTitle>You&rsquo;re all clear</EmptyTitle>
+                        <EmptyDescription>
+                          Canvas has no upcoming assignments or calendar events
+                          for you.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  </Card>
+                )}
+              </section>
+            </div>
           </div>
         </div>
       </SidebarInset>
