@@ -779,6 +779,67 @@ export class CanvasClient {
     );
   }
 
+  async getCourseSection(
+    courseId: string,
+    section: "quizzes" | "people" | "grades",
+  ) {
+    const course = encodeURIComponent(courseId);
+    if (section === "quizzes")
+      return {
+        kind: "quizzes" as const,
+        items: await this.fetchAllPages(
+          `/api/v1/courses/${course}/quizzes?per_page=100`,
+          canvasQuizSchema,
+          "quizzes",
+        ),
+      };
+    if (section === "people")
+      return {
+        kind: "people" as const,
+        items: await this.fetchAllPages(
+          `/api/v1/courses/${course}/users?per_page=100&include[]=enrollments`,
+          canvasUserSchema.extend({
+            enrollments: z.array(canvasEnrollmentSchema).nullable().optional(),
+          }),
+          "course people",
+        ),
+      };
+    const user = await this.getCurrentUser();
+    const [enrollments, assignments] = await Promise.all([
+      this.fetchAllPages(
+        `/api/v1/courses/${course}/enrollments?user_id=${encodeURIComponent(user.id)}&per_page=100`,
+        canvasEnrollmentSchema,
+        "your enrollments",
+      ),
+      this.fetchAllPages(
+        `/api/v1/courses/${course}/assignments?include[]=submission&per_page=100`,
+        canvasAssignmentSchema,
+        "graded assignments",
+      ),
+    ]);
+    return { kind: "grades" as const, enrollments, assignments };
+  }
+
+  async getCourseAssignment(courseId: string, assignmentId: string) {
+    return this.parseResponse(
+      canvasAssignmentSchema,
+      await this.request(
+        `/api/v1/courses/${encodeURIComponent(courseId)}/assignments/${encodeURIComponent(assignmentId)}?include[]=submission&include[]=rubric_assessment`,
+      ),
+      "assignment",
+    );
+  }
+
+  async getCourseQuiz(courseId: string, quizId: string) {
+    return this.parseResponse(
+      canvasQuizSchema,
+      await this.request(
+        `/api/v1/courses/${encodeURIComponent(courseId)}/quizzes/${encodeURIComponent(quizId)}`,
+      ),
+      "quiz",
+    );
+  }
+
   async getCourseDetail(courseId: string): Promise<CanvasCourseDetail> {
     const encodedId = encodeURIComponent(courseId);
     const assignmentParams = new URLSearchParams({

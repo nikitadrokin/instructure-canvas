@@ -46,6 +46,72 @@ function toTrpcError(error: unknown) {
 }
 
 export const canvasRouter = createTRPCRouter({
+  courseSection: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string().min(1),
+        section: z.enum(["quizzes", "people", "grades"]),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const session =
+        getCanvasSession(ctx.canvasSessionId) ?? ctx.canvasCredentials;
+      if (!session)
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Connect to Canvas to view this course.",
+        });
+      const client = new CanvasClient({
+        baseUrl: normalizeCanvasBaseUrl(session.canvasUrl),
+        accessToken: session.token,
+      });
+      try {
+        return await client.getCourseSection(input.courseId, input.section);
+      } catch (error) {
+        throw toTrpcError(error);
+      } finally {
+        client.forgetCredentials();
+      }
+    }),
+  courseResource: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string().min(1),
+        id: z.string().min(1),
+        kind: z.enum(["assignment", "quiz"]),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const session =
+        getCanvasSession(ctx.canvasSessionId) ?? ctx.canvasCredentials;
+      if (!session)
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Connect to Canvas to view this course.",
+        });
+      const client = new CanvasClient({
+        baseUrl: normalizeCanvasBaseUrl(session.canvasUrl),
+        accessToken: session.token,
+      });
+      try {
+        if (input.kind === "assignment")
+          return {
+            kind: "assignment" as const,
+            assignment: await client.getCourseAssignment(
+              input.courseId,
+              input.id,
+            ),
+          };
+        return {
+          kind: "quiz" as const,
+          quiz: await client.getCourseQuiz(input.courseId, input.id),
+        };
+      } catch (error) {
+        throw toTrpcError(error);
+      } finally {
+        client.forgetCredentials();
+      }
+    }),
   restoreSession: publicProcedure
     .input(canvasCredentialsSchema)
     .mutation(({ ctx, input }) => {
