@@ -35,7 +35,10 @@ export function CalendarFilters({
           className="grid w-full grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-x-4 gap-y-2"
         >
           {sources.map((source) => (
-            <Label key={source.code} className="min-w-0 cursor-pointer">
+            <Label
+              key={source.code}
+              className="min-w-0 cursor-pointer select-none"
+            >
               <Checkbox value={source.code} />
               <CalendarColorDot
                 swatch={calendarSwatch(source.code, customColors)}
