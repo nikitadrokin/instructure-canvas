@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CalendarView } from "@/components/calendar/calendar-view";
+import { ModeToggle } from "@/components/mode-toggle";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -66,6 +67,9 @@ function CalendarPage() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+          <div className="ms-auto">
+            <ModeToggle />
+          </div>
         </header>
 
         <main className="flex w-full min-w-0 flex-1 flex-col px-4 py-6 sm:px-6 md:px-10">

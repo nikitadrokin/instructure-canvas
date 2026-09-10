@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+	color-scheme: light;
 	--background: var(--color-white);
 	--border: --alpha(var(--color-black) / 8%);
 	--accent: --alpha(var(--color-black) / 4%);
@@ -185,6 +186,7 @@
 }
 
 .dark {
+	color-scheme: dark;
 	--destructive-foreground: var(--color-red-400);
 	--info: var(--color-blue-500);
 	--info-foreground: var(--color-blue-400);

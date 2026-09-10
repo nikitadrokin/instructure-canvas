@@ -8,6 +8,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import type { TRPCRouter } from "#/integrations/trpc/router";
+import { ThemeProvider } from "@/components/theme-provider";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
@@ -48,31 +49,33 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
       <body>
-        {process.env.NODE_ENV === "development" && (
-          <script
-            crossOrigin="anonymous"
-            data-enabled="true"
-            src="//unpkg.com/react-grab/dist/index.global.js"
+        <ThemeProvider defaultTheme="system" storageKey="theme">
+          {process.env.NODE_ENV === "development" && (
+            <script
+              crossOrigin="anonymous"
+              data-enabled="true"
+              src="//unpkg.com/react-grab/dist/index.global.js"
+            />
+          )}
+          {children}
+          <TanStackDevtools
+            config={{
+              position: "bottom-right",
+            }}
+            plugins={[
+              {
+                name: "Tanstack Router",
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+              TanStackQueryDevtools,
+            ]}
           />
-        )}
-        {children}
-        <TanStackDevtools
-          config={{
-            position: "bottom-right",
-          }}
-          plugins={[
-            {
-              name: "Tanstack Router",
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-            TanStackQueryDevtools,
-          ]}
-        />
+        </ThemeProvider>
         <Scripts />
       </body>
     </html>

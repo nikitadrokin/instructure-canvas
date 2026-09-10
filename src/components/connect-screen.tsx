@@ -8,6 +8,7 @@ import {
 import type React from "react";
 import { Brand } from "@/components/brand";
 import { CanvasLogo } from "@/components/canvas-logo/canvas-logo";
+import { ModeToggle } from "@/components/mode-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +50,7 @@ export function ConnectScreen({
     <div className="flex min-h-screen flex-col px-6">
       <header className="flex h-20 items-center justify-between">
         <Brand />
+        <ModeToggle />
       </header>
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12">

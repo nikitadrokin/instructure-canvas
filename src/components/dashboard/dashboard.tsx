@@ -20,6 +20,7 @@ import {
 } from "@/components/dashboard/shared";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { UpcomingRow } from "@/components/dashboard/upcoming-row";
+import { ModeToggle } from "@/components/mode-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,7 @@ export function Dashboard({
           <Separator orientation="vertical" className="me-1 h-4" />
           <span className="font-medium text-sm">Overview</span>
           <div className="ms-auto flex items-center gap-3">
+            <ModeToggle />
             <Button
               variant="outline"
               size="sm"

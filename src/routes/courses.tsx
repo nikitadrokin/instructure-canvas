@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/app-sidebar";
 import { partitionCourses } from "@/components/dashboard/shared";
+import { ModeToggle } from "@/components/mode-toggle";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -94,6 +95,9 @@ function CoursesLayout() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+          <div className="ms-auto">
+            <ModeToggle />
+          </div>
         </header>
 
         <main className="flex w-full flex-1 flex-col gap-8 px-6 py-8 md:px-10">
