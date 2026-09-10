@@ -1,3 +1,4 @@
+import { Link, useParams } from "@tanstack/react-router";
 import type { inferRouterOutputs } from "@trpc/server";
 import { ExternalLink, FileText, GraduationCap, Megaphone } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -189,6 +190,7 @@ export function AssignmentsTable({
 }: {
   assignments: CourseDetailData["assignments"];
 }) {
+  const { courseId } = useParams({ from: "/courses/$courseId" });
   if (!assignments.length)
     return (
       <TabEmpty
@@ -210,7 +212,15 @@ export function AssignmentsTable({
         <TableBody>
           {assignments.map((assignment) => (
             <TableRow key={assignment.id}>
-              <TableCell className="font-medium">{assignment.name}</TableCell>
+              <TableCell className="font-medium">
+                <Link
+                  to="/courses/$courseId/assignments/$assignmentId"
+                  params={{ courseId, assignmentId: assignment.id }}
+                  className="hover:underline"
+                >
+                  {assignment.name}
+                </Link>
+              </TableCell>
               <TableCell>
                 {assignment.due_at
                   ? formatDate(assignment.due_at)
