@@ -16,6 +16,8 @@ import { Route as CoursesIndexRouteImport } from './routes/courses.index'
 import { Route as CoursesCourseIdRouteImport } from './routes/courses.$courseId'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as CoursesCourseIdIndexRouteImport } from './routes/courses.$courseId.index'
+import { Route as CoursesCourseIdAnnouncementsRouteImport } from './routes/courses.$courseId.announcements'
+import { Route as CoursesCourseIdAssignmentsRouteImport } from './routes/courses.$courseId.assignments'
 import { Route as CoursesCourseIdModulesRouteImport } from './routes/courses.$courseId.modules'
 import { Route as CoursesCourseIdModulesItemsItemIdRouteImport } from './routes/courses.$courseId.modules_.items.$itemId'
 
@@ -54,6 +56,18 @@ const CoursesCourseIdIndexRoute = CoursesCourseIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CoursesCourseIdRoute,
 } as any)
+const CoursesCourseIdAnnouncementsRoute =
+  CoursesCourseIdAnnouncementsRouteImport.update({
+    id: '/announcements',
+    path: '/announcements',
+    getParentRoute: () => CoursesCourseIdRoute,
+  } as any)
+const CoursesCourseIdAssignmentsRoute =
+  CoursesCourseIdAssignmentsRouteImport.update({
+    id: '/assignments',
+    path: '/assignments',
+    getParentRoute: () => CoursesCourseIdRoute,
+  } as any)
 const CoursesCourseIdModulesRoute = CoursesCourseIdModulesRouteImport.update({
   id: '/modules',
   path: '/modules',
@@ -73,6 +87,8 @@ export interface FileRoutesByFullPath {
   '/courses/$courseId': typeof CoursesCourseIdRouteWithChildren
   '/courses/': typeof CoursesIndexRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/courses/$courseId/announcements': typeof CoursesCourseIdAnnouncementsRoute
+  '/courses/$courseId/assignments': typeof CoursesCourseIdAssignmentsRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/modules/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
@@ -82,6 +98,8 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/courses': typeof CoursesIndexRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/courses/$courseId/announcements': typeof CoursesCourseIdAnnouncementsRoute
+  '/courses/$courseId/assignments': typeof CoursesCourseIdAssignmentsRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
   '/courses/$courseId': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/modules/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
@@ -94,6 +112,8 @@ export interface FileRoutesById {
   '/courses/$courseId': typeof CoursesCourseIdRouteWithChildren
   '/courses/': typeof CoursesIndexRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
+  '/courses/$courseId/announcements': typeof CoursesCourseIdAnnouncementsRoute
+  '/courses/$courseId/assignments': typeof CoursesCourseIdAssignmentsRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/modules_/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
@@ -107,6 +127,8 @@ export interface FileRouteTypes {
     | '/courses/$courseId'
     | '/courses/'
     | '/api/trpc/$'
+    | '/courses/$courseId/announcements'
+    | '/courses/$courseId/assignments'
     | '/courses/$courseId/modules'
     | '/courses/$courseId/'
     | '/courses/$courseId/modules/items/$itemId'
@@ -116,6 +138,8 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/courses'
     | '/api/trpc/$'
+    | '/courses/$courseId/announcements'
+    | '/courses/$courseId/assignments'
     | '/courses/$courseId/modules'
     | '/courses/$courseId'
     | '/courses/$courseId/modules/items/$itemId'
@@ -127,6 +151,8 @@ export interface FileRouteTypes {
     | '/courses/$courseId'
     | '/courses/'
     | '/api/trpc/$'
+    | '/courses/$courseId/announcements'
+    | '/courses/$courseId/assignments'
     | '/courses/$courseId/modules'
     | '/courses/$courseId/'
     | '/courses/$courseId/modules_/items/$itemId'
@@ -190,6 +216,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesCourseIdIndexRouteImport
       parentRoute: typeof CoursesCourseIdRoute
     }
+    '/courses/$courseId/announcements': {
+      id: '/courses/$courseId/announcements'
+      path: '/announcements'
+      fullPath: '/courses/$courseId/announcements'
+      preLoaderRoute: typeof CoursesCourseIdAnnouncementsRouteImport
+      parentRoute: typeof CoursesCourseIdRoute
+    }
+    '/courses/$courseId/assignments': {
+      id: '/courses/$courseId/assignments'
+      path: '/assignments'
+      fullPath: '/courses/$courseId/assignments'
+      preLoaderRoute: typeof CoursesCourseIdAssignmentsRouteImport
+      parentRoute: typeof CoursesCourseIdRoute
+    }
     '/courses/$courseId/modules': {
       id: '/courses/$courseId/modules'
       path: '/modules'
@@ -208,12 +248,16 @@ declare module '@tanstack/react-router' {
 }
 
 interface CoursesCourseIdRouteChildren {
+  CoursesCourseIdAnnouncementsRoute: typeof CoursesCourseIdAnnouncementsRoute
+  CoursesCourseIdAssignmentsRoute: typeof CoursesCourseIdAssignmentsRoute
   CoursesCourseIdModulesRoute: typeof CoursesCourseIdModulesRoute
   CoursesCourseIdIndexRoute: typeof CoursesCourseIdIndexRoute
   CoursesCourseIdModulesItemsItemIdRoute: typeof CoursesCourseIdModulesItemsItemIdRoute
 }
 
 const CoursesCourseIdRouteChildren: CoursesCourseIdRouteChildren = {
+  CoursesCourseIdAnnouncementsRoute: CoursesCourseIdAnnouncementsRoute,
+  CoursesCourseIdAssignmentsRoute: CoursesCourseIdAssignmentsRoute,
   CoursesCourseIdModulesRoute: CoursesCourseIdModulesRoute,
   CoursesCourseIdIndexRoute: CoursesCourseIdIndexRoute,
   CoursesCourseIdModulesItemsItemIdRoute:

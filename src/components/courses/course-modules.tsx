@@ -82,11 +82,13 @@ export function CourseModules({
   modules,
   origin,
   issue,
+  embedded = false,
 }: {
   course: CourseDetailData["course"];
   modules: CourseModule[];
   origin: string;
   issue?: string;
+  embedded?: boolean;
 }) {
   const trackedItems = modules
     .flatMap((module) => module.items ?? [])
@@ -100,27 +102,31 @@ export function CourseModules({
 
   return (
     <>
-      <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <CardDescription>{course.name ?? course.course_code}</CardDescription>
-          <CardTitle className="mt-1 text-2xl">Modules</CardTitle>
+      {!embedded ? (
+        <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardDescription>
+              {course.name ?? course.course_code}
+            </CardDescription>
+            <CardTitle className="mt-1 text-2xl">Modules</CardTitle>
+          </div>
+          <Button
+            variant="outline"
+            render={
+              // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+              <a
+                href={`${origin}/courses/${course.id}/modules`}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Open modules in Canvas"
+              />
+            }
+          >
+            <ExternalLink />
+            Open in Canvas
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          render={
-            // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-            <a
-              href={`${origin}/courses/${course.id}/modules`}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Open modules in Canvas"
-            />
-          }
-        >
-          <ExternalLink />
-          Open in Canvas
-        </Button>
-      </div>
+      ) : null}
 
       {trackedItems.length ? (
         <div className="mb-6 border-b pb-6">

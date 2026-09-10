@@ -1,14 +1,6 @@
 import type { inferRouterOutputs } from "@trpc/server";
-import {
-  CheckCircle2,
-  ExternalLink,
-  FileText,
-  GraduationCap,
-  Layers3,
-  Megaphone,
-} from "lucide-react";
+import { ExternalLink, FileText, GraduationCap, Megaphone } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,36 +31,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import type { TRPCRouter } from "@/integrations/trpc/router";
 
 export type CourseDetailData =
   inferRouterOutputs<TRPCRouter>["canvas"]["courseDetail"];
 
-export function CourseDetail({
+export function CourseHeader({
   data,
   origin,
-  score,
 }: {
   data: CourseDetailData;
   origin: string;
-  score: number | null;
 }) {
   const course = data.course;
   const courseUrl = course.html_url ?? `${origin}/courses/${course.id}`;
-  const completedItems = data.modules
-    .flatMap((module) => module.items ?? [])
-    .filter((item) => item.completion_requirement?.completed).length;
-  const moduleItems = data.modules.reduce(
-    (total, module) =>
-      total + (module.items?.length ?? module.items_count ?? 0),
-    0,
-  );
-  const availableTabIds = new Set(data.tabs.map((tab) => tab.id));
-  const hasAssignments = availableTabIds.has("assignments");
-  const hasModules = availableTabIds.has("modules");
-  const hasAnnouncements = availableTabIds.has("announcements");
-
   return (
     <>
       {data.issues.length ? (
@@ -104,149 +80,111 @@ export function CourseDetail({
           Open in Canvas
         </Button>
       </div>
-
-      <Tabs defaultValue="overview">
-        <TabsList
-          variant="underline"
-          className="mb-4 max-w-full overflow-x-auto"
-        >
-          <TabsTab value="overview">Overview</TabsTab>
-          {hasAssignments ? (
-            <TabsTab value="assignments">Assignments</TabsTab>
-          ) : null}
-          {hasModules ? <TabsTab value="modules">Modules</TabsTab> : null}
-          {hasAnnouncements ? (
-            <TabsTab value="announcements">Announcements</TabsTab>
-          ) : null}
-        </TabsList>
-        <TabsPanel value="overview" className="grid gap-4 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Current standing</CardTitle>
-              <CardDescription>Your released course score.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {score === null ? (
-                <p className="text-muted-foreground text-sm">
-                  No score has been released.
-                </p>
-              ) : (
-                <Meter value={score}>
-                  <div className="flex justify-between">
-                    <MeterLabel>Course score</MeterLabel>
-                    <span className="text-sm tabular-nums">
-                      {Math.round(score)}%
-                    </span>
-                  </div>
-                  <MeterTrack>
-                    <MeterIndicator />
-                  </MeterTrack>
-                </Meter>
-              )}
-            </CardContent>
-          </Card>
-          {hasModules ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Module progress</CardTitle>
-                <CardDescription>
-                  Completion requirements reported by Canvas.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Meter
-                  value={moduleItems ? (completedItems / moduleItems) * 100 : 0}
-                >
-                  <div className="flex justify-between">
-                    <MeterLabel>Completed</MeterLabel>
-                    <span className="text-sm tabular-nums">
-                      {completedItems} of {moduleItems}
-                    </span>
-                  </div>
-                  <MeterTrack>
-                    <MeterIndicator />
-                  </MeterTrack>
-                </Meter>
-              </CardContent>
-            </Card>
-          ) : null}
-        </TabsPanel>
-        {hasAssignments ? (
-          <TabsPanel value="assignments">
-            <AssignmentsTable assignments={data.assignments} />
-          </TabsPanel>
-        ) : null}
-        {hasModules ? (
-          <TabsPanel value="modules" className="grid gap-3">
-            {data.modules.length ? (
-              data.modules.map((module) => (
-                <Card key={module.id}>
-                  <CardHeader>
-                    <CardTitle>{module.name}</CardTitle>
-                    <CardDescription>
-                      {module.items?.length ?? module.items_count ?? 0} items
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-wrap gap-2">
-                    {(module.items ?? []).map((item) => (
-                      <Badge
-                        key={item.id}
-                        variant={
-                          item.completion_requirement?.completed
-                            ? "success"
-                            : "secondary"
-                        }
-                      >
-                        {item.completion_requirement?.completed ? (
-                          <CheckCircle2 />
-                        ) : null}
-                        {item.title}
-                      </Badge>
-                    ))}
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <TabEmpty
-                icon={<Layers3 />}
-                title="No modules"
-                description="Canvas did not return any published modules."
-              />
-            )}
-          </TabsPanel>
-        ) : null}
-        {hasAnnouncements ? (
-          <TabsPanel value="announcements" className="grid gap-3">
-            {data.announcements.length ? (
-              data.announcements.map((announcement) => (
-                <Card key={announcement.id}>
-                  <CardHeader>
-                    <CardTitle>{announcement.title}</CardTitle>
-                    <CardDescription>
-                      {announcement.author?.display_name ??
-                        "Course announcement"}
-                      {announcement.posted_at
-                        ? ` · ${formatDate(announcement.posted_at)}`
-                        : ""}
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              ))
-            ) : (
-              <TabEmpty
-                icon={<Megaphone />}
-                title="No announcements"
-                description="There are no active announcements for this course."
-              />
-            )}
-          </TabsPanel>
-        ) : null}
-      </Tabs>
     </>
   );
 }
 
-function AssignmentsTable({
+export function CourseOverview({
+  data,
+  score,
+}: {
+  data: CourseDetailData;
+  score: number | null;
+}) {
+  const hasModules = data.tabs.some((tab) => tab.id === "modules");
+  const completedItems = data.modules
+    .flatMap((module) => module.items ?? [])
+    .filter((item) => item.completion_requirement?.completed).length;
+  const moduleItems = data.modules.reduce(
+    (total, module) =>
+      total + (module.items?.length ?? module.items_count ?? 0),
+    0,
+  );
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Current standing</CardTitle>
+          <CardDescription>Your released course score.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {score === null ? (
+            <p className="text-muted-foreground text-sm">
+              No score has been released.
+            </p>
+          ) : (
+            <Meter value={score}>
+              <div className="flex justify-between">
+                <MeterLabel>Course score</MeterLabel>
+                <span className="text-sm tabular-nums">
+                  {Math.round(score)}%
+                </span>
+              </div>
+              <MeterTrack>
+                <MeterIndicator />
+              </MeterTrack>
+            </Meter>
+          )}
+        </CardContent>
+      </Card>
+      {hasModules ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Module progress</CardTitle>
+            <CardDescription>
+              Completion requirements reported by Canvas.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Meter
+              value={moduleItems ? (completedItems / moduleItems) * 100 : 0}
+            >
+              <div className="flex justify-between">
+                <MeterLabel>Completed</MeterLabel>
+                <span className="text-sm tabular-nums">
+                  {completedItems} of {moduleItems}
+                </span>
+              </div>
+              <MeterTrack>
+                <MeterIndicator />
+              </MeterTrack>
+            </Meter>
+          </CardContent>
+        </Card>
+      ) : null}
+    </div>
+  );
+}
+
+export function CourseAnnouncements({ data }: { data: CourseDetailData }) {
+  return (
+    <div className="grid gap-3">
+      {data.announcements.length ? (
+        data.announcements.map((announcement) => (
+          <Card key={announcement.id}>
+            <CardHeader>
+              <CardTitle>{announcement.title}</CardTitle>
+              <CardDescription>
+                {announcement.author?.display_name ?? "Course announcement"}
+                {announcement.posted_at
+                  ? ` · ${formatDate(announcement.posted_at)}`
+                  : ""}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        ))
+      ) : (
+        <TabEmpty
+          icon={<Megaphone />}
+          title="No announcements"
+          description="There are no active announcements for this course."
+        />
+      )}
+    </div>
+  );
+}
+
+export function AssignmentsTable({
   assignments,
 }: {
   assignments: CourseDetailData["assignments"];
