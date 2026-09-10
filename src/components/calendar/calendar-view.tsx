@@ -1,8 +1,8 @@
 import {
   AlertCircle,
   CalendarDays,
-  ChevronLeft,
   ExternalLink,
+  MousePointerClick,
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -64,10 +64,12 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useCanvasStore } from "@/integrations/canvas/store";
 import { useCalendarColors } from "@/integrations/canvas/use-calendar-colors";
 import { useCalendarEvents } from "@/integrations/canvas/use-calendar-events";
+import { cn } from "@/lib/utils";
 
 /**
- * Month or week calendar plus a day agenda. On large screens an opened event
- * stays beside the grid; on small screens it uses a sheet.
+ * Month or week calendar plus a day agenda. On large screens a persistent
+ * detail card sits beside the grid; on small screens an opened event uses a
+ * sheet.
  */
 export function CalendarView() {
   const dashboard = useCanvasStore((state) => state.dashboard);
@@ -255,13 +257,11 @@ export function CalendarView() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-6">
-          {selectedEvent && isLarge ? (
-            <EventDetailCard
-              item={selectedEvent}
-              origin={dashboard.origin}
-              onBack={() => setSelectedEventId(undefined)}
-            />
-          ) : null}
+          <EventDetailCard
+            item={selectedEvent}
+            origin={dashboard.origin}
+            onBack={() => setSelectedEventId(undefined)}
+          />
           <DayAgendaCard
             date={selectedDate}
             items={dayItems}
@@ -322,7 +322,7 @@ function DayAgendaCard({
   onSelectEvent: (id: string) => void;
 }) {
   return (
-    <Card className="min-w-0 lg:sticky lg:top-4">
+    <Card className="min-w-0">
       <CardHeader className="border-b">
         <CardTitle>{formatDayHeading(date)}</CardTitle>
         <CardDescription>
@@ -393,24 +393,72 @@ function EventDetailCard({
   origin,
   onBack,
 }: {
-  item: CalendarItem;
+  item?: CalendarItem;
   origin: string;
   onBack: () => void;
 }) {
   return (
-    <Card className="min-w-0 lg:sticky lg:top-4">
+    <Card className="hidden min-w-0 lg:flex lg:sticky lg:top-4">
       <CardHeader className="border-b">
-        <CardTitle>{item.title}</CardTitle>
-        <CardDescription>{formatEventTime(item)}</CardDescription>
+        <CardTitle className="min-w-0 truncate">
+          {item?.title ?? "Details"}
+        </CardTitle>
+        <CardDescription className="truncate">
+          {item ? formatEventTime(item) : "Select an assignment or event"}
+        </CardDescription>
         <CardAction>
-          <Button type="button" variant="ghost" size="sm" onClick={onBack}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            disabled={!item}
+            aria-label="Clear selection"
+            className={item ? undefined : "invisible"}
+          >
             <X />
           </Button>
         </CardAction>
       </CardHeader>
-      <CardPanel className="flex flex-col gap-4">
-        <EventMeta item={item} />
-        <CanvasLinkButton item={item} origin={origin} />
+      <CardPanel className="grid p-0">
+        <div
+          className={cn(
+            "col-start-1 row-start-1 motion-reduce:transition-none",
+            "transition-opacity duration-200 ease-out",
+            item ? "pointer-events-none opacity-0" : "opacity-100",
+          )}
+          aria-hidden={Boolean(item)}
+          inert={Boolean(item) || undefined}
+        >
+          <Empty className="py-12 md:py-16">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <MousePointerClick />
+              </EmptyMedia>
+              <EmptyTitle>Nothing selected</EmptyTitle>
+              <EmptyDescription>
+                Pick an assignment or event from the calendar or the day list.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        </div>
+        <div
+          className={cn(
+            "col-start-1 row-start-1 flex flex-col gap-4 p-6",
+            "motion-reduce:transition-none",
+            "transition-opacity duration-200 ease-out",
+            item ? "opacity-100" : "pointer-events-none opacity-0",
+          )}
+          aria-hidden={!item}
+          inert={!item || undefined}
+        >
+          {item ? (
+            <>
+              <EventMeta item={item} />
+              <CanvasLinkButton item={item} origin={origin} />
+            </>
+          ) : null}
+        </div>
       </CardPanel>
     </Card>
   );
@@ -479,7 +527,7 @@ function CanvasLinkButton({
 
 function CalendarSkeleton() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]">
       <Card>
         <CardHeader>
           <Skeleton className="h-6 w-28" />
@@ -489,15 +537,26 @@ function CalendarSkeleton() {
           <Skeleton className="h-72 w-full" />
         </CardPanel>
       </Card>
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-40" />
-        </CardHeader>
-        <CardPanel className="flex flex-col gap-3">
-          <Skeleton className="h-12" />
-          <Skeleton className="h-12" />
-        </CardPanel>
-      </Card>
+      <div className="flex flex-col gap-6">
+        <Card className="hidden lg:flex">
+          <CardHeader>
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-4 w-48" />
+          </CardHeader>
+          <CardPanel>
+            <Skeleton className="h-32 w-full" />
+          </CardPanel>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardPanel className="flex flex-col gap-3">
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
+          </CardPanel>
+        </Card>
+      </div>
     </div>
   );
 }
