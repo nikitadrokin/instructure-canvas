@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ExternalLink,
+  X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
@@ -399,8 +400,7 @@ function EventDetailCard({
         <CardDescription>{formatEventTime(item)}</CardDescription>
         <CardAction>
           <Button type="button" variant="ghost" size="sm" onClick={onBack}>
-            <ChevronLeft />
-            Back
+            <X />
           </Button>
         </CardAction>
       </CardHeader>
