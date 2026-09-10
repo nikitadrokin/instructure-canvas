@@ -26,7 +26,7 @@ export function CalendarFilters({
   if (sources.length === 0) return null;
 
   return (
-    <Card className="min-w-0">
+    <Card className="w-full min-w-0">
       <CardPanel className="py-4">
         <CheckboxGroup
           aria-label="Calendars"

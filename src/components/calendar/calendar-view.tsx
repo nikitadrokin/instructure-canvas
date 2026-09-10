@@ -198,13 +198,6 @@ export function CalendarView() {
         </Alert>
       ) : null}
 
-      <CalendarFilters
-        sources={sources}
-        value={activeCodes}
-        customColors={customColors}
-        onValueChange={setVisibleCodes}
-      />
-
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26rem)]">
         <div className="flex min-w-0 flex-col gap-3">
           <CalendarToolbar
@@ -248,6 +241,12 @@ export function CalendarView() {
               }}
             />
           )}
+          <CalendarFilters
+            sources={sources}
+            value={activeCodes}
+            customColors={customColors}
+            onValueChange={setVisibleCodes}
+          />
         </div>
 
         <div className="flex min-w-0 flex-col gap-6">
