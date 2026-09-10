@@ -432,6 +432,30 @@ const canvasCourseNicknameSchema = z
   })
   .passthrough();
 
+/**
+ * Assignment objects from GET /api/v1/users/self/missing_submissions.
+ * Description HTML is omitted on purpose; `include[]=course` is optional.
+ * @see https://developerdocs.instructure.com/services/canvas/resources/users
+ */
+const canvasMissingAssignmentSchema = z
+  .object({
+    id: canvasIdSchema,
+    name: z.string(),
+    due_at: nullableStringSchema,
+    points_possible: nullableNumberSchema,
+    html_url: z.string().optional(),
+    course_id: canvasIdSchema.optional(),
+    course: z
+      .object({
+        id: canvasIdSchema,
+        name: nullableStringSchema,
+        course_code: nullableStringSchema,
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
 const canvasUpcomingItemSchema = z
   .object({
     id: canvasIdSchema,
@@ -570,6 +594,17 @@ export type CanvasCalendarItem = {
   points_possible?: number | null;
 };
 
+/** Past-due assignment with no submission, from `missing_submissions`. */
+export type CanvasMissingItem = {
+  id: string;
+  name: string;
+  due_at?: string | null;
+  points_possible?: number | null;
+  html_url?: string;
+  course_id?: string;
+  course_name?: string | null;
+};
+
 /** Planner-style upcoming assignment or calendar event. */
 export type CanvasUpcomingItem = {
   id: string;
@@ -596,6 +631,7 @@ export type CanvasDashboard = {
   profile: CanvasProfile;
   courses: CanvasCourse[];
   upcoming: CanvasUpcomingItem[];
+  missing: CanvasMissingItem[];
 };
 
 export type CanvasAssignment = z.infer<typeof canvasAssignmentSchema>;
@@ -978,6 +1014,22 @@ export class CanvasClient {
   }
 
   /**
+   * Past-due assignments the current user has not submitted.
+   * `filter[]=submittable` drops locked items the student cannot turn in.
+   * @see https://developerdocs.instructure.com/services/canvas/resources/users
+   */
+  async getMissingSubmissions() {
+    const params = new URLSearchParams({ per_page: "100" });
+    params.append("include[]", "course");
+    params.append("filter[]", "submittable");
+    return this.fetchAllPages(
+      `/api/v1/users/self/missing_submissions?${params}`,
+      canvasMissingAssignmentSchema,
+      "missing submissions",
+    );
+  }
+
+  /**
    * Loads dated calendar events and assignment due dates for a range.
    * Canvas accepts at most 10 `context_codes[]` per request, so larger
    * course lists are fetched in sequential batches.
@@ -1270,6 +1322,28 @@ function upcomingBelongsToCourse(
   return courseIds.has(code.slice("course_".length));
 }
 
+function missingBelongsToCourse(
+  item: CanvasMissingItem,
+  courseIds: Set<string>,
+): boolean {
+  if (!item.course_id) return true;
+  return courseIds.has(item.course_id);
+}
+
+function toMissingItem(
+  item: z.infer<typeof canvasMissingAssignmentSchema>,
+): CanvasMissingItem {
+  return {
+    id: item.id,
+    name: item.name,
+    due_at: item.due_at,
+    points_possible: item.points_possible,
+    html_url: item.html_url,
+    course_id: item.course_id ?? item.course?.id,
+    course_name: item.course?.name ?? item.course?.course_code ?? null,
+  };
+}
+
 function toUpcomingItem(
   item: z.infer<typeof canvasUpcomingItemSchema>,
 ): CanvasUpcomingItem {
@@ -1300,7 +1374,8 @@ function toUpcomingItem(
 
 /**
  * Loads the dashboard using the same Canvas endpoints as the MCP tools
- * `get-current-user`, `list-courses`, and `get-upcoming-assignments`.
+ * `get-current-user`, `list-courses`, and `get-upcoming-assignments`, plus
+ * `GET /api/v1/users/self/missing_submissions`.
  */
 export async function getCanvasDashboard(input: {
   canvasUrl: string;
@@ -1315,10 +1390,19 @@ export async function getCanvasDashboard(input: {
   });
 
   try {
-    const [user, courses, upcoming, nicknames] = await Promise.all([
+    const [user, courses, upcoming, missing, nicknames] = await Promise.all([
       client.getCurrentUser(),
       client.getCourses("active"),
       client.getUpcomingAssignments(),
+      client.getMissingSubmissions().catch((error) => {
+        if (
+          error instanceof CanvasApiError &&
+          (error.status === 403 || error.status === 404)
+        ) {
+          return [];
+        }
+        throw error;
+      }),
       client.getCourseNicknames().catch(() => []),
     ]);
     const nicknamesByCourse = new Map(
@@ -1345,6 +1429,14 @@ export async function getCanvasDashboard(input: {
           if (!aTime) return 1;
           if (!bTime) return -1;
           return new Date(aTime).getTime() - new Date(bTime).getTime();
+        }),
+      missing: missing
+        .map(toMissingItem)
+        .filter((item) => missingBelongsToCourse(item, starredIds))
+        .sort((a, b) => {
+          if (!a.due_at) return 1;
+          if (!b.due_at) return -1;
+          return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
         }),
     };
   } finally {
