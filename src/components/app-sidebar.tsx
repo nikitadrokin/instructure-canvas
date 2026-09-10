@@ -6,7 +6,11 @@ import {
   Home,
   LogOut,
 } from "lucide-react";
-import type { DashboardData } from "@/components/dashboard/shared";
+import {
+  type Course,
+  type DashboardData,
+  partitionCourses,
+} from "@/components/dashboard/shared";
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +36,8 @@ export function AppSidebar({
   selectedCourseId?: string;
   onDisconnect: () => void;
 }) {
+  const { starred, other } = partitionCourses(data.courses);
+
   return (
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader>
@@ -75,39 +81,22 @@ export function AppSidebar({
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Your courses</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {data.courses.map((course) => {
-                const label =
-                  (course.nickname ?? course.course_code) ||
-                  course.name ||
-                  "Course";
-                return (
-                  <SidebarMenuItem key={course.id}>
-                    <SidebarMenuButton
-                      isActive={
-                        activePage === "courses" &&
-                        course.id === selectedCourseId
-                      }
-                      tooltip={label}
-                      render={
-                        <Link
-                          to="/courses/$courseId"
-                          params={{ courseId: course.id }}
-                        />
-                      }
-                    >
-                      <BookOpen />
-                      <span>{label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {starred.length ? (
+          <CourseNavGroup
+            label="Starred Courses"
+            courses={starred}
+            activePage={activePage}
+            selectedCourseId={selectedCourseId}
+          />
+        ) : null}
+        {other.length ? (
+          <CourseNavGroup
+            label="Other Courses"
+            courses={other}
+            activePage={activePage}
+            selectedCourseId={selectedCourseId}
+          />
+        ) : null}
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
@@ -134,5 +123,52 @@ export function AppSidebar({
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  );
+}
+
+function CourseNavGroup({
+  label,
+  courses,
+  activePage,
+  selectedCourseId,
+}: {
+  label: string;
+  courses: Course[];
+  activePage: "overview" | "courses" | "calendar";
+  selectedCourseId?: string;
+}) {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {courses.map((course) => {
+            const courseLabel =
+              (course.nickname ?? course.course_code) ||
+              course.name ||
+              "Course";
+            return (
+              <SidebarMenuItem key={course.id}>
+                <SidebarMenuButton
+                  isActive={
+                    activePage === "courses" && course.id === selectedCourseId
+                  }
+                  tooltip={courseLabel}
+                  render={
+                    <Link
+                      to="/courses/$courseId"
+                      params={{ courseId: course.id }}
+                    />
+                  }
+                >
+                  <BookOpen />
+                  <span>{courseLabel}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 }

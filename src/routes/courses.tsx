@@ -6,6 +6,7 @@ import {
   useParams,
 } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/app-sidebar";
+import { partitionCourses } from "@/components/dashboard/shared";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,8 +17,11 @@ import {
 } from "@/components/ui/breadcrumb";
 import {
   Select,
+  SelectGroup,
+  SelectGroupLabel,
   SelectItem,
   SelectPopup,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -44,10 +48,14 @@ function CoursesLayout() {
 
   useCanvasSessionRestore();
 
-  const options = (dashboard?.courses ?? []).map((course) => ({
+  const { starred, other } = partitionCourses(dashboard?.courses ?? []);
+  const toOption = (course: (typeof starred)[number]) => ({
     label: course.nickname ?? course.name ?? course.course_code,
     value: course.id,
-  }));
+  });
+  const starredOptions = starred.map(toOption);
+  const otherOptions = other.map(toOption);
+  const options = [...starredOptions, ...otherOptions];
 
   async function disconnect() {
     useCanvasStore.getState().forgetSession();
@@ -114,11 +122,29 @@ function CoursesLayout() {
                   <SelectValue placeholder="Choose a course" />
                 </SelectTrigger>
                 <SelectPopup>
-                  {options.map((option) => (
-                    <SelectItem key={option.value} value={option}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
+                  {starredOptions.length ? (
+                    <SelectGroup>
+                      <SelectGroupLabel>Starred Courses</SelectGroupLabel>
+                      {starredOptions.map((option) => (
+                        <SelectItem key={option.value} value={option}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ) : null}
+                  {starredOptions.length && otherOptions.length ? (
+                    <SelectSeparator />
+                  ) : null}
+                  {otherOptions.length ? (
+                    <SelectGroup>
+                      <SelectGroupLabel>Your Courses</SelectGroupLabel>
+                      {otherOptions.map((option) => (
+                        <SelectItem key={option.value} value={option}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  ) : null}
                 </SelectPopup>
               </Select>
             ) : null}

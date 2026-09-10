@@ -86,6 +86,8 @@ const canvasCourseSchema = z
     syllabus_body: nullableStringSchema,
     public_description: nullableStringSchema,
     default_view: nullableStringSchema,
+    /** Present when `include[]=favorites` is requested. */
+    is_favorite: z.boolean().optional(),
   })
   .passthrough();
 
@@ -545,6 +547,8 @@ export type CanvasCourse = {
   public_description?: string | null;
   default_view?: string | null;
   nickname?: string;
+  /** Starred in Canvas (`include[]=favorites`). */
+  is_favorite: boolean;
 };
 
 /**
@@ -722,6 +726,7 @@ export class CanvasClient {
     params.append("include[]", "term");
     params.append("include[]", "total_scores");
     params.append("include[]", "current_grading_period_scores");
+    params.append("include[]", "favorites");
 
     return this.fetchAllPages(
       `/api/v1/courses?${params}`,
@@ -1231,7 +1236,38 @@ function toCourse(
       : course.term,
     enrollments: course.enrollments,
     nickname,
+    is_favorite: course.is_favorite === true,
   };
+}
+
+function courseSortLabel(course: CanvasCourse): string {
+  return (course.nickname ?? course.name ?? course.course_code).toLowerCase();
+}
+
+/** Starred (real) courses first, then helpers, then name. */
+function compareCoursesByFavorite(a: CanvasCourse, b: CanvasCourse): number {
+  if (a.is_favorite !== b.is_favorite) {
+    return a.is_favorite ? -1 : 1;
+  }
+  return courseSortLabel(a).localeCompare(courseSortLabel(b));
+}
+
+/**
+ * Courses the user starred in Canvas. If none are starred yet, Canvas has
+ * not recorded favorites, so fall back to the full enrollment list.
+ */
+export function primaryCourses(courses: CanvasCourse[]): CanvasCourse[] {
+  const starred = courses.filter((course) => course.is_favorite);
+  return starred.length > 0 ? starred : courses;
+}
+
+function upcomingBelongsToCourse(
+  item: CanvasUpcomingItem,
+  courseIds: Set<string>,
+): boolean {
+  const code = item.context_code;
+  if (!code?.startsWith("course_")) return true;
+  return courseIds.has(code.slice("course_".length));
 }
 
 function toUpcomingItem(
@@ -1288,21 +1324,28 @@ export async function getCanvasDashboard(input: {
     const nicknamesByCourse = new Map(
       nicknames.map((item) => [item.course_id, item.nickname]),
     );
+    const mappedCourses = courses
+      .map((course) => toCourse(course, nicknamesByCourse.get(course.id)))
+      .sort(compareCoursesByFavorite);
+    const starredIds = new Set(
+      primaryCourses(mappedCourses).map((course) => course.id),
+    );
 
     return {
       origin,
       connectedAt: new Date(),
       profile: toProfile(user),
-      courses: courses.map((course) =>
-        toCourse(course, nicknamesByCourse.get(course.id)),
-      ),
-      upcoming: upcoming.map(toUpcomingItem).sort((a, b) => {
-        const aTime = a.assignment?.due_at ?? a.start_at;
-        const bTime = b.assignment?.due_at ?? b.start_at;
-        if (!aTime) return 1;
-        if (!bTime) return -1;
-        return new Date(aTime).getTime() - new Date(bTime).getTime();
-      }),
+      courses: mappedCourses,
+      upcoming: upcoming
+        .map(toUpcomingItem)
+        .filter((item) => upcomingBelongsToCourse(item, starredIds))
+        .sort((a, b) => {
+          const aTime = a.assignment?.due_at ?? a.start_at;
+          const bTime = b.assignment?.due_at ?? b.start_at;
+          if (!aTime) return 1;
+          if (!bTime) return -1;
+          return new Date(aTime).getTime() - new Date(bTime).getTime();
+        }),
     };
   } finally {
     client.forgetCredentials();

@@ -85,25 +85,30 @@ export function CalendarView() {
 
   const range =
     view === "week" ? weekRange(selectedDate) : visibleGridRange(month);
+  const calendarCourses = useMemo(() => {
+    if (!dashboard) return [];
+    const starred = dashboard.courses.filter((course) => course.is_favorite);
+    return starred.length > 0 ? starred : dashboard.courses;
+  }, [dashboard]);
   const sources = useMemo(
     () =>
       dashboard
         ? calendarSources({
             userId: dashboard.profile.id,
-            courses: dashboard.courses,
+            courses: calendarCourses,
           })
         : [],
-    [dashboard],
+    [calendarCourses, dashboard],
   );
   const contextCodes = useMemo(
     () =>
       dashboard
         ? calendarContextCodes({
             userId: dashboard.profile.id,
-            courseIds: dashboard.courses.map((course) => course.id),
+            courseIds: calendarCourses.map((course) => course.id),
           })
         : [],
-    [dashboard],
+    [calendarCourses, dashboard],
   );
   const allCodes = useMemo(
     () => sources.map((source) => source.code),
