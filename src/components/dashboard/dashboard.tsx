@@ -293,7 +293,7 @@ function CourseSection({
 }): React.ReactElement {
   return (
     <section id={id} aria-labelledby={`${id}-heading`}>
-      <div className="mb-4 flex items-baseline justify-between gap-4">
+      <div className="mb-4 flex items-baseline gap-3">
         <h2 id={`${id}-heading`} className="font-heading font-semibold text-xl">
           {title}
         </h2>
