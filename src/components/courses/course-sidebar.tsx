@@ -29,7 +29,17 @@ export function CourseSidebar({ course, tabs }: CourseSidebarProps) {
             ? "/courses/$courseId"
             : tab.id === "modules"
               ? "/courses/$courseId/modules"
-              : null;
+              : tab.id === "assignments"
+                ? "/courses/$courseId/assignments"
+                : tab.id === "quizzes"
+                  ? "/courses/$courseId/quizzes"
+                  : tab.id === "grades"
+                    ? "/courses/$courseId/grades"
+                    : tab.id === "people"
+                      ? "/courses/$courseId/users"
+                      : tab.id === "announcements"
+                        ? "/courses/$courseId/announcements"
+                        : null;
         const className =
           "h-auto w-full justify-start whitespace-normal px-3 py-1.5 text-start";
         if (internalTo) {

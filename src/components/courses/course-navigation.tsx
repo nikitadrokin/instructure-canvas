@@ -10,6 +10,9 @@ const views = [
     to: "/courses/$courseId/assignments",
   },
   { id: "modules", label: "Modules", to: "/courses/$courseId/modules" },
+  { id: "quizzes", label: "Quizzes", to: "/courses/$courseId/quizzes" },
+  { id: "grades", label: "Grades", to: "/courses/$courseId/grades" },
+  { id: "people", label: "People", to: "/courses/$courseId/users" },
   {
     id: "announcements",
     label: "Announcements",

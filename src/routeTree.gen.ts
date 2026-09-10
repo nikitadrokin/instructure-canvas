@@ -18,7 +18,12 @@ import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as CoursesCourseIdIndexRouteImport } from './routes/courses.$courseId.index'
 import { Route as CoursesCourseIdAnnouncementsRouteImport } from './routes/courses.$courseId.announcements'
 import { Route as CoursesCourseIdAssignmentsRouteImport } from './routes/courses.$courseId.assignments'
+import { Route as CoursesCourseIdGradesRouteImport } from './routes/courses.$courseId.grades'
 import { Route as CoursesCourseIdModulesRouteImport } from './routes/courses.$courseId.modules'
+import { Route as CoursesCourseIdQuizzesRouteImport } from './routes/courses.$courseId.quizzes'
+import { Route as CoursesCourseIdUsersRouteImport } from './routes/courses.$courseId.users'
+import { Route as CoursesCourseIdAssignmentsAssignmentIdRouteImport } from './routes/courses.$courseId.assignments_.$assignmentId'
+import { Route as CoursesCourseIdQuizzesQuizIdRouteImport } from './routes/courses.$courseId.quizzes_.$quizId'
 import { Route as CoursesCourseIdModulesItemsItemIdRouteImport } from './routes/courses.$courseId.modules_.items.$itemId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -68,11 +73,38 @@ const CoursesCourseIdAssignmentsRoute =
     path: '/assignments',
     getParentRoute: () => CoursesCourseIdRoute,
   } as any)
+const CoursesCourseIdGradesRoute = CoursesCourseIdGradesRouteImport.update({
+  id: '/grades',
+  path: '/grades',
+  getParentRoute: () => CoursesCourseIdRoute,
+} as any)
 const CoursesCourseIdModulesRoute = CoursesCourseIdModulesRouteImport.update({
   id: '/modules',
   path: '/modules',
   getParentRoute: () => CoursesCourseIdRoute,
 } as any)
+const CoursesCourseIdQuizzesRoute = CoursesCourseIdQuizzesRouteImport.update({
+  id: '/quizzes',
+  path: '/quizzes',
+  getParentRoute: () => CoursesCourseIdRoute,
+} as any)
+const CoursesCourseIdUsersRoute = CoursesCourseIdUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => CoursesCourseIdRoute,
+} as any)
+const CoursesCourseIdAssignmentsAssignmentIdRoute =
+  CoursesCourseIdAssignmentsAssignmentIdRouteImport.update({
+    id: '/assignments_/$assignmentId',
+    path: '/assignments/$assignmentId',
+    getParentRoute: () => CoursesCourseIdRoute,
+  } as any)
+const CoursesCourseIdQuizzesQuizIdRoute =
+  CoursesCourseIdQuizzesQuizIdRouteImport.update({
+    id: '/quizzes_/$quizId',
+    path: '/quizzes/$quizId',
+    getParentRoute: () => CoursesCourseIdRoute,
+  } as any)
 const CoursesCourseIdModulesItemsItemIdRoute =
   CoursesCourseIdModulesItemsItemIdRouteImport.update({
     id: '/modules_/items/$itemId',
@@ -89,8 +121,13 @@ export interface FileRoutesByFullPath {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/courses/$courseId/announcements': typeof CoursesCourseIdAnnouncementsRoute
   '/courses/$courseId/assignments': typeof CoursesCourseIdAssignmentsRoute
+  '/courses/$courseId/grades': typeof CoursesCourseIdGradesRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
+  '/courses/$courseId/quizzes': typeof CoursesCourseIdQuizzesRoute
+  '/courses/$courseId/users': typeof CoursesCourseIdUsersRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
+  '/courses/$courseId/assignments/$assignmentId': typeof CoursesCourseIdAssignmentsAssignmentIdRoute
+  '/courses/$courseId/quizzes/$quizId': typeof CoursesCourseIdQuizzesQuizIdRoute
   '/courses/$courseId/modules/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
 }
 export interface FileRoutesByTo {
@@ -100,8 +137,13 @@ export interface FileRoutesByTo {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/courses/$courseId/announcements': typeof CoursesCourseIdAnnouncementsRoute
   '/courses/$courseId/assignments': typeof CoursesCourseIdAssignmentsRoute
+  '/courses/$courseId/grades': typeof CoursesCourseIdGradesRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
+  '/courses/$courseId/quizzes': typeof CoursesCourseIdQuizzesRoute
+  '/courses/$courseId/users': typeof CoursesCourseIdUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdIndexRoute
+  '/courses/$courseId/assignments/$assignmentId': typeof CoursesCourseIdAssignmentsAssignmentIdRoute
+  '/courses/$courseId/quizzes/$quizId': typeof CoursesCourseIdQuizzesQuizIdRoute
   '/courses/$courseId/modules/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
 }
 export interface FileRoutesById {
@@ -114,8 +156,13 @@ export interface FileRoutesById {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/courses/$courseId/announcements': typeof CoursesCourseIdAnnouncementsRoute
   '/courses/$courseId/assignments': typeof CoursesCourseIdAssignmentsRoute
+  '/courses/$courseId/grades': typeof CoursesCourseIdGradesRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
+  '/courses/$courseId/quizzes': typeof CoursesCourseIdQuizzesRoute
+  '/courses/$courseId/users': typeof CoursesCourseIdUsersRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
+  '/courses/$courseId/assignments_/$assignmentId': typeof CoursesCourseIdAssignmentsAssignmentIdRoute
+  '/courses/$courseId/quizzes_/$quizId': typeof CoursesCourseIdQuizzesQuizIdRoute
   '/courses/$courseId/modules_/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
 }
 export interface FileRouteTypes {
@@ -129,8 +176,13 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/courses/$courseId/announcements'
     | '/courses/$courseId/assignments'
+    | '/courses/$courseId/grades'
     | '/courses/$courseId/modules'
+    | '/courses/$courseId/quizzes'
+    | '/courses/$courseId/users'
     | '/courses/$courseId/'
+    | '/courses/$courseId/assignments/$assignmentId'
+    | '/courses/$courseId/quizzes/$quizId'
     | '/courses/$courseId/modules/items/$itemId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -140,8 +192,13 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/courses/$courseId/announcements'
     | '/courses/$courseId/assignments'
+    | '/courses/$courseId/grades'
     | '/courses/$courseId/modules'
+    | '/courses/$courseId/quizzes'
+    | '/courses/$courseId/users'
     | '/courses/$courseId'
+    | '/courses/$courseId/assignments/$assignmentId'
+    | '/courses/$courseId/quizzes/$quizId'
     | '/courses/$courseId/modules/items/$itemId'
   id:
     | '__root__'
@@ -153,8 +210,13 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/courses/$courseId/announcements'
     | '/courses/$courseId/assignments'
+    | '/courses/$courseId/grades'
     | '/courses/$courseId/modules'
+    | '/courses/$courseId/quizzes'
+    | '/courses/$courseId/users'
     | '/courses/$courseId/'
+    | '/courses/$courseId/assignments_/$assignmentId'
+    | '/courses/$courseId/quizzes_/$quizId'
     | '/courses/$courseId/modules_/items/$itemId'
   fileRoutesById: FileRoutesById
 }
@@ -230,11 +292,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesCourseIdAssignmentsRouteImport
       parentRoute: typeof CoursesCourseIdRoute
     }
+    '/courses/$courseId/grades': {
+      id: '/courses/$courseId/grades'
+      path: '/grades'
+      fullPath: '/courses/$courseId/grades'
+      preLoaderRoute: typeof CoursesCourseIdGradesRouteImport
+      parentRoute: typeof CoursesCourseIdRoute
+    }
     '/courses/$courseId/modules': {
       id: '/courses/$courseId/modules'
       path: '/modules'
       fullPath: '/courses/$courseId/modules'
       preLoaderRoute: typeof CoursesCourseIdModulesRouteImport
+      parentRoute: typeof CoursesCourseIdRoute
+    }
+    '/courses/$courseId/quizzes': {
+      id: '/courses/$courseId/quizzes'
+      path: '/quizzes'
+      fullPath: '/courses/$courseId/quizzes'
+      preLoaderRoute: typeof CoursesCourseIdQuizzesRouteImport
+      parentRoute: typeof CoursesCourseIdRoute
+    }
+    '/courses/$courseId/users': {
+      id: '/courses/$courseId/users'
+      path: '/users'
+      fullPath: '/courses/$courseId/users'
+      preLoaderRoute: typeof CoursesCourseIdUsersRouteImport
+      parentRoute: typeof CoursesCourseIdRoute
+    }
+    '/courses/$courseId/assignments_/$assignmentId': {
+      id: '/courses/$courseId/assignments_/$assignmentId'
+      path: '/assignments/$assignmentId'
+      fullPath: '/courses/$courseId/assignments/$assignmentId'
+      preLoaderRoute: typeof CoursesCourseIdAssignmentsAssignmentIdRouteImport
+      parentRoute: typeof CoursesCourseIdRoute
+    }
+    '/courses/$courseId/quizzes_/$quizId': {
+      id: '/courses/$courseId/quizzes_/$quizId'
+      path: '/quizzes/$quizId'
+      fullPath: '/courses/$courseId/quizzes/$quizId'
+      preLoaderRoute: typeof CoursesCourseIdQuizzesQuizIdRouteImport
       parentRoute: typeof CoursesCourseIdRoute
     }
     '/courses/$courseId/modules_/items/$itemId': {
@@ -250,16 +347,27 @@ declare module '@tanstack/react-router' {
 interface CoursesCourseIdRouteChildren {
   CoursesCourseIdAnnouncementsRoute: typeof CoursesCourseIdAnnouncementsRoute
   CoursesCourseIdAssignmentsRoute: typeof CoursesCourseIdAssignmentsRoute
+  CoursesCourseIdGradesRoute: typeof CoursesCourseIdGradesRoute
   CoursesCourseIdModulesRoute: typeof CoursesCourseIdModulesRoute
+  CoursesCourseIdQuizzesRoute: typeof CoursesCourseIdQuizzesRoute
+  CoursesCourseIdUsersRoute: typeof CoursesCourseIdUsersRoute
   CoursesCourseIdIndexRoute: typeof CoursesCourseIdIndexRoute
+  CoursesCourseIdAssignmentsAssignmentIdRoute: typeof CoursesCourseIdAssignmentsAssignmentIdRoute
+  CoursesCourseIdQuizzesQuizIdRoute: typeof CoursesCourseIdQuizzesQuizIdRoute
   CoursesCourseIdModulesItemsItemIdRoute: typeof CoursesCourseIdModulesItemsItemIdRoute
 }
 
 const CoursesCourseIdRouteChildren: CoursesCourseIdRouteChildren = {
   CoursesCourseIdAnnouncementsRoute: CoursesCourseIdAnnouncementsRoute,
   CoursesCourseIdAssignmentsRoute: CoursesCourseIdAssignmentsRoute,
+  CoursesCourseIdGradesRoute: CoursesCourseIdGradesRoute,
   CoursesCourseIdModulesRoute: CoursesCourseIdModulesRoute,
+  CoursesCourseIdQuizzesRoute: CoursesCourseIdQuizzesRoute,
+  CoursesCourseIdUsersRoute: CoursesCourseIdUsersRoute,
   CoursesCourseIdIndexRoute: CoursesCourseIdIndexRoute,
+  CoursesCourseIdAssignmentsAssignmentIdRoute:
+    CoursesCourseIdAssignmentsAssignmentIdRoute,
+  CoursesCourseIdQuizzesQuizIdRoute: CoursesCourseIdQuizzesQuizIdRoute,
   CoursesCourseIdModulesItemsItemIdRoute:
     CoursesCourseIdModulesItemsItemIdRoute,
 }
