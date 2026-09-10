@@ -5,6 +5,9 @@ struct Params {
   time: f32,
   motion: f32,
   texel: vec2f,
+  pointer: vec2f,
+  hover: f32,
+  press: f32,
 }
 
 @group(0) @binding(0) var<uniform> params: Params;
@@ -67,13 +70,6 @@ fn rotate(p: vec2f, angle: f32) -> vec2f {
   return vec2f(c * p.x - s * p.y, s * p.x + c * p.y);
 }
 
-fn polarAlign(p: vec2f, count: f32) -> vec2f {
-  let slice = TAU / count;
-  let angle = atan2(p.y, p.x);
-  let sector = round(angle / slice) * slice;
-  return rotate(p, -sector);
-}
-
 fn sdCircle(p: vec2f, radius: f32) -> f32 {
   return length(p) - radius;
 }
@@ -82,11 +78,27 @@ fn sdOutwardHalfDisk(p: vec2f, radius: f32) -> f32 {
   return max(length(p) - radius, -p.x);
 }
 
-fn sdCanvasMark(p: vec2f) -> f32 {
-  let q = polarAlign(p, FIGURES);
-  let head = sdCircle(q - vec2f(HEAD_X, 0.0), HEAD_R);
-  let body = sdOutwardHalfDisk(q - vec2f(BODY_X, 0.0), BODY_R);
-  return min(head, body);
+// Evaluate each figure separately so displaced neighbors cross sector boundaries.
+fn sdCanvasMark(p: vec2f, pointer: vec2f) -> f32 {
+  var distance = 10.0;
+  for (var index = 0; index < 8; index++) {
+    let angle = f32(index) * TAU / FIGURES;
+    let axis = vec2f(cos(angle), sin(angle));
+    let anchor = axis * 0.52;
+    let delta = anchor - pointer;
+    let proximity = 1.0 - smoothstep(0.0, 0.95, length(delta));
+    let energy = proximity * params.hover;
+    let direction = delta / max(length(delta), 0.16);
+    let tangent = vec2f(-direction.y, direction.x);
+    let offset = (direction * 0.20 + tangent * 0.07) * energy
+      + axis * params.press * params.hover * 0.12;
+    let twist = energy * 0.30 * sin(angle - atan2(pointer.y, pointer.x));
+    let q = rotate(p - anchor - offset, -angle - twist) + vec2f(0.52, 0.0);
+    let head = sdCircle(q - vec2f(HEAD_X, 0.0), HEAD_R);
+    let body = sdOutwardHalfDisk(q - vec2f(BODY_X, 0.0), BODY_R);
+    distance = min(distance, min(head, body));
+  }
+  return distance;
 }
 
 @fragment
@@ -99,7 +111,8 @@ fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let spin = clock * 0.08 * params.motion;
   p = rotate(p, spin);
 
-  let d = sdCanvasMark(p);
+  let pointer = rotate(params.pointer, spin);
+  let d = sdCanvasMark(p, pointer);
   let pixel = max(max(fwidth(d), length(params.texel) * 1.6), 0.0015);
   let fill = 1.0 - smoothstep(-pixel, pixel, d);
   let glow = exp(-max(d, 0.0) * 26.0) * (0.22 + 0.06 * sin(clock * 1.15));
@@ -116,6 +129,9 @@ fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   let canvasRed = vec3f(0.882, 0.247, 0.169);
   let ember = vec3f(1.0, 0.55, 0.28);
   var rgb = mix(canvasRed, ember, veins * 0.45 + spark * 0.3);
+
+  let proximity = exp(-length(p - pointer) * 2.8) * params.hover;
+  rgb = mix(rgb, vec3f(1.0, 0.78, 0.44), proximity * (0.65 + params.press * 0.25));
 
   // Premultiply with the same coverage so faint edges stay red, not gray.
   return vec4f(rgb * coverage, coverage);

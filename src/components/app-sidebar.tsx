@@ -1,11 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import {
-  BookOpen,
-  CalendarDays,
-  GraduationCap,
-  Home,
-  LogOut,
-} from "lucide-react";
+import { BookOpen, CalendarDays, Home, LogOut } from "lucide-react";
+import { CanvasLogo } from "@/components/canvas-logo/canvas-logo";
 import {
   type Course,
   type DashboardData,
@@ -42,12 +37,12 @@ export function AppSidebar({
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-1 py-1.5">
-          <span
-            aria-hidden="true"
-            className="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground"
-          >
-            <GraduationCap className="size-4.5" />
-          </span>
+          <CanvasLogo
+            decorative
+            interactive={false}
+            size="sm"
+            className="size-8 shrink-0"
+          />
           <span className="font-semibold text-sm tracking-tight group-data-[collapsible=icon]:hidden truncate">
             Canvas Local
           </span>

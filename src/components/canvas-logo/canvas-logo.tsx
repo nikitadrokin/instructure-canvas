@@ -35,6 +35,8 @@ export interface CanvasLogoProps
     Omit<React.ComponentProps<"div">, "children"> {
   /** When true, hide the mark from assistive tech because nearby text names it. */
   decorative?: boolean;
+  /** Enable pointer repulsion and press energy. */
+  interactive?: boolean;
   /** Accessible name announced to assistive tech. */
   label?: string;
 }
@@ -91,6 +93,7 @@ function CanvasLogoMark(): React.ReactElement {
 export function CanvasLogo({
   className,
   decorative = false,
+  interactive = true,
   label = "Canvas",
   size,
   ...props
@@ -120,6 +123,7 @@ export function CanvasLogo({
               if (!cancelled) setGpuReady(true);
             },
             reducedMotion,
+            interactive,
           });
         })
         .catch(() => {
@@ -139,14 +143,18 @@ export function CanvasLogo({
       motionQuery.removeEventListener("change", onMotionChange);
       stop();
     };
-  }, []);
+  }, [interactive]);
 
   return (
     <div
       {...props}
       aria-hidden={decorative ? true : undefined}
       aria-label={decorative ? undefined : label}
-      className={cn("pointer-events-none", logoVariants({ size }), className)}
+      className={cn(
+        !interactive && "pointer-events-none",
+        logoVariants({ size }),
+        className,
+      )}
       role="img"
     >
       <span
