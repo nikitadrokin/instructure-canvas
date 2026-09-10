@@ -24,7 +24,8 @@ const HEAD_R = 0.086;
 const BODY_X = 0.588;
 const BODY_R = 0.196;
 const FIGURES = 8;
-const SCALE = 42;
+// Match the shader’s unit-disk coordinates and 1.18 framing scale.
+const SCALE = 50 / 1.18;
 const CENTER = 50;
 
 /**
@@ -61,9 +62,10 @@ function CanvasLogoMark(): React.ReactElement {
     const startY = bodyCy + perpY * radius;
     const endX = bodyCx - perpX * radius;
     const endY = bodyCy - perpY * radius;
+    // With SVG’s downward Y axis, sweep 0 bulges away from the center.
     const path = [
       `M ${startX.toFixed(3)} ${startY.toFixed(3)}`,
-      `A ${radius.toFixed(3)} ${radius.toFixed(3)} 0 0 1 ${endX.toFixed(3)} ${endY.toFixed(3)}`,
+      `A ${radius.toFixed(3)} ${radius.toFixed(3)} 0 0 0 ${endX.toFixed(3)} ${endY.toFixed(3)}`,
       "Z",
     ].join(" ");
 
