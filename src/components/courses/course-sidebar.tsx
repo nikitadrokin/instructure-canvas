@@ -39,7 +39,9 @@ export function CourseSidebar({ course, tabs }: CourseSidebarProps) {
                       ? "/courses/$courseId/users"
                       : tab.id === "announcements"
                         ? "/courses/$courseId/announcements"
-                        : null;
+                        : tab.id === "syllabus"
+                          ? "/courses/$courseId/syllabus"
+                          : null;
         const className =
           "h-auto w-full justify-start whitespace-normal px-3 py-1.5 text-start";
         if (internalTo) {
@@ -66,12 +68,9 @@ export function CourseSidebar({ course, tabs }: CourseSidebarProps) {
             variant="link"
             className={className}
             render={
-              // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-              <a
-                href={tab.html_url}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={`Open ${tab.label} in Canvas`}
+              <Link
+                to="/courses/$courseId/tools/$tabId"
+                params={{ courseId: course.id, tabId: tab.id }}
               />
             }
           >
