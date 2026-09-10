@@ -137,7 +137,7 @@ function CoursesLayout() {
                   ) : null}
                   {otherOptions.length ? (
                     <SelectGroup>
-                      <SelectGroupLabel>Your Courses</SelectGroupLabel>
+                      <SelectGroupLabel>Other Courses</SelectGroupLabel>
                       {otherOptions.map((option) => (
                         <SelectItem key={option.value} value={option}>
                           {option.label}

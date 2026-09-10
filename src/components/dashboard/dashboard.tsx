@@ -167,7 +167,7 @@ export function Dashboard({
               {other.length || !starred.length ? (
                 <CourseSection
                   id="courses"
-                  title="Your Courses"
+                  title="Other Courses"
                   count={other.length}
                   courses={other}
                   empty
