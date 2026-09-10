@@ -444,7 +444,7 @@ function EventDetailCard({
         </div>
         <div
           className={cn(
-            "col-start-1 row-start-1 flex flex-col gap-4 p-6",
+            "col-start-1 row-start-1 flex flex-col gap-4 self-stretch p-6",
             "motion-reduce:transition-none",
             "transition-opacity duration-200 ease-out",
             item ? "opacity-100" : "pointer-events-none opacity-0",
@@ -455,7 +455,11 @@ function EventDetailCard({
           {item ? (
             <>
               <EventMeta item={item} />
-              <CanvasLinkButton item={item} origin={origin} />
+              <CanvasLinkButton
+                item={item}
+                origin={origin}
+                className="mt-auto"
+              />
             </>
           ) : null}
         </div>
@@ -507,9 +511,11 @@ function EventKindBadge({ kind }: { kind: CalendarItem["kind"] }) {
 function CanvasLinkButton({
   item,
   origin,
+  className,
 }: {
   item: CalendarItem;
   origin: string;
+  className?: string;
 }) {
   const href = item.html_url ?? origin;
   return (
@@ -517,7 +523,7 @@ function CanvasLinkButton({
       href={href}
       target="_blank"
       rel="noreferrer noopener"
-      className={buttonVariants()}
+      className={buttonVariants({ className })}
     >
       <ExternalLink />
       Open in Canvas
