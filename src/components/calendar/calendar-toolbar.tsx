@@ -1,10 +1,6 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  RadioGroupPrimitive,
-  RadioPrimitive,
-} from "@/components/ui/radio-group";
+import { RadioGroup, RadioPrimitive } from "@/components/ui/radio-group";
 import {
   segmentedControlItemVariants,
   segmentedControlRootClassName,
@@ -68,23 +64,21 @@ export function CalendarToolbar({
         </Button>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <RadioGroupPrimitive
+        <RadioGroup
           aria-label="Calendar view"
           value={view}
           onValueChange={(value) => {
             if (value === "month" || value === "week") onViewChange(value);
           }}
-          className={segmentedControlRootClassName}
+          className={cn(segmentedControlRootClassName, "flex-row")}
         >
-          <Label className={cn(itemClassName, "cursor-pointer")}>
-            <RadioPrimitive.Root value="month" className="sr-only" />
+          <RadioPrimitive.Root className={itemClassName} value="month">
             Month
-          </Label>
-          <Label className={cn(itemClassName, "cursor-pointer")}>
-            <RadioPrimitive.Root value="week" className="sr-only" />
+          </RadioPrimitive.Root>
+          <RadioPrimitive.Root className={itemClassName} value="week">
             Week
-          </Label>
-        </RadioGroupPrimitive>
+          </RadioPrimitive.Root>
+        </RadioGroup>
         <Button type="button" variant="outline" size="sm" onClick={onToday}>
           Today
         </Button>
