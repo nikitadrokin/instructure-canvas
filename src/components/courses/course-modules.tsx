@@ -8,12 +8,15 @@ import {
   FileQuestion,
   FileText,
   Layers3,
+  LayoutGrid,
   Link2,
+  List,
   Lock,
   MessagesSquare,
   Paperclip,
   StickyNote,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { CourseDetailData } from "@/components/courses/course-detail";
 import {
   Accordion,
@@ -90,6 +93,23 @@ export function CourseModules({
   issue?: string;
   embedded?: boolean;
 }) {
+  const [view, setView] = useState<"list" | "cards">("list");
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("canvas-modules-view") === "cards")
+        setView("cards");
+    } catch {
+      /* Storage can be unavailable in private browsing. */
+    }
+  }, []);
+  const changeView = (next: "list" | "cards") => {
+    setView(next);
+    try {
+      localStorage.setItem("canvas-modules-view", next);
+    } catch {
+      /* Keep the view usable without storage. */
+    }
+  };
   const trackedItems = modules
     .flatMap((module) => module.items ?? [])
     .filter((item) => item.completion_requirement);
@@ -154,16 +174,52 @@ export function CourseModules({
       ) : null}
 
       {modules.length ? (
-        <div className="flex flex-col gap-4">
-          {modules.map((module) => (
-            <ModuleCard
-              key={module.id}
-              courseId={course.id}
-              module={module}
-              moduleNames={moduleNames}
-            />
-          ))}
-        </div>
+        <>
+          <div className="mb-4 flex justify-end">
+            <fieldset
+              aria-label="Module layout"
+              className="flex gap-0.5 rounded-lg bg-muted p-0.5"
+            >
+              <Button
+                size="icon-sm"
+                variant={view === "list" ? "secondary" : "ghost"}
+                aria-label="List view"
+                title="List view"
+                aria-pressed={view === "list"}
+                onClick={() => changeView("list")}
+              >
+                <List />
+              </Button>
+              <Button
+                size="icon-sm"
+                variant={view === "cards" ? "secondary" : "ghost"}
+                aria-label="Cards view"
+                title="Cards view"
+                aria-pressed={view === "cards"}
+                onClick={() => changeView("cards")}
+              >
+                <LayoutGrid />
+              </Button>
+            </fieldset>
+          </div>
+          <div
+            className={
+              view === "cards"
+                ? "grid grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))] items-start gap-4"
+                : "flex flex-col gap-4"
+            }
+          >
+            {modules.map((module) => (
+              <ModuleCard
+                key={module.id}
+                courseId={course.id}
+                module={module}
+                moduleNames={moduleNames}
+                compact={view === "cards"}
+              />
+            ))}
+          </div>
+        </>
       ) : (
         <Card>
           <Empty>
@@ -187,10 +243,12 @@ function ModuleCard({
   courseId,
   module,
   moduleNames,
+  compact = false,
 }: {
   courseId: string;
   module: CourseModule;
   moduleNames: Map<string, string>;
+  compact?: boolean;
 }) {
   const items = module.items ?? [];
   const tracked = items.filter((item) => item.completion_requirement);
@@ -248,6 +306,7 @@ function ModuleCard({
                     key={item.id}
                     courseId={courseId}
                     item={item}
+                    compact={compact}
                   />
                 ))}
               </ul>
@@ -291,9 +350,11 @@ function ModuleStateBadge({ module }: { module: CourseModule }) {
 function ModuleItemRow({
   courseId,
   item,
+  compact = false,
 }: {
   courseId: string;
   item: CourseModuleItem;
+  compact?: boolean;
 }) {
   const indent = Math.max(item.indent ?? 0, 0);
 
@@ -376,13 +437,19 @@ function ModuleItemRow({
 
   return (
     <li
-      className="group relative flex items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-accent"
+      className={`group relative flex rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-accent ${compact ? "flex-col items-stretch gap-1" : "items-center justify-between gap-3"}`}
       style={{ paddingInlineStart: `${0.625 + indent}rem` }}
     >
       {title}
-      <span className="flex shrink-0 items-center gap-2.5 text-muted-foreground text-xs">
+      <span
+        className={`flex shrink-0 items-center gap-2.5 text-muted-foreground text-xs ${compact ? "pl-6.5" : ""}`}
+      >
         {meta.length ? (
-          <span className="hidden tabular-nums sm:inline">
+          <span
+            className={
+              compact ? "tabular-nums" : "hidden tabular-nums sm:inline"
+            }
+          >
             {meta.join(" · ")}
           </span>
         ) : null}
