@@ -250,6 +250,13 @@ export function CalendarView() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-6">
+          {selectedEvent && isLarge ? (
+            <EventDetailCard
+              item={selectedEvent}
+              origin={dashboard.origin}
+              onBack={() => setSelectedEventId(undefined)}
+            />
+          ) : null}
           <DayAgendaCard
             date={selectedDate}
             items={dayItems}
@@ -258,13 +265,6 @@ export function CalendarView() {
             customColors={customColors}
             onSelectEvent={setSelectedEventId}
           />
-          {selectedEvent && isLarge ? (
-            <EventDetailCard
-              item={selectedEvent}
-              origin={dashboard.origin}
-              onBack={() => setSelectedEventId(undefined)}
-            />
-          ) : null}
         </div>
       </div>
 
