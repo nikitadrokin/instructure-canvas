@@ -520,6 +520,37 @@ const canvasCalendarEventSchema = z
   })
   .passthrough();
 
+/** A learning object returned by the current user's Canvas planner. */
+const canvasPlannerItemSchema = z
+  .object({
+    plannable_id: canvasIdSchema,
+    plannable_type: z.string(),
+    plannable_date: nullableStringSchema,
+    html_url: z.string().optional(),
+    plannable: z
+      .object({
+        title: z.string().optional(),
+        name: z.string().optional(),
+        due_at: nullableStringSchema,
+        points_possible: nullableNumberSchema,
+        html_url: z.string().optional(),
+      })
+      .passthrough(),
+    planner_override: z
+      .object({ marked_complete: z.boolean().optional() })
+      .passthrough()
+      .nullable()
+      .optional(),
+    submissions: z
+      .union([
+        z.literal(false),
+        z.object({ submitted: z.boolean().optional() }).passthrough(),
+      ])
+      .nullable()
+      .optional(),
+  })
+  .passthrough();
+
 /**
  * Saved calendar colors from GET /api/v1/users/self/colors.
  * @see https://developerdocs.instructure.com/services/canvas/resources/users
@@ -532,6 +563,15 @@ const canvasCustomColorsSchema = z
 
 /** Canvas calendar query type. Assignments are a separate list from events. */
 export type CanvasCalendarKind = "event" | "assignment";
+
+export type CanvasPlannerItem = {
+  id: string;
+  type: string;
+  title: string;
+  date: string | null;
+  htmlUrl: string | null;
+  completed: boolean;
+};
 
 const canvasErrorSchema = z.object({
   errors: z
@@ -1182,6 +1222,52 @@ export class CanvasClient {
       if (byTime !== 0) return byTime;
       return a.title.localeCompare(b.title);
     });
+  }
+
+  /** Loads this user's course-scoped planner items for an inclusive range. */
+  async getCoursePlannerItems(input: {
+    courseId: string;
+    startDate: string;
+    endDate: string;
+  }): Promise<CanvasPlannerItem[]> {
+    const params = new URLSearchParams({
+      start_date: input.startDate,
+      end_date: input.endDate,
+      per_page: "100",
+    });
+    params.append("context_codes[]", `course_${input.courseId}`);
+
+    const rows = await this.fetchAllPages(
+      `/api/v1/planner/items?${params}`,
+      canvasPlannerItemSchema,
+      "course planner items",
+    );
+
+    return rows
+      .map((row) => {
+        const rawUrl = row.plannable.html_url ?? row.html_url;
+        const url = rawUrl ? new URL(rawUrl, this.baseUrl) : null;
+        const submitted =
+          row.submissions === false ? false : row.submissions?.submitted;
+        return {
+          id: row.plannable_id,
+          type: row.plannable_type,
+          title: row.plannable.title ?? row.plannable.name ?? "Course item",
+          date: row.plannable.due_at ?? row.plannable_date ?? null,
+          htmlUrl:
+            url?.protocol === "https:" && url.origin === this.baseUrl
+              ? url.toString()
+              : null,
+          completed: Boolean(
+            row.planner_override?.marked_complete || submitted,
+          ),
+        };
+      })
+      .sort((a, b) => {
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return a.date.localeCompare(b.date);
+      });
   }
 
   /**

@@ -166,3 +166,52 @@ test("tool launch rejects URLs outside the connected Canvas origin", async () =>
     globalThis.fetch = originalFetch;
   }
 });
+
+test("course planner is scoped to the course and normalizes completion", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestedUrl: URL | undefined;
+  globalThis.fetch = async (input) => {
+    requestedUrl = new URL(String(input));
+    return Response.json([
+      {
+        plannable_id: 7,
+        plannable_type: "assignment",
+        plannable_date: "2026-09-30T12:00:00Z",
+        html_url: "/courses/10/assignments/7",
+        plannable: { title: "Weekly reflection", due_at: null },
+        planner_override: { marked_complete: true },
+        submissions: false,
+      },
+    ]);
+  };
+  try {
+    const items = await new CanvasClient({
+      baseUrl: origin,
+      accessToken: "test",
+    }).getCoursePlannerItems({
+      courseId: "10",
+      startDate: "2026-09-28",
+      endDate: "2026-10-04",
+    });
+
+    assert.equal(requestedUrl?.pathname, "/api/v1/planner/items");
+    assert.equal(
+      requestedUrl?.searchParams.get("context_codes[]"),
+      "course_10",
+    );
+    assert.equal(requestedUrl?.searchParams.get("start_date"), "2026-09-28");
+    assert.equal(requestedUrl?.searchParams.get("end_date"), "2026-10-04");
+    assert.deepEqual(items, [
+      {
+        id: "7",
+        type: "assignment",
+        title: "Weekly reflection",
+        date: "2026-09-30T12:00:00Z",
+        htmlUrl: `${origin}/courses/10/assignments/7`,
+        completed: true,
+      },
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

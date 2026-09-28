@@ -3,6 +3,7 @@ import { CourseOverview } from "@/components/courses/course-detail";
 import { getCourseScore } from "@/components/dashboard/shared";
 import { useCanvasStore } from "@/integrations/canvas/store";
 import { useCourseDetail } from "@/integrations/canvas/use-course-detail";
+import { useCoursePlanner } from "@/integrations/canvas/use-course-planner";
 
 export const Route = createFileRoute("/courses/$courseId/")({
   validateSearch: (
@@ -32,6 +33,7 @@ function CourseOverviewPage() {
   const { courseId } = Route.useParams();
   const dashboard = useCanvasStore((state) => state.dashboard);
   const detail = useCourseDetail(courseId);
+  const planner = useCoursePlanner(courseId);
 
   if (!detail.data || !dashboard) return null;
 
@@ -43,6 +45,9 @@ function CourseOverviewPage() {
     <CourseOverview
       data={detail.data}
       score={selectedCourse ? getCourseScore(selectedCourse) : null}
+      plannerItems={planner.data ?? []}
+      plannerPending={planner.isPending}
+      plannerUnavailable={planner.isError}
     />
   );
 }

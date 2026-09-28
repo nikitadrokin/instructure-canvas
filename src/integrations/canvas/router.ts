@@ -223,6 +223,50 @@ export const canvasRouter = createTRPCRouter({
         client.forgetCredentials();
       }
     }),
+  coursePlanner: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string().min(1),
+        startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const startMs = Date.parse(`${input.startDate}T00:00:00`);
+      const endMs = Date.parse(`${input.endDate}T00:00:00`);
+      if (
+        Number.isNaN(startMs) ||
+        Number.isNaN(endMs) ||
+        endMs < startMs ||
+        (endMs - startMs) / 86_400_000 > 14
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Choose a valid planner date range.",
+        });
+      }
+
+      const session =
+        getCanvasSession(ctx.canvasSessionId) ?? ctx.canvasCredentials;
+      if (!session) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Connect to Canvas to view this course.",
+        });
+      }
+
+      const client = new CanvasClient({
+        baseUrl: normalizeCanvasBaseUrl(session.canvasUrl),
+        accessToken: session.token,
+      });
+      try {
+        return await client.getCoursePlannerItems(input);
+      } catch (error) {
+        throw toTrpcError(error);
+      } finally {
+        client.forgetCredentials();
+      }
+    }),
   calendarEvents: publicProcedure
     .input(
       z.object({
