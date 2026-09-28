@@ -25,6 +25,32 @@ test("assignment readers accept absent optional quiz and upload data", async () 
   }
 });
 
+test("assignment readers accept null rubric scoring flags", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    Response.json({
+      id: 1,
+      name: "Rubric assignment",
+      rubric: [
+        {
+          id: "criterion-1",
+          description: "Criterion",
+          points: 10,
+          ignore_for_scoring: null,
+        },
+      ],
+    });
+  try {
+    const assignment = await new CanvasClient({
+      baseUrl: origin,
+      accessToken: "test",
+    }).getCourseAssignment("10", "1");
+    assert.equal(assignment.rubric?.[0].ignore_for_scoring, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("invalid rows fail explicitly instead of silently disappearing from grades", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () =>

@@ -191,7 +191,7 @@ const canvasRubricCriterionSchema = z
     description: nullableStringSchema,
     long_description: nullableStringSchema,
     points: nullableNumberSchema,
-    ignore_for_scoring: z.boolean().optional(),
+    ignore_for_scoring: z.boolean().nullable().optional(),
     ratings: z.array(canvasRubricRatingSchema).optional(),
   })
   .passthrough();
