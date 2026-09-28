@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/styles.css"
+        ],
+        "createdAt": "2026-09-28T22:08:31.675Z",
+        "reason": "Intentional semantic blockquote rule; existing style predates the PDF viewer work (git blame 1f9a70a3)."
+      }
+    ]
+  }
+}
