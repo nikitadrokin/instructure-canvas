@@ -111,6 +111,12 @@ const canvasFileSchema = z
   })
   .passthrough();
 
+const canvasFilePublicUrlSchema = z
+  .object({
+    public_url: nullableStringSchema,
+  })
+  .passthrough();
+
 const canvasCommentAuthorSchema = z
   .object({
     id: canvasIdSchema.optional(),
@@ -1176,6 +1182,43 @@ export class CanvasClient {
       if (byTime !== 0) return byTime;
       return a.title.localeCompare(b.title);
     });
+  }
+
+  /**
+   * Course-scoped file metadata. Prefer this over the global files endpoint
+   * so the file has to belong to the course the user is viewing.
+   */
+  async getCourseFile(courseId: string, fileId: string) {
+    return this.parseResponse(
+      canvasFileSchema,
+      await this.request(
+        `/api/v1/courses/${encodeURIComponent(courseId)}/files/${encodeURIComponent(fileId)}`,
+      ),
+      "file",
+    );
+  }
+
+  /** Global file lookup. Used when a file is not stored as a course file. */
+  async getFile(fileId: string) {
+    return this.parseResponse(
+      canvasFileSchema,
+      await this.request(`/api/v1/files/${encodeURIComponent(fileId)}`),
+      "file",
+    );
+  }
+
+  /**
+   * Canvas's documented inline-preview URL for a file
+   * (`GET /api/v1/files/:id/public_url`).
+   */
+  async getFilePublicUrl(fileId: string) {
+    return this.parseResponse(
+      canvasFilePublicUrlSchema,
+      await this.request(
+        `/api/v1/files/${encodeURIComponent(fileId)}/public_url`,
+      ),
+      "file preview url",
+    );
   }
 
   /**

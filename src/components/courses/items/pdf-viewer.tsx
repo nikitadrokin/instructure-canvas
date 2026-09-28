@@ -1,0 +1,417 @@
+import { ChevronLeft, ChevronRight, Download, Minus, Plus } from "lucide-react";
+import type {
+  PDFDocumentLoadingTask,
+  PDFDocumentProxy,
+  RenderTask,
+} from "pdfjs-dist";
+import type React from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Toolbar,
+  ToolbarButton,
+  ToolbarGroup,
+  ToolbarSeparator,
+} from "@/components/ui/toolbar";
+import {
+  Tooltip,
+  TooltipPopup,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useCanvasStore } from "@/integrations/canvas/store";
+
+const MIN_SCALE = 0.5;
+const MAX_SCALE = 3;
+const SCALE_STEP = 0.15;
+
+function pageNumbers(count: number) {
+  const pages: number[] = [];
+  for (let page = 1; page <= count; page += 1) pages.push(page);
+  return pages;
+}
+
+export function PdfViewer({
+  src,
+  fileName,
+  downloadHref,
+}: {
+  src: string;
+  fileName: string;
+  downloadHref?: string;
+}): React.ReactElement {
+  const labelId = useId();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const pagesRef = useRef<HTMLDivElement>(null);
+  const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
+  const [pageCount, setPageCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [scale, setScale] = useState(1);
+  const [inlineMaxScale, setInlineMaxScale] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const userZoomed = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let task: PDFDocumentLoadingTask | undefined;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      setPdf(null);
+      setPageCount(0);
+      setPage(1);
+      setInlineMaxScale(1);
+      userZoomed.current = false;
+
+      try {
+        const pdfjs = await import("pdfjs-dist");
+        const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+        pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+        const { canvasUrl, token } = useCanvasStore.getState();
+        const httpHeaders =
+          canvasUrl && token
+            ? {
+                Authorization: `Bearer ${token}`,
+                "X-Canvas-Url": canvasUrl,
+              }
+            : undefined;
+        task = pdfjs.getDocument({
+          url: src,
+          httpHeaders,
+          withCredentials: true,
+        });
+        const documentProxy = await task.promise;
+        if (cancelled) {
+          await task.destroy();
+          return;
+        }
+        setPdf(documentProxy);
+        setPageCount(documentProxy.numPages);
+        setLoading(false);
+      } catch (caught) {
+        if (cancelled) return;
+        const name =
+          caught && typeof caught === "object" && "name" in caught
+            ? String(caught.name)
+            : "";
+        setError(
+          name === "PasswordException"
+            ? "This PDF is password protected. Download it to open it."
+            : "This PDF could not be displayed. Try downloading it instead.",
+        );
+        setLoading(false);
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+      void task?.destroy();
+    };
+  }, [src]);
+
+  const applyFitWidth = useCallback(async () => {
+    if (!pdf || !containerRef.current) return;
+    const first = await pdf.getPage(1);
+    const width = containerRef.current.clientWidth - 32;
+    if (width <= 0) return;
+    const next = Math.min(
+      MAX_SCALE,
+      Math.max(MIN_SCALE, width / first.getViewport({ scale: 1 }).width),
+    );
+    setInlineMaxScale(next);
+    if (!userZoomed.current) setScale(next);
+  }, [pdf]);
+
+  useEffect(() => {
+    void applyFitWidth();
+  }, [applyFitWidth]);
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+      userZoomed.current = false;
+      void applyFitWidth();
+    };
+    window.addEventListener("resize", handleWindowResize);
+    return () => window.removeEventListener("resize", handleWindowResize);
+  }, [applyFitWidth]);
+
+  const zoomBy = (delta: number) => {
+    userZoomed.current = true;
+    setScale((current) =>
+      Math.min(inlineMaxScale, Math.max(MIN_SCALE, current + delta)),
+    );
+  };
+
+  const goTo = (next: number) => {
+    if (next < 1 || next > pageCount) return;
+    setPage(next);
+    const target = pagesRef.current?.querySelector(`[data-page="${next}"]`);
+    target?.scrollIntoView({ block: "start" });
+  };
+
+  return (
+    <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden">
+      <Toolbar
+        aria-labelledby={labelId}
+        className="w-full flex-wrap items-center"
+      >
+        <span id={labelId} className="sr-only">
+          PDF viewer for {fileName}
+        </span>
+        <ToolbarGroup>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <ToolbarButton
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={page <= 1}
+                        aria-label="Previous page"
+                        onClick={() => goTo(page - 1)}
+                      />
+                    }
+                  />
+                }
+              >
+                <ChevronLeft />
+              </TooltipTrigger>
+              <TooltipPopup>Previous page</TooltipPopup>
+            </Tooltip>
+            <span className="min-w-16 px-1 text-center text-muted-foreground text-sm tabular-nums">
+              {pageCount ? `${page} / ${pageCount}` : "—"}
+            </span>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <ToolbarButton
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={page >= pageCount}
+                        aria-label="Next page"
+                        onClick={() => goTo(page + 1)}
+                      />
+                    }
+                  />
+                }
+              >
+                <ChevronRight />
+              </TooltipTrigger>
+              <TooltipPopup>Next page</TooltipPopup>
+            </Tooltip>
+          </TooltipProvider>
+        </ToolbarGroup>
+        <ToolbarSeparator />
+        <ToolbarGroup>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <ToolbarButton
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={scale <= MIN_SCALE}
+                        aria-label="Zoom out"
+                        onClick={() => zoomBy(-SCALE_STEP)}
+                      />
+                    }
+                  />
+                }
+              >
+                <Minus />
+              </TooltipTrigger>
+              <TooltipPopup>Zoom out</TooltipPopup>
+            </Tooltip>
+            <span className="min-w-12 px-1 text-center text-muted-foreground text-sm tabular-nums">
+              {Math.round(scale * 100)}%
+            </span>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <ToolbarButton
+                    render={
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={scale >= inlineMaxScale}
+                        aria-label="Zoom in"
+                        onClick={() => zoomBy(SCALE_STEP)}
+                      />
+                    }
+                  />
+                }
+              >
+                <Plus />
+              </TooltipTrigger>
+              <TooltipPopup>Zoom in</TooltipPopup>
+            </Tooltip>
+          </TooltipProvider>
+        </ToolbarGroup>
+        {downloadHref ? (
+          <>
+            <ToolbarSeparator />
+            <ToolbarGroup className="ms-auto">
+              <ToolbarButton
+                render={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={
+                      // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+                      <a
+                        href={downloadHref}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Download ${fileName}`}
+                      />
+                    }
+                  />
+                }
+              >
+                <Download />
+                Download
+              </ToolbarButton>
+            </ToolbarGroup>
+          </>
+        ) : null}
+      </Toolbar>
+
+      <div
+        ref={containerRef}
+        className="h-[70vh] w-full min-w-0 max-w-full overflow-auto overscroll-contain rounded-lg border bg-muted/40"
+      >
+        {loading ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 p-6">
+            <Spinner />
+            <Skeleton className="h-[80%] w-[70%] max-w-xl" />
+          </div>
+        ) : null}
+        {error ? (
+          <p role="alert" className="p-6 text-muted-foreground text-sm">
+            {error}
+          </p>
+        ) : null}
+        {pdf && !loading && !error ? (
+          <div
+            ref={pagesRef}
+            className="flex w-max min-w-full flex-col items-center gap-4 p-4"
+          >
+            {pageNumbers(pageCount).map((pageNumber) => (
+              <PdfPage
+                key={pageNumber}
+                pdf={pdf}
+                pageNumber={pageNumber}
+                scale={scale}
+                fileName={fileName}
+                onVisible={setPage}
+              />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function PdfPage({
+  pdf,
+  pageNumber,
+  scale,
+  fileName,
+  onVisible,
+}: {
+  pdf: PDFDocumentProxy;
+  pageNumber: number;
+  scale: number;
+  fileName: string;
+  onVisible: (page: number) => void;
+}): React.ReactElement {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting))
+          onVisible(pageNumber);
+      },
+      { threshold: 0.4 },
+    );
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [onVisible, pageNumber]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    let cancelled = false;
+    let renderTask: RenderTask | undefined;
+
+    async function draw() {
+      const page = await pdf.getPage(pageNumber);
+      if (cancelled || !canvas) return;
+      const viewport = page.getViewport({ scale });
+      const outputScale = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(viewport.width * outputScale);
+      canvas.height = Math.floor(viewport.height * outputScale);
+      canvas.style.width = `${Math.floor(viewport.width)}px`;
+      canvas.style.height = `${Math.floor(viewport.height)}px`;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      const transform =
+        outputScale === 1 ? undefined : [outputScale, 0, 0, outputScale, 0, 0];
+      renderTask = page.render({
+        canvas,
+        canvasContext: context,
+        viewport,
+        transform,
+      });
+      try {
+        await renderTask.promise;
+      } catch (caught) {
+        if (
+          caught &&
+          typeof caught === "object" &&
+          "name" in caught &&
+          caught.name === "RenderingCancelledException"
+        ) {
+          return;
+        }
+        throw caught;
+      }
+    }
+
+    void draw();
+    return () => {
+      cancelled = true;
+      renderTask?.cancel();
+    };
+  }, [pdf, pageNumber, scale]);
+
+  return (
+    <div
+      ref={hostRef}
+      data-page={pageNumber}
+      className="overflow-hidden rounded-md border bg-background shadow-xs"
+    >
+      <canvas ref={canvasRef} aria-label={`${fileName}, page ${pageNumber}`} />
+    </div>
+  );
+}

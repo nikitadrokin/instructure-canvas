@@ -266,7 +266,7 @@ function ItemBody({
 
   switch (content.kind) {
     case "page":
-      return <PageView page={content.page} />;
+      return <PageView page={content.page} courseId={courseId} />;
     case "assignment":
       return (
         <AssignmentView
@@ -281,12 +281,13 @@ function ItemBody({
           topic={content.topic}
           entries={content.entries}
           participants={content.participants}
+          courseId={courseId}
         />
       );
     case "quiz":
-      return <QuizView quiz={content.quiz} />;
+      return <QuizView quiz={content.quiz} courseId={courseId} />;
     case "file":
-      return <FileView file={content.file} />;
+      return <FileView file={content.file} courseId={courseId} />;
   }
 }
 

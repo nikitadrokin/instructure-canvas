@@ -77,7 +77,7 @@ export function CourseResource({
               courseId={courseId}
             />
           ) : (
-            <QuizView quiz={data.quiz} />
+            <QuizView quiz={data.quiz} courseId={courseId} />
           )}
         </>
       ) : null}

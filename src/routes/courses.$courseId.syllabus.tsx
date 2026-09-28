@@ -11,7 +11,10 @@ function Page() {
     <section className="space-y-4">
       <h2 className="text-lg font-semibold">Syllabus</h2>
       {detail.data?.course.syllabus_body ? (
-        <CanvasHtml html={detail.data.course.syllabus_body} />
+        <CanvasHtml
+          html={detail.data.course.syllabus_body}
+          courseId={courseId}
+        />
       ) : (
         <p className="text-sm text-muted-foreground">
           No syllabus content was published here. If your course uses University

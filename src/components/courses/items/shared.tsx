@@ -1,78 +1,118 @@
 import type React from "react";
+import { PdfViewer } from "@/components/courses/items/pdf-viewer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { splitCanvasFilePreviews } from "@/integrations/canvas/canvas-html";
+import { canvasFileContentPath } from "@/integrations/canvas/file-paths";
 import { cn } from "@/lib/utils";
 
 export function formatDateTime(value: string): string {
-	return new Intl.DateTimeFormat(undefined, {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-		hour: "numeric",
-		minute: "2-digit",
-	}).format(new Date(value));
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 export function formatDate(value: string): string {
-	return new Intl.DateTimeFormat(undefined, {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-	}).format(new Date(value));
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
 }
 
 export function formatBytes(size: number): string {
-	if (size < 1024) return `${size} B`;
-	const units = ["KB", "MB", "GB"];
-	let value = size;
-	let unit = "B";
-	for (const next of units) {
-		if (value < 1024) break;
-		value /= 1024;
-		unit = next;
-	}
-	return `${value.toFixed(value >= 10 ? 0 : 1)} ${unit}`;
+  if (size < 1024) return `${size} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = size;
+  let unit = "B";
+  for (const next of units) {
+    if (value < 1024) break;
+    value /= 1024;
+    unit = next;
+  }
+  return `${value.toFixed(value >= 10 ? 0 : 1)} ${unit}`;
 }
 
 /** Two-letter initials for an avatar fallback. */
 export function initials(name?: string | null): string {
-	if (!name) return "?";
-	const parts = name.trim().split(/\s+/).filter(Boolean);
-	if (!parts.length) return "?";
-	if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-	return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
 }
 
 /** Person avatar with image + initials fallback, used in comment threads. */
 export function PersonAvatar({
-	name,
-	src,
-	className,
+  name,
+  src,
+  className,
 }: {
-	name?: string | null;
-	src?: string | null;
-	className?: string;
+  name?: string | null;
+  src?: string | null;
+  className?: string;
 }): React.ReactElement {
-	return (
-		<Avatar className={cn("size-8", className)}>
-			{src ? <AvatarImage src={src} alt="" /> : null}
-			<AvatarFallback>{initials(name)}</AvatarFallback>
-		</Avatar>
-	);
+  return (
+    <Avatar className={cn("size-8", className)}>
+      {src ? <AvatarImage src={src} alt="" /> : null}
+      <AvatarFallback>{initials(name)}</AvatarFallback>
+    </Avatar>
+  );
 }
 
 /** Renders sanitized rich HTML returned by the Canvas API. */
 export function CanvasHtml({
-	html,
-	className,
+  html,
+  courseId,
+  className,
 }: {
-	html: string;
-	className?: string;
+  html: string;
+  courseId?: string;
+  className?: string;
 }): React.ReactElement {
-	return (
-		<div
-			className={cn("canvas-content", className)}
-			// biome-ignore lint/security/noDangerouslySetInnerHtml: Canvas sanitizes rich content server-side before the API returns it
-			dangerouslySetInnerHTML={{ __html: html }}
-		/>
-	);
+  const parts = splitCanvasFilePreviews(html, courseId);
+  const nodes: React.ReactNode[] = [];
+  const usedKeys = new Set<string>();
+
+  for (const part of parts) {
+    if (part.kind === "pdf") {
+      let key = `pdf-${part.courseId}-${part.fileId}`;
+      while (usedKeys.has(key)) key = `${key}+`;
+      usedKeys.add(key);
+      nodes.push(
+        <div key={key} className="my-4 min-w-0 max-w-full">
+          <PdfViewer
+            src={canvasFileContentPath(part.courseId, part.fileId)}
+            fileName={part.name}
+            downloadHref={canvasFileContentPath(
+              part.courseId,
+              part.fileId,
+              true,
+            )}
+          />
+        </div>,
+      );
+      continue;
+    }
+    if (!part.html.trim()) continue;
+    let key = `html-${part.html.slice(0, 48)}`;
+    while (usedKeys.has(key)) key = `${key}+`;
+    usedKeys.add(key);
+    nodes.push(
+      <div
+        key={key}
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Canvas sanitizes rich content server-side before the API returns it
+        dangerouslySetInnerHTML={{ __html: part.html }}
+      />,
+    );
+  }
+
+  return (
+    <div className={cn("canvas-content min-w-0 max-w-full", className)}>
+      {nodes}
+    </div>
+  );
 }

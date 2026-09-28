@@ -27,6 +27,7 @@ import { Route as CoursesCourseIdAssignmentsAssignmentIdRouteImport } from './ro
 import { Route as CoursesCourseIdQuizzesQuizIdRouteImport } from './routes/courses.$courseId.quizzes_.$quizId'
 import { Route as CoursesCourseIdToolsTabIdRouteImport } from './routes/courses.$courseId.tools.$tabId'
 import { Route as CoursesCourseIdModulesItemsItemIdRouteImport } from './routes/courses.$courseId.modules_.items.$itemId'
+import { Route as ApiCanvasCoursesCourseIdFilesFileIdRouteImport } from './routes/api.canvas.courses.$courseId.files.$fileId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -124,6 +125,12 @@ const CoursesCourseIdModulesItemsItemIdRoute =
     path: '/modules/items/$itemId',
     getParentRoute: () => CoursesCourseIdRoute,
   } as any)
+const ApiCanvasCoursesCourseIdFilesFileIdRoute =
+  ApiCanvasCoursesCourseIdFilesFileIdRouteImport.update({
+    id: '/api/canvas/courses/$courseId/files/$fileId',
+    path: '/api/canvas/courses/$courseId/files/$fileId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/courses/$courseId/quizzes/$quizId': typeof CoursesCourseIdQuizzesQuizIdRoute
   '/courses/$courseId/tools/$tabId': typeof CoursesCourseIdToolsTabIdRoute
   '/courses/$courseId/modules/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
+  '/api/canvas/courses/$courseId/files/$fileId': typeof ApiCanvasCoursesCourseIdFilesFileIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
   '/courses/$courseId/quizzes/$quizId': typeof CoursesCourseIdQuizzesQuizIdRoute
   '/courses/$courseId/tools/$tabId': typeof CoursesCourseIdToolsTabIdRoute
   '/courses/$courseId/modules/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
+  '/api/canvas/courses/$courseId/files/$fileId': typeof ApiCanvasCoursesCourseIdFilesFileIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -183,6 +192,7 @@ export interface FileRoutesById {
   '/courses/$courseId/quizzes_/$quizId': typeof CoursesCourseIdQuizzesQuizIdRoute
   '/courses/$courseId/tools/$tabId': typeof CoursesCourseIdToolsTabIdRoute
   '/courses/$courseId/modules_/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
+  '/api/canvas/courses/$courseId/files/$fileId': typeof ApiCanvasCoursesCourseIdFilesFileIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId/quizzes/$quizId'
     | '/courses/$courseId/tools/$tabId'
     | '/courses/$courseId/modules/items/$itemId'
+    | '/api/canvas/courses/$courseId/files/$fileId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId/quizzes/$quizId'
     | '/courses/$courseId/tools/$tabId'
     | '/courses/$courseId/modules/items/$itemId'
+    | '/api/canvas/courses/$courseId/files/$fileId'
   id:
     | '__root__'
     | '/'
@@ -243,6 +255,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId/quizzes_/$quizId'
     | '/courses/$courseId/tools/$tabId'
     | '/courses/$courseId/modules_/items/$itemId'
+    | '/api/canvas/courses/$courseId/files/$fileId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -250,6 +263,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   CoursesRoute: typeof CoursesRouteWithChildren
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
+  ApiCanvasCoursesCourseIdFilesFileIdRoute: typeof ApiCanvasCoursesCourseIdFilesFileIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -380,6 +394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesCourseIdModulesItemsItemIdRouteImport
       parentRoute: typeof CoursesCourseIdRoute
     }
+    '/api/canvas/courses/$courseId/files/$fileId': {
+      id: '/api/canvas/courses/$courseId/files/$fileId'
+      path: '/api/canvas/courses/$courseId/files/$fileId'
+      fullPath: '/api/canvas/courses/$courseId/files/$fileId'
+      preLoaderRoute: typeof ApiCanvasCoursesCourseIdFilesFileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -437,6 +458,8 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   CoursesRoute: CoursesRouteWithChildren,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
+  ApiCanvasCoursesCourseIdFilesFileIdRoute:
+    ApiCanvasCoursesCourseIdFilesFileIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
