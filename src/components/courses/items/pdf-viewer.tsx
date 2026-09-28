@@ -53,6 +53,7 @@ export function PdfViewer({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const userZoomed = useRef(false);
+  const measuredWidth = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,30 +115,45 @@ export function PdfViewer({
     };
   }, [src]);
 
-  const applyFitWidth = useCallback(async () => {
-    if (!pdf || !containerRef.current) return;
-    const first = await pdf.getPage(1);
-    const width = containerRef.current.clientWidth - 32;
-    if (width <= 0) return;
-    const next = Math.min(
-      MAX_SCALE,
-      Math.max(MIN_SCALE, width / first.getViewport({ scale: 1 }).width),
-    );
-    setInlineMaxScale(next);
-    if (!userZoomed.current) setScale(next);
-  }, [pdf]);
+  const applyFitWidth = useCallback(
+    async (observedWidth?: number) => {
+      if (!pdf || !containerRef.current) return;
+      const first = await pdf.getPage(1);
+      const width = (observedWidth ?? containerRef.current.clientWidth) - 32;
+      if (width <= 0) return;
+      const next = Math.min(
+        MAX_SCALE,
+        Math.max(MIN_SCALE, width / first.getViewport({ scale: 1 }).width),
+      );
+      setInlineMaxScale(next);
+      if (!userZoomed.current) setScale(next);
+    },
+    [pdf],
+  );
 
   useEffect(() => {
     void applyFitWidth();
   }, [applyFitWidth]);
 
   useEffect(() => {
-    const handleWindowResize = () => {
-      userZoomed.current = false;
-      void applyFitWidth();
+    const node = containerRef.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      const width = node.clientWidth;
+      if (Math.abs(width - measuredWidth.current) < 0.5) return;
+      measuredWidth.current = width;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        userZoomed.current = false;
+        void applyFitWidth(width);
+      });
+    });
+    observer.observe(node);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
     };
-    window.addEventListener("resize", handleWindowResize);
-    return () => window.removeEventListener("resize", handleWindowResize);
   }, [applyFitWidth]);
 
   const zoomBy = (delta: number) => {
@@ -155,7 +171,7 @@ export function PdfViewer({
   };
 
   return (
-    <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden">
+    <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden [contain:inline-size]">
       <Toolbar
         aria-labelledby={labelId}
         className="w-full flex-wrap items-center"
