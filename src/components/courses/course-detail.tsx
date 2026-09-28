@@ -1,8 +1,7 @@
 import { Link, useParams } from "@tanstack/react-router";
 import type { inferRouterOutputs } from "@trpc/server";
-import { ExternalLink, FileText, GraduationCap, Megaphone } from "lucide-react";
+import { FileText, GraduationCap, Megaphone } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -37,52 +36,17 @@ import type { TRPCRouter } from "@/integrations/trpc/router";
 export type CourseDetailData =
   inferRouterOutputs<TRPCRouter>["canvas"]["courseDetail"];
 
-export function CourseHeader({
-  data,
-  origin,
-}: {
-  data: CourseDetailData;
-  origin: string;
-}) {
-  const course = data.course;
-  const courseUrl = course.html_url ?? `${origin}/courses/${course.id}`;
-  return (
-    <>
-      {data.issues.length ? (
-        <Alert variant="warning" className="mb-6">
-          <AlertTitle>Some course sections are unavailable</AlertTitle>
-          <AlertDescription>
-            {data.issues
-              .map((issue) => `${issue.section}: ${issue.message}`)
-              .join(" ")}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-      <div className="mb-6 flex flex-col gap-4 border-b py-4 pb-6 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <CardDescription>{course.course_code}</CardDescription>
-          <CardTitle className="mt-1 text-2xl">
-            {course.name ?? course.course_code}
-          </CardTitle>
-        </div>
-        <Button
-          variant="outline"
-          render={
-            // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-            <a
-              href={courseUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Open this course in Canvas"
-            />
-          }
-        >
-          <ExternalLink />
-          Open in Canvas
-        </Button>
-      </div>
-    </>
-  );
+export function CourseIssues({ data }: { data: CourseDetailData }) {
+  return data.issues.length ? (
+    <Alert variant="warning" className="mb-6">
+      <AlertTitle>Some course sections are unavailable</AlertTitle>
+      <AlertDescription>
+        {data.issues
+          .map((issue) => `${issue.section}: ${issue.message}`)
+          .join(" ")}
+      </AlertDescription>
+    </Alert>
+  ) : null;
 }
 
 export function CourseOverview({

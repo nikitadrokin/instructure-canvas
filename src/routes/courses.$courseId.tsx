@@ -1,11 +1,10 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import {
-  CourseHeader,
+  CourseIssues,
   CourseSkeleton,
   DisconnectedState,
 } from "@/components/courses/course-detail";
 import { CourseNavigation } from "@/components/courses/course-navigation";
-import { CourseSidebar } from "@/components/courses/course-sidebar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCanvasStore } from "@/integrations/canvas/store";
 import { useCourseDetail } from "@/integrations/canvas/use-course-detail";
@@ -24,10 +23,6 @@ function CourseDetailLayout() {
 
   return (
     <div className="flex flex-col gap-8 md:flex-row md:items-start">
-      {/* {detail.data && dashboard ? (
-        <CourseSidebar course={detail.data.course} tabs={detail.data.tabs} />
-      ) : null} */}
-
       <div className="min-w-0 flex-1">
         {!hasHydrated || detail.isPending || isRestoring ? (
           <CourseSkeleton />
@@ -41,7 +36,7 @@ function CourseDetailLayout() {
         ) : null}
         {detail.data && dashboard ? (
           <>
-            <CourseHeader data={detail.data} origin={dashboard.origin} />
+            <CourseIssues data={detail.data} />
             <CourseNavigation courseId={courseId} tabs={detail.data.tabs} />
             <Outlet />
           </>
