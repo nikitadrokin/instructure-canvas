@@ -1,4 +1,12 @@
-import { ChevronLeft, ChevronRight, Download, Minus, Plus } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Maximize2,
+  Minimize2,
+  Minus,
+  Plus,
+} from "lucide-react";
 import type {
   PDFDocumentLoadingTask,
   PDFDocumentProxy,
@@ -44,6 +52,7 @@ export function PdfViewer({
   downloadHref?: string;
 }): React.ReactElement {
   const labelId = useId();
+  const viewerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pagesRef = useRef<HTMLDivElement>(null);
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
@@ -53,8 +62,21 @@ export function PdfViewer({
   const [inlineMaxScale, setInlineMaxScale] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fullscreenEnabled, setFullscreenEnabled] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const userZoomed = useRef(false);
   const measuredWidth = useRef(0);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === viewerRef.current);
+    };
+
+    setFullscreenEnabled(document.fullscreenEnabled);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -171,8 +193,19 @@ export function PdfViewer({
     target?.scrollIntoView({ block: "start" });
   };
 
+  const toggleFullscreen = async () => {
+    if (document.fullscreenElement === viewerRef.current) {
+      await document.exitFullscreen();
+      return;
+    }
+    await viewerRef.current?.requestFullscreen();
+  };
+
   return (
-    <div className="flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden [contain:inline-size]">
+    <div
+      ref={viewerRef}
+      className={`flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden [contain:inline-size] ${isFullscreen ? "h-screen bg-background p-3" : ""}`}
+    >
       <Toolbar
         aria-labelledby={labelId}
         className="w-full flex-wrap items-center"
@@ -279,38 +312,63 @@ export function PdfViewer({
             </Tooltip>
           </TooltipProvider>
         </ToolbarGroup>
-        {downloadHref ? (
-          <>
-            <ToolbarSeparator />
-            <ToolbarGroup className="ms-auto">
-              <ToolbarButton
+        <ToolbarSeparator />
+        <ToolbarGroup className="ms-auto">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger
                 render={
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <ToolbarButton
                     render={
-                      // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-                      <a
-                        href={downloadHref}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={`Download ${fileName}`}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={!fullscreenEnabled}
+                        aria-label={
+                          isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
+                        }
+                        onClick={() => void toggleFullscreen()}
                       />
                     }
                   />
                 }
               >
-                <Download />
-                Download
-              </ToolbarButton>
-            </ToolbarGroup>
-          </>
-        ) : null}
+                {isFullscreen ? <Minimize2 /> : <Maximize2 />}
+              </TooltipTrigger>
+              <TooltipPopup>
+                {isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              </TooltipPopup>
+            </Tooltip>
+          </TooltipProvider>
+          {downloadHref ? (
+            <ToolbarButton
+              render={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  render={
+                    // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+                    <a
+                      href={downloadHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Download ${fileName}`}
+                    />
+                  }
+                />
+              }
+            >
+              <Download />
+              Download
+            </ToolbarButton>
+          ) : null}
+        </ToolbarGroup>
       </Toolbar>
 
       <div
         ref={containerRef}
-        className="h-[70vh] w-full min-w-0 max-w-full overflow-auto overscroll-contain rounded-lg border bg-muted/40"
+        className={`${isFullscreen ? "min-h-0 flex-1" : "h-[70vh]"} w-full min-w-0 max-w-full overflow-auto overscroll-contain rounded-lg border bg-muted/40`}
       >
         {loading ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 p-6">
