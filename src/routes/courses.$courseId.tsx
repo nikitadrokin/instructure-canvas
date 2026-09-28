@@ -24,9 +24,9 @@ function CourseDetailLayout() {
 
   return (
     <div className="flex flex-col gap-8 md:flex-row md:items-start">
-      {detail.data && dashboard ? (
+      {/* {detail.data && dashboard ? (
         <CourseSidebar course={detail.data.course} tabs={detail.data.tabs} />
-      ) : null}
+      ) : null} */}
 
       <div className="min-w-0 flex-1">
         {!hasHydrated || detail.isPending || isRestoring ? (
