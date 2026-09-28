@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Download, Minus, Plus } from "lucide-react";
 import type {
   PDFDocumentLoadingTask,
   PDFDocumentProxy,
+  TextLayer as PDFTextLayer,
   RenderTask,
 } from "pdfjs-dist";
 import type React from "react";
@@ -333,7 +334,6 @@ export function PdfViewer({
                 pdf={pdf}
                 pageNumber={pageNumber}
                 scale={scale}
-                fileName={fileName}
                 onVisible={setPage}
               />
             ))}
@@ -348,16 +348,15 @@ function PdfPage({
   pdf,
   pageNumber,
   scale,
-  fileName,
   onVisible,
 }: {
   pdf: PDFDocumentProxy;
   pageNumber: number;
   scale: number;
-  fileName: string;
   onVisible: (page: number) => void;
 }): React.ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const textLayerRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -376,13 +375,16 @@ function PdfPage({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const textLayerNode = textLayerRef.current;
+    if (!canvas || !textLayerNode) return;
     let cancelled = false;
     let renderTask: RenderTask | undefined;
+    let textLayer: PDFTextLayer | undefined;
 
     async function draw() {
+      const pdfjs = await import("pdfjs-dist");
       const page = await pdf.getPage(pageNumber);
-      if (cancelled || !canvas) return;
+      if (cancelled || !canvas || !textLayerNode) return;
       const viewport = page.getViewport({ scale });
       const outputScale = window.devicePixelRatio || 1;
       canvas.width = Math.floor(viewport.width * outputScale);
@@ -399,14 +401,21 @@ function PdfPage({
         viewport,
         transform,
       });
+      textLayerNode.replaceChildren();
+      textLayer = new pdfjs.TextLayer({
+        container: textLayerNode,
+        textContentSource: page.streamTextContent(),
+        viewport,
+      });
       try {
-        await renderTask.promise;
+        await Promise.all([renderTask.promise, textLayer.render()]);
       } catch (caught) {
         if (
           caught &&
           typeof caught === "object" &&
           "name" in caught &&
-          caught.name === "RenderingCancelledException"
+          (caught.name === "RenderingCancelledException" ||
+            caught.name === "AbortException")
         ) {
           return;
         }
@@ -418,6 +427,7 @@ function PdfPage({
     return () => {
       cancelled = true;
       renderTask?.cancel();
+      textLayer?.cancel();
     };
   }, [pdf, pageNumber, scale]);
 
@@ -425,9 +435,11 @@ function PdfPage({
     <div
       ref={hostRef}
       data-page={pageNumber}
-      className="overflow-hidden rounded-md border bg-background shadow-xs"
+      className="relative overflow-hidden rounded-md border bg-background shadow-xs"
+      style={{ "--total-scale-factor": scale } as React.CSSProperties}
     >
-      <canvas ref={canvasRef} aria-label={`${fileName}, page ${pageNumber}`} />
+      <canvas ref={canvasRef} />
+      <div ref={textLayerRef} className="textLayer" />
     </div>
   );
 }
