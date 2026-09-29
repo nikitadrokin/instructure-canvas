@@ -34,7 +34,8 @@ import { useCanvasStore } from "@/integrations/canvas/store";
 import { cn } from "@/lib/utils";
 
 const MIN_SCALE = 0.5;
-const MAX_SCALE = 3;
+const MAX_FIT_SCALE = 3;
+const MAX_SCALE = 4;
 const SCALE_STEP = 0.15;
 
 function pageNumbers(count: number) {
@@ -60,7 +61,7 @@ export function PdfViewer({
   const [pageCount, setPageCount] = useState(0);
   const [page, setPage] = useState(1);
   const [scale, setScale] = useState(1);
-  const [inlineMaxScale, setInlineMaxScale] = useState(1);
+  const [zoomMode, setZoomMode] = useState<"fit" | "custom">("fit");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fullscreenEnabled, setFullscreenEnabled] = useState(false);
@@ -89,7 +90,7 @@ export function PdfViewer({
       setPdf(null);
       setPageCount(0);
       setPage(1);
-      setInlineMaxScale(1);
+      setZoomMode("fit");
       userZoomed.current = false;
 
       try {
@@ -146,11 +147,13 @@ export function PdfViewer({
       const width = (observedWidth ?? containerRef.current.clientWidth) - 32;
       if (width <= 0) return;
       const next = Math.min(
-        MAX_SCALE,
+        MAX_FIT_SCALE,
         Math.max(MIN_SCALE, width / first.getViewport({ scale: 1 }).width),
       );
-      setInlineMaxScale(next);
-      if (!userZoomed.current) setScale(next);
+      if (!userZoomed.current) {
+        setScale(next);
+        setZoomMode("fit");
+      }
     },
     [pdf],
   );
@@ -169,7 +172,6 @@ export function PdfViewer({
       measuredWidth.current = width;
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        userZoomed.current = false;
         void applyFitWidth(width);
       });
     });
@@ -182,9 +184,16 @@ export function PdfViewer({
 
   const zoomBy = (delta: number) => {
     userZoomed.current = true;
+    setZoomMode("custom");
     setScale((current) =>
-      Math.min(inlineMaxScale, Math.max(MIN_SCALE, current + delta)),
+      Math.min(MAX_SCALE, Math.max(MIN_SCALE, current + delta)),
     );
+  };
+
+  const fitToWidth = () => {
+    userZoomed.current = false;
+    setZoomMode("fit");
+    void applyFitWidth();
   };
 
   const goTo = (next: number) => {
@@ -212,7 +221,7 @@ export function PdfViewer({
     >
       <Toolbar
         aria-labelledby={labelId}
-        className="w-full flex-wrap items-center"
+        className="w-full flex-wrap items-center rounded-none border-0 bg-transparent p-0"
       >
         <span id={labelId} className="sr-only">
           PDF viewer for {fileName}
@@ -290,9 +299,19 @@ export function PdfViewer({
               </TooltipTrigger>
               <TooltipPopup>Zoom out</TooltipPopup>
             </Tooltip>
-            <span className="min-w-12 px-1 text-center text-muted-foreground text-sm tabular-nums">
-              {Math.round(scale * 100)}%
-            </span>
+            <Button
+              type="button"
+              variant={zoomMode === "fit" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={fitToWidth}
+            >
+              Fit width
+            </Button>
+            {zoomMode === "custom" ? (
+              <span className="min-w-12 px-1 text-center text-muted-foreground text-sm tabular-nums">
+                {Math.round(scale * 100)}%
+              </span>
+            ) : null}
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -302,7 +321,7 @@ export function PdfViewer({
                         type="button"
                         variant="ghost"
                         size="icon-sm"
-                        disabled={scale >= inlineMaxScale}
+                        disabled={scale >= MAX_SCALE}
                         aria-label="Zoom in"
                         onClick={() => zoomBy(SCALE_STEP)}
                       />
@@ -389,6 +408,7 @@ export function PdfViewer({
                 pdf={pdf}
                 pageNumber={pageNumber}
                 scale={scale}
+                scrollRoot={containerRef}
                 onVisible={setPage}
               />
             ))}
@@ -403,35 +423,60 @@ function PdfPage({
   pdf,
   pageNumber,
   scale,
+  scrollRoot,
   onVisible,
 }: {
   pdf: PDFDocumentProxy;
   pageNumber: number;
   scale: number;
+  scrollRoot: React.RefObject<HTMLDivElement | null>;
   onVisible: (page: number) => void;
 }): React.ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
   const hostRef = useRef<HTMLDivElement>(null);
+  const [isNearby, setIsNearby] = useState(false);
+  const [pageSize, setPageSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void pdf.getPage(pageNumber).then((pdfPage) => {
+      if (cancelled) return;
+      const viewport = pdfPage.getViewport({ scale });
+      setPageSize({ width: viewport.width, height: viewport.height });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [pdf, pageNumber, scale]);
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting))
-          onVisible(pageNumber);
+        for (const entry of entries) {
+          setIsNearby(entry.isIntersecting);
+          if (entry.intersectionRatio >= 0.4) onVisible(pageNumber);
+        }
       },
-      { threshold: 0.4 },
+      {
+        root: scrollRoot.current,
+        rootMargin: "100% 0px",
+        threshold: [0, 0.4],
+      },
     );
     observer.observe(host);
     return () => observer.disconnect();
-  }, [onVisible, pageNumber]);
+  }, [onVisible, pageNumber, scrollRoot]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const textLayerNode = textLayerRef.current;
-    if (!canvas || !textLayerNode) return;
+    if (!isNearby || !canvas || !textLayerNode) return;
     let cancelled = false;
     let renderTask: RenderTask | undefined;
     let textLayer: PDFTextLayer | undefined;
@@ -484,17 +529,29 @@ function PdfPage({
       renderTask?.cancel();
       textLayer?.cancel();
     };
-  }, [pdf, pageNumber, scale]);
+  }, [isNearby, pdf, pageNumber, scale]);
 
   return (
     <div
       ref={hostRef}
       data-page={pageNumber}
-      className="relative overflow-hidden rounded-md border bg-background shadow-xs"
-      style={{ "--total-scale-factor": scale } as React.CSSProperties}
+      className="relative max-w-full overflow-hidden rounded-md bg-background shadow-xs ring-1 ring-black/10 dark:ring-white/10"
+      style={
+        {
+          "--total-scale-factor": scale,
+          width: pageSize?.width ?? "min(100%, 48rem)",
+          aspectRatio: pageSize
+            ? `${pageSize.width} / ${pageSize.height}`
+            : "8.5 / 11",
+        } as React.CSSProperties
+      }
     >
-      <canvas ref={canvasRef} />
-      <div ref={textLayerRef} className="textLayer" />
+      {isNearby ? (
+        <>
+          <canvas ref={canvasRef} />
+          <div ref={textLayerRef} className="textLayer" />
+        </>
+      ) : null}
     </div>
   );
 }

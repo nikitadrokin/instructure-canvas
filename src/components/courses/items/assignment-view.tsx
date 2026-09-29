@@ -138,10 +138,14 @@ export function AssignmentView({
       {status ? (
         <Card>
           <CardHeader>
-            <CardDescription className="flex items-center gap-1.5">
+            <CardTitle
+              className="flex items-center gap-1.5 text-base"
+              role="heading"
+              aria-level={3}
+            >
               <ClipboardList className="size-3.5" />
               Submission
-            </CardDescription>
+            </CardTitle>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={status.variant} size="lg">
                 {status.icon}
@@ -162,21 +166,36 @@ export function AssignmentView({
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {score != null ? (
-              <Meter value={percent ?? 0}>
-                <div className="flex items-baseline justify-between">
-                  <MeterLabel>Score</MeterLabel>
-                  <span className="text-sm tabular-nums">
-                    {score}
-                    {points != null ? ` / ${points}` : ""}
-                    {percent != null ? ` · ${percent}%` : ""}
-                  </span>
-                </div>
-                {percent != null ? (
-                  <MeterTrack>
-                    <MeterIndicator />
-                  </MeterTrack>
-                ) : null}
-              </Meter>
+              <div className="flex flex-col gap-2">
+                <Meter value={Math.min(percent ?? 0, 100)} className="max-w-xl">
+                  <div className="flex flex-wrap items-end justify-between gap-2">
+                    <MeterLabel>Score</MeterLabel>
+                    <div className="text-right">
+                      <div className="font-semibold text-2xl leading-none tabular-nums">
+                        {score}
+                        {points != null ? (
+                          <span className="font-normal text-base text-muted-foreground">
+                            {` / ${points}`}
+                          </span>
+                        ) : null}
+                      </div>
+                      {percent != null ? (
+                        <div className="mt-1 text-muted-foreground text-sm tabular-nums">
+                          {percent}%
+                          {points != null && score > points
+                            ? ` · ${score - points} bonus points`
+                            : ""}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                  {percent != null && percent <= 100 ? (
+                    <MeterTrack>
+                      <MeterIndicator />
+                    </MeterTrack>
+                  ) : null}
+                </Meter>
+              </div>
             ) : (
               <p className="text-muted-foreground text-sm">
                 {points != null
@@ -290,7 +309,9 @@ export function AssignmentView({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Details</CardTitle>
+          <CardTitle className="text-base" role="heading" aria-level={3}>
+            Assignment details
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {assignment.description ? (
@@ -310,7 +331,11 @@ export function AssignmentView({
       {comments.length ? (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle
+              className="flex items-center gap-2 text-base"
+              role="heading"
+              aria-level={3}
+            >
               <MessageSquare className="size-4" />
               Feedback
             </CardTitle>
@@ -392,6 +417,7 @@ function RubricCard({
 }): React.ReactElement {
   const assessment = submission?.rubric_assessment ?? null;
   const scored = Boolean(assessment);
+  const submissionIsGraded = submission?.workflow_state === "graded";
   const criteria = assignment.rubric ?? [];
   const totalPossible = criteria.reduce(
     (sum, criterion) =>
@@ -408,11 +434,15 @@ function RubricCard({
   return (
     <Card className="overflow-hidden py-0">
       <CardHeader className="p-6 pb-0">
-        <CardTitle className="text-base">Rubric</CardTitle>
+        <CardTitle className="text-base" role="heading" aria-level={3}>
+          Rubric
+        </CardTitle>
         <CardDescription>
           {scored
             ? `Scored ${totalAwarded} of ${totalPossible} points.`
-            : `${totalPossible} points across ${criteria.length} criteria.`}
+            : submissionIsGraded
+              ? `Detailed rubric scores aren’t available. ${totalPossible} points across ${criteria.length} criteria.`
+              : `${totalPossible} points across ${criteria.length} criteria.`}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6 pt-4">
@@ -441,7 +471,8 @@ function RubricCard({
                     ) : null}
                   </TableCell>
                   <TableCell className="max-w-64 whitespace-normal align-top text-muted-foreground">
-                    {rating?.description ?? (scored ? "—" : "Not yet scored")}
+                    {rating?.description ??
+                      (scored || submissionIsGraded ? "—" : "Not yet scored")}
                     {result?.comments ? (
                       <span className="mt-0.5 block text-foreground text-xs italic">
                         {result.comments}

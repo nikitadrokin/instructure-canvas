@@ -32,6 +32,10 @@ export function CourseResource({
     data?.kind === "assignment"
       ? data.assignment.html_url
       : data?.quiz.html_url;
+  const assignmentIsInProgress =
+    data?.kind === "assignment" &&
+    !data.assignment.submission?.submitted_at &&
+    data.assignment.submission?.workflow_state !== "graded";
   return (
     <div className="space-y-4">
       <Link
@@ -60,14 +64,19 @@ export function CourseResource({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xl font-semibold">{title}</h2>
             {url ? (
-              <a
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm underline"
-              >
-                {kind === "quiz" ? "Take quiz in Canvas" : "Submit in Canvas"}
-              </a>
+              <Button
+                variant="outline"
+                size="sm"
+                render={
+                  <a href={url} target="_blank" rel="noreferrer">
+                    {kind === "quiz"
+                      ? "Take quiz in Canvas"
+                      : assignmentIsInProgress
+                        ? "Submit in Canvas"
+                        : "View in Canvas"}
+                  </a>
+                }
+              />
             ) : null}
           </div>
           {data.kind === "assignment" ? (
