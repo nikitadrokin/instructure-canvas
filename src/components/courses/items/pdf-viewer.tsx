@@ -337,6 +337,7 @@ export function PdfViewer({
                 render={
                   <Button
                     variant="outline"
+                    className="no-underline"
                     size="sm"
                     render={
                       // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
