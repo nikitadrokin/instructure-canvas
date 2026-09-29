@@ -134,7 +134,7 @@ export function ModuleItemDetail({
               </span>
               {found.module.name} · {typeLabel}
             </CardDescription>
-            <CardTitle className="mt-1 break-words text-2xl">
+            <CardTitle className="mt-1 wrap-break-word text-2xl">
               {item.title}
             </CardTitle>
           </div>
