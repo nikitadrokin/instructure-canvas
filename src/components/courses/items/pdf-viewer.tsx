@@ -314,56 +314,48 @@ export function PdfViewer({
         </ToolbarGroup>
         <ToolbarSeparator />
         <ToolbarGroup className="ms-auto">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
+          <ToolbarButton
+            render={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!fullscreenEnabled}
+                onClick={() => void toggleFullscreen()}
+              />
+            }
+          >
+            {isFullscreen ? <Minimize2 /> : <Maximize2 />}
+            {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          </ToolbarButton>
+        </ToolbarGroup>
+        {downloadHref ? (
+          <>
+            <ToolbarSeparator />
+            <ToolbarGroup>
+              <ToolbarButton
                 render={
-                  <ToolbarButton
+                  <Button
+                    variant="outline"
+                    size="sm"
                     render={
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled={!fullscreenEnabled}
-                        aria-label={
-                          isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
-                        }
-                        onClick={() => void toggleFullscreen()}
+                      // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
+                      <a
+                        href={downloadHref}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Download ${fileName}`}
                       />
                     }
                   />
                 }
               >
-                {isFullscreen ? <Minimize2 /> : <Maximize2 />}
-              </TooltipTrigger>
-              <TooltipPopup>
-                {isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              </TooltipPopup>
-            </Tooltip>
-          </TooltipProvider>
-          {downloadHref ? (
-            <ToolbarButton
-              render={
-                <Button
-                  variant="outline"
-                  size="sm"
-                  render={
-                    // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-                    <a
-                      href={downloadHref}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`Download ${fileName}`}
-                    />
-                  }
-                />
-              }
-            >
-              <Download />
-              Download
-            </ToolbarButton>
-          ) : null}
-        </ToolbarGroup>
+                <Download />
+                Download
+              </ToolbarButton>
+            </ToolbarGroup>
+          </>
+        ) : null}
       </Toolbar>
 
       <div
