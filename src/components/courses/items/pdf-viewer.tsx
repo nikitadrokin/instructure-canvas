@@ -31,6 +31,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useCanvasStore } from "@/integrations/canvas/store";
+import { cn } from "@/lib/utils";
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
@@ -204,7 +205,10 @@ export function PdfViewer({
   return (
     <div
       ref={viewerRef}
-      className={`flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden contain-[inline-size] ${isFullscreen ? "h-screen bg-background p-3" : ""}`}
+      className={cn(
+        "flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden contain-[inline-size]",
+        isFullscreen && "h-screen bg-background p-3",
+      )}
     >
       <Toolbar
         aria-labelledby={labelId}
