@@ -12,7 +12,7 @@ export function PageView({
 }): React.ReactElement {
   return (
     <Card>
-      <CardContent>
+      <CardContent className="p-3">
         {page.body ? (
           <CanvasHtml html={page.body} courseId={courseId} />
         ) : (
