@@ -43,9 +43,12 @@ export function CourseNavigation({
       const active = list.querySelector<HTMLAnchorElement>(
         '[data-status="active"]',
       );
-      indicator.style.opacity = active ? "1" : "0";
-      if (active) {
-        indicator.style.transform = `translateX(${active.offsetLeft}px) scaleX(${active.offsetWidth})`;
+      const label = active?.querySelector<HTMLElement>("[data-nav-label]");
+      indicator.style.opacity = label ? "1" : "0";
+      if (label) {
+        const listRect = list.getBoundingClientRect();
+        const labelRect = label.getBoundingClientRect();
+        indicator.style.transform = `translateX(${labelRect.left - listRect.left}px) scaleX(${labelRect.width})`;
       }
     };
     update();
@@ -77,7 +80,7 @@ export function CourseNavigation({
               }}
               className="relative shrink-0 rounded-sm px-3 py-2 text-sm font-medium text-muted-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring data-[status=active]:text-foreground"
             >
-              {view.label}
+              <span data-nav-label>{view.label}</span>
             </Link>
           ))}
         <span
