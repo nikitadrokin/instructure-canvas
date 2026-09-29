@@ -204,7 +204,7 @@ export function PdfViewer({
   return (
     <div
       ref={viewerRef}
-      className={`flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden [contain:inline-size] ${isFullscreen ? "h-screen bg-background p-3" : ""}`}
+      className={`flex w-full min-w-0 max-w-full flex-col gap-3 overflow-hidden contain-[inline-size] ${isFullscreen ? "h-screen bg-background p-3" : ""}`}
     >
       <Toolbar
         aria-labelledby={labelId}
