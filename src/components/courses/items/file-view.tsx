@@ -49,7 +49,7 @@ export function FileView({
           )}
           File
         </CardDescription>
-        <CardTitle className="break-words text-base">
+        <CardTitle className="wrap-break-word text-base">
           {file.display_name}
         </CardTitle>
         {meta.length ? (
