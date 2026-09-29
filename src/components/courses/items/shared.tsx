@@ -83,7 +83,7 @@ export function CanvasHtml({
       while (usedKeys.has(key)) key = `${key}+`;
       usedKeys.add(key);
       nodes.push(
-        <div key={key} className="my-4 min-w-0 max-w-full first:mt-0 last:mb-0">
+        <div key={key} className="my-0 min-w-0 max-w-full first:mt-0 last:mb-0">
           <PdfViewer
             src={canvasFileContentPath(part.courseId, part.fileId)}
             fileName={part.name}
