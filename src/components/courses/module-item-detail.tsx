@@ -43,6 +43,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { CanvasModuleItemContent } from "@/integrations/canvas/client";
 import { useCanvasStore } from "@/integrations/canvas/store";
 import { useCourseDetail } from "@/integrations/canvas/use-course-detail";
+import { useCoursePageTitle } from "@/integrations/canvas/use-course-title";
 import { useTRPC } from "@/integrations/trpc/react";
 
 export function ModuleItemDetail({
@@ -62,6 +63,7 @@ export function ModuleItemDetail({
     .flatMap((module) => (module.items ?? []).map((item) => ({ module, item })))
     .find((entry) => entry.item.id === itemId);
   const item = found?.item;
+  useCoursePageTitle(courseId, item?.title);
   const internal = item ? isInternalModuleItemType(item.type) : false;
 
   const content = useQuery(
