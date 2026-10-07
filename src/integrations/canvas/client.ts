@@ -1309,6 +1309,24 @@ export class CanvasClient {
   }
 
   /**
+   * Wiki pages for a course, sorted by title. Bodies are not requested; the
+   * page view loads one page at a time.
+   * @see https://developerdocs.instructure.com/services/canvas/resources/pages
+   */
+  async getCoursePages(courseId: string) {
+    const params = new URLSearchParams({
+      per_page: "100",
+      sort: "title",
+      order: "asc",
+    });
+    return this.fetchAllPages(
+      `/api/v1/courses/${encodeURIComponent(courseId)}/pages?${params}`,
+      canvasPageSchema,
+      "course pages",
+    );
+  }
+
+  /**
    * Discussion topics for a course, most recently active first.
    * Announcements are a separate list and are excluded by Canvas by default.
    * @see https://developerdocs.instructure.com/services/canvas/resources/discussion_topics
