@@ -5,6 +5,7 @@ import { CanvasLogo } from "#/components/canvas-logo/canvas-logo";
 import { ConnectScreen } from "#/components/connect-screen";
 import { Dashboard } from "#/components/dashboard/dashboard";
 import { Spinner } from "#/components/ui/spinner";
+import { usePageTitle } from "#/hooks/use-page-title";
 import { useCanvasStore } from "#/integrations/canvas/store";
 import { useTRPC, useTRPCClient } from "#/integrations/trpc/react";
 
@@ -15,6 +16,7 @@ function getTrpcErrorMessage(error: unknown, fallback: string) {
 export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
+	usePageTitle();
 	const trpc = useTRPC();
 	const client = useTRPCClient();
 	const queryClient = useQueryClient();
