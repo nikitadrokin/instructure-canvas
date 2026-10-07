@@ -18,6 +18,7 @@ const views = [
     label: "Announcements",
     to: "/courses/$courseId/announcements",
   },
+  { id: "syllabus", label: "Syllabus", to: "/courses/$courseId/syllabus" },
 ] as const;
 
 export function CourseNavigation({
