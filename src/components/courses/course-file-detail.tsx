@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCanvasStore } from "@/integrations/canvas/store";
+import { useCoursePageTitle } from "@/integrations/canvas/use-course-title";
 import { useTRPC } from "@/integrations/trpc/react";
 
 /** One course file with an inline preview or download button. */
@@ -29,6 +30,11 @@ export function CourseFileDetail({
         gcTime: 60 * 60_000,
       },
     ),
+  );
+
+  useCoursePageTitle(
+    courseId,
+    query.data?.kind === "file" ? query.data.file.display_name : "Files",
   );
 
   return (
