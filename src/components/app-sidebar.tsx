@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, Home, LogOut } from "lucide-react";
+import { BookOpen, CalendarDays, Home, ListChecks, LogOut } from "lucide-react";
 import { CanvasLogo } from "@/components/canvas-logo/canvas-logo";
 import {
   type Course,
@@ -61,6 +61,16 @@ export function AppSidebar({
                 >
                   <Home />
                   <span>Overview</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={activePage === "todo"}
+                  tooltip="To-do"
+                  render={<Link to="/todo" />}
+                >
+                  <ListChecks />
+                  <span>To-do</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
