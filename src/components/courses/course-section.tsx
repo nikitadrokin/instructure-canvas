@@ -14,8 +14,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useCanvasStore } from "@/integrations/canvas/store";
+import { useCoursePageTitle } from "@/integrations/canvas/use-course-title";
 import { useTRPC } from "@/integrations/trpc/react";
 import { formatDateTime } from "./items/shared";
+
+const SECTION_TITLES = {
+  quizzes: "Quizzes",
+  people: "People",
+  grades: "Grades",
+} as const;
 
 export function CourseSection({
   courseId,
@@ -27,6 +34,7 @@ export function CourseSection({
   const trpc = useTRPC();
   const ready = useCanvasStore((state) => state.sessionReady);
   const [search, setSearch] = useState("");
+  useCoursePageTitle(courseId, SECTION_TITLES[section]);
   const query = useQuery(
     trpc.canvas.courseSection.queryOptions(
       { courseId, section },
