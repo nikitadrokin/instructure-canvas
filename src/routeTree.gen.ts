@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as CoursesRouteImport } from './routes/courses'
+import { Route as TodoRouteImport } from './routes/todo'
 import { Route as CoursesIndexRouteImport } from './routes/courses.index'
 import { Route as CoursesCourseIdRouteImport } from './routes/courses.$courseId'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
@@ -48,6 +49,11 @@ const CalendarRoute = CalendarRouteImport.update({
 const CoursesRoute = CoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TodoRoute = TodoRouteImport.update({
+  id: '/todo',
+  path: '/todo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesIndexRoute = CoursesIndexRouteImport.update({
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/todo': typeof TodoRoute
   '/courses/$courseId': typeof CoursesCourseIdRouteWithChildren
   '/courses/': typeof CoursesIndexRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
+  '/todo': typeof TodoRoute
   '/courses': typeof CoursesIndexRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/courses/$courseId/announcements': typeof CoursesCourseIdAnnouncementsRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/calendar': typeof CalendarRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/todo': typeof TodoRoute
   '/courses/$courseId': typeof CoursesCourseIdRouteWithChildren
   '/courses/': typeof CoursesIndexRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/'
     | '/calendar'
     | '/courses'
+    | '/todo'
     | '/courses/$courseId'
     | '/courses/'
     | '/api/trpc/$'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/calendar'
+    | '/todo'
     | '/courses'
     | '/api/trpc/$'
     | '/courses/$courseId/announcements'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/'
     | '/calendar'
     | '/courses'
+    | '/todo'
     | '/courses/$courseId'
     | '/courses/'
     | '/api/trpc/$'
@@ -338,6 +350,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CalendarRoute: typeof CalendarRoute
   CoursesRoute: typeof CoursesRouteWithChildren
+  TodoRoute: typeof TodoRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
   ApiCanvasCoursesCourseIdFilesFileIdRoute: typeof ApiCanvasCoursesCourseIdFilesFileIdRoute
 }
@@ -363,6 +376,13 @@ declare module '@tanstack/react-router' {
       path: '/courses'
       fullPath: '/courses'
       preLoaderRoute: typeof CoursesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/todo': {
+      id: '/todo'
+      path: '/todo'
+      fullPath: '/todo'
+      preLoaderRoute: typeof TodoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses/': {
@@ -588,6 +608,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CalendarRoute: CalendarRoute,
   CoursesRoute: CoursesRouteWithChildren,
+  TodoRoute: TodoRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
   ApiCanvasCoursesCourseIdFilesFileIdRoute:
     ApiCanvasCoursesCourseIdFilesFileIdRoute,
