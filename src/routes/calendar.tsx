@@ -16,9 +16,11 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { useCanvasStore } from "@/integrations/canvas/store";
 import { useCanvasSessionRestore } from "@/integrations/canvas/use-session";
 import { useTRPCClient } from "@/integrations/trpc/react";
+import { SITE_TITLE } from "@/lib/page-title";
 
 export const Route = createFileRoute("/calendar")({
   component: CalendarPage,
@@ -30,6 +32,7 @@ function CalendarPage() {
   const dashboard = useCanvasStore((state) => state.dashboard);
 
   useCanvasSessionRestore();
+  usePageTitle("Calendar", SITE_TITLE);
 
   async function disconnect() {
     useCanvasStore.getState().forgetSession();
