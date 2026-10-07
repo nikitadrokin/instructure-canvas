@@ -550,6 +550,8 @@ const canvasPlannerItemSchema = z
     plannable_type: z.string(),
     plannable_date: nullableStringSchema,
     html_url: z.string().optional(),
+    course_id: canvasIdSchema.nullable().optional(),
+    context_name: nullableStringSchema,
     plannable: z
       .object({
         title: z.string().optional(),
@@ -567,7 +569,15 @@ const canvasPlannerItemSchema = z
     submissions: z
       .union([
         z.literal(false),
-        z.object({ submitted: z.boolean().optional() }).passthrough(),
+        z
+          .object({
+            submitted: z.boolean().optional(),
+            excused: z.boolean().optional(),
+            graded: z.boolean().optional(),
+            late: z.boolean().optional(),
+            missing: z.boolean().optional(),
+          })
+          .passthrough(),
       ])
       .nullable()
       .optional(),
@@ -594,6 +604,26 @@ export type CanvasPlannerItem = {
   date: string | null;
   htmlUrl: string | null;
   completed: boolean;
+};
+
+/** A planner item across all of the user's courses, for the To-do page. */
+export type CanvasTodoItem = {
+  id: string;
+  /** Canvas plannable type, e.g. assignment, quiz, discussion_topic. */
+  type: string;
+  title: string;
+  /** Due date, or the planner date for items without one. */
+  date: string | null;
+  courseId: string | null;
+  courseName: string | null;
+  htmlUrl: string | null;
+  pointsPossible: number | null;
+  completed: boolean;
+  submitted: boolean;
+  missing: boolean;
+  late: boolean;
+  graded: boolean;
+  excused: boolean;
 };
 
 const canvasErrorSchema = z.object({
@@ -1291,6 +1321,70 @@ export class CanvasClient {
         if (!a.date) return 1;
         if (!b.date) return -1;
         return a.date.localeCompare(b.date);
+      });
+  }
+
+  /**
+   * Planner items across every course the user is enrolled in, for an
+   * inclusive-start date range. `end_date` is exclusive of later days, so
+   * callers pass the day after the last day they want.
+   * @see https://developerdocs.instructure.com/services/canvas/resources/planner
+   */
+  async getPlannerTodoItems(input: {
+    startDate: string;
+    endDate: string;
+  }): Promise<CanvasTodoItem[]> {
+    const params = new URLSearchParams({
+      start_date: input.startDate,
+      end_date: input.endDate,
+      per_page: "100",
+    });
+    const rows = await this.fetchAllPages(
+      `/api/v1/planner/items?${params}`,
+      canvasPlannerItemSchema,
+      "planner items",
+    );
+
+    return rows
+      .map((row): CanvasTodoItem => {
+        const status = row.submissions || undefined;
+        const rawUrl = row.plannable.html_url ?? row.html_url;
+        let htmlUrl: string | null = null;
+        if (rawUrl) {
+          try {
+            const url = new URL(rawUrl, this.baseUrl);
+            htmlUrl =
+              url.protocol === "https:" && url.origin === this.baseUrl
+                ? url.toString()
+                : null;
+          } catch {
+            htmlUrl = null;
+          }
+        }
+        const submitted = status?.submitted === true;
+        return {
+          id: row.plannable_id,
+          type: row.plannable_type,
+          title: row.plannable.title ?? row.plannable.name ?? "Canvas item",
+          date: row.plannable.due_at ?? row.plannable_date ?? null,
+          courseId: row.course_id ?? null,
+          courseName: row.context_name ?? null,
+          htmlUrl,
+          pointsPossible: row.plannable.points_possible ?? null,
+          completed: Boolean(
+            row.planner_override?.marked_complete || submitted,
+          ),
+          submitted,
+          missing: status?.missing === true,
+          late: status?.late === true,
+          graded: status?.graded === true,
+          excused: status?.excused === true,
+        };
+      })
+      .sort((a, b) => {
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return Date.parse(a.date) - Date.parse(b.date);
       });
   }
 
