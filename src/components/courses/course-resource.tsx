@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from "@/integrations/canvas/store";
+import { useCoursePageTitle } from "@/integrations/canvas/use-course-title";
 import { useTRPC } from "@/integrations/trpc/react";
 import { AssignmentView } from "./items/assignment-view";
 import { QuizView } from "./items/quiz-view";
@@ -28,6 +29,7 @@ export function CourseResource({
   const data = query.data;
   const title =
     data?.kind === "assignment" ? data.assignment.name : data?.quiz.title;
+  useCoursePageTitle(courseId, title);
   const url =
     data?.kind === "assignment"
       ? data.assignment.html_url
