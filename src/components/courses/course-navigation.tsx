@@ -11,6 +11,11 @@ const views = [
   },
   { id: "modules", label: "Modules", to: "/courses/$courseId/modules" },
   { id: "quizzes", label: "Quizzes", to: "/courses/$courseId/quizzes" },
+  {
+    id: "discussions",
+    label: "Discussions",
+    to: "/courses/$courseId/discussions",
+  },
   { id: "files", label: "Files", to: "/courses/$courseId/files" },
   { id: "grades", label: "Grades", to: "/courses/$courseId/grades" },
   { id: "people", label: "People", to: "/courses/$courseId/users" },
