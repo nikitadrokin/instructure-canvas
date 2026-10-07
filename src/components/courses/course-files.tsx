@@ -47,6 +47,7 @@ import {
   folderPath,
 } from "@/integrations/canvas/file-tree";
 import { useCanvasStore } from "@/integrations/canvas/store";
+import { useCoursePageTitle } from "@/integrations/canvas/use-course-title";
 import { useTRPC } from "@/integrations/trpc/react";
 
 function fileIcon(file: CanvasFile): ReactElement {
@@ -105,6 +106,10 @@ export function CourseFiles({
   const path =
     folders.data && current ? folderPath(folders.data, current.id) : [];
   const error = folders.error ?? files.error;
+  useCoursePageTitle(
+    courseId,
+    current?.parent_folder_id ? current.name : "Files",
+  );
 
   return (
     <div className="space-y-4">
