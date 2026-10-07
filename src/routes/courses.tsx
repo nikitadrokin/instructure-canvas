@@ -124,7 +124,7 @@ function CoursesLayout() {
                 {selectedCourseName}
               </h1>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 self-start pt-6 sm:flex-row">
               {selectedCourseUrl ? (
                 <Button
                   variant="outline"
