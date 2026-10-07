@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/table";
 import type { CanvasDiscussionTopic } from "@/integrations/canvas/client";
 import { useCanvasStore } from "@/integrations/canvas/store";
+import { useCoursePageTitle } from "@/integrations/canvas/use-course-title";
 import { useTRPC } from "@/integrations/trpc/react";
 
 /** Pinned topics first, otherwise keep Canvas's recent-activity order. */
@@ -49,6 +50,7 @@ export function CourseDiscussions({
   const trpc = useTRPC();
   const ready = useCanvasStore((state) => state.sessionReady);
   const [search, setSearch] = useState("");
+  useCoursePageTitle(courseId, "Discussions");
   const query = useQuery(
     trpc.canvas.courseDiscussions.queryOptions(
       { courseId },
@@ -191,6 +193,7 @@ export function CourseDiscussionDetail({
     ),
   );
   const content = query.data?.kind === "discussion" ? query.data : undefined;
+  useCoursePageTitle(courseId, content?.topic.title ?? "Discussions");
 
   return (
     <div className="flex flex-col gap-4">
