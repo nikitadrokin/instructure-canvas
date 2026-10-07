@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCourseDetail } from "@/integrations/canvas/use-course-detail";
+import { useCoursePageTitle } from "@/integrations/canvas/use-course-title";
 
 export const Route = createFileRoute("/courses/$courseId/assignments")({
   component: CourseAssignmentsPage,
@@ -14,6 +15,7 @@ function CourseAssignmentsPage() {
   const { courseId } = Route.useParams();
   const detail = useCourseDetail(courseId);
   const [search, setSearch] = useState("");
+  useCoursePageTitle(courseId, "Assignments");
   if (!detail.data) return null;
   const issue = detail.data.issues.find(
     (entry) => entry.section === "assignments",
