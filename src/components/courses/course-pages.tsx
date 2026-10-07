@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useCanvasStore } from "@/integrations/canvas/store";
+import { useCoursePageTitle } from "@/integrations/canvas/use-course-title";
 import { useTRPC } from "@/integrations/trpc/react";
 
 /** Wiki pages for a course. */
@@ -33,6 +34,7 @@ export function CoursePages({ courseId }: { courseId: string }): ReactElement {
   const trpc = useTRPC();
   const ready = useCanvasStore((state) => state.sessionReady);
   const [search, setSearch] = useState("");
+  useCoursePageTitle(courseId, "Pages");
   const query = useQuery(
     trpc.canvas.coursePages.queryOptions(
       { courseId },
@@ -157,6 +159,7 @@ export function CoursePageDetail({
     ),
   );
   const page = query.data?.kind === "page" ? query.data.page : undefined;
+  useCoursePageTitle(courseId, page?.title ?? "Pages");
 
   return (
     <div className="flex flex-col gap-4">
