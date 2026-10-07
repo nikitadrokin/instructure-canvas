@@ -74,7 +74,31 @@ async function withCanvasClient<T>(
   }
 }
 
+const dateParamSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
 export const canvasRouter = createTRPCRouter({
+  todoItems: publicProcedure
+    .input(z.object({ startDate: dateParamSchema, endDate: dateParamSchema }))
+    .query(({ ctx, input }) => {
+      const startMs = Date.parse(`${input.startDate}T00:00:00Z`);
+      const endMs = Date.parse(`${input.endDate}T00:00:00Z`);
+      if (
+        Number.isNaN(startMs) ||
+        Number.isNaN(endMs) ||
+        endMs < startMs ||
+        (endMs - startMs) / 86_400_000 > 62
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Choose a valid to-do date range.",
+        });
+      }
+      return withCanvasClient(
+        ctx,
+        "Connect to Canvas to view your to-do list.",
+        (client) => client.getPlannerTodoItems(input),
+      );
+    }),
   courseDiscussions: publicProcedure
     .input(z.object({ courseId: z.string().regex(/^\d+$/) }))
     .query(({ ctx, input }) =>
