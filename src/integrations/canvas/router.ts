@@ -75,6 +75,22 @@ async function withCanvasClient<T>(
 }
 
 export const canvasRouter = createTRPCRouter({
+  courseDiscussions: publicProcedure
+    .input(z.object({ courseId: z.string().regex(/^\d+$/) }))
+    .query(({ ctx, input }) =>
+      withCanvasClient(
+        ctx,
+        "Connect to Canvas to view discussions.",
+        (client) => client.getCourseDiscussionTopics(input.courseId),
+      ),
+    ),
+  coursePages: publicProcedure
+    .input(z.object({ courseId: z.string().regex(/^\d+$/) }))
+    .query(({ ctx, input }) =>
+      withCanvasClient(ctx, "Connect to Canvas to view pages.", (client) =>
+        client.getCoursePages(input.courseId),
+      ),
+    ),
   courseFolders: publicProcedure
     .input(z.object({ courseId: z.string().regex(/^\d+$/) }))
     .query(({ ctx, input }) =>
