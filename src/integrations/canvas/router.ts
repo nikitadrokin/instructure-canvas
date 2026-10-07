@@ -45,7 +45,55 @@ function toTrpcError(error: unknown) {
   return new TRPCError({ code, message: error.message, cause: error });
 }
 
+/**
+ * Runs one Canvas read with a per-call client, mapping Canvas failures to
+ * tRPC errors and always dropping the token afterwards.
+ */
+async function withCanvasClient<T>(
+  ctx: {
+    canvasSessionId: string | null;
+    canvasCredentials: { canvasUrl: string; token: string } | null;
+  },
+  unauthorizedMessage: string,
+  run: (client: CanvasClient) => Promise<T>,
+): Promise<T> {
+  const session =
+    getCanvasSession(ctx.canvasSessionId) ?? ctx.canvasCredentials;
+  if (!session)
+    throw new TRPCError({ code: "UNAUTHORIZED", message: unauthorizedMessage });
+  const client = new CanvasClient({
+    baseUrl: normalizeCanvasBaseUrl(session.canvasUrl),
+    accessToken: session.token,
+  });
+  try {
+    return await run(client);
+  } catch (error) {
+    throw toTrpcError(error);
+  } finally {
+    client.forgetCredentials();
+  }
+}
+
 export const canvasRouter = createTRPCRouter({
+  courseFolders: publicProcedure
+    .input(z.object({ courseId: z.string().regex(/^\d+$/) }))
+    .query(({ ctx, input }) =>
+      withCanvasClient(ctx, "Connect to Canvas to view files.", (client) =>
+        client.getCourseFolders(input.courseId),
+      ),
+    ),
+  folderFiles: publicProcedure
+    .input(
+      z.object({
+        courseId: z.string().regex(/^\d+$/),
+        folderId: z.string().regex(/^\d+$/),
+      }),
+    )
+    .query(({ ctx, input }) =>
+      withCanvasClient(ctx, "Connect to Canvas to view files.", (client) =>
+        client.getCourseFolderFiles(input.courseId, input.folderId),
+      ),
+    ),
   toolLaunch: publicProcedure
     .input(
       z.object({
