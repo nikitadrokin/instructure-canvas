@@ -1309,6 +1309,23 @@ export class CanvasClient {
   }
 
   /**
+   * Discussion topics for a course, most recently active first.
+   * Announcements are a separate list and are excluded by Canvas by default.
+   * @see https://developerdocs.instructure.com/services/canvas/resources/discussion_topics
+   */
+  async getCourseDiscussionTopics(courseId: string) {
+    const params = new URLSearchParams({
+      per_page: "50",
+      order_by: "recent_activity",
+    });
+    return this.fetchAllPages(
+      `/api/v1/courses/${encodeURIComponent(courseId)}/discussion_topics?${params}`,
+      canvasDiscussionTopicSchema,
+      "discussion topics",
+    );
+  }
+
+  /**
    * Flat list of every folder in a course (`GET /courses/:id/folders`).
    * The tree is rebuilt client-side from `parent_folder_id`.
    */
