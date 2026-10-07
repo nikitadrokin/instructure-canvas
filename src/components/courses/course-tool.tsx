@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from "@/integrations/canvas/store";
 import { useCourseDetail } from "@/integrations/canvas/use-course-detail";
+import { useCoursePageTitle } from "@/integrations/canvas/use-course-title";
 import { useTRPC } from "@/integrations/trpc/react";
 
 export function CourseTool({
@@ -17,6 +18,7 @@ export function CourseTool({
   const ready = useCanvasStore((state) => state.sessionReady);
   const tab = detail.data?.tabs.find((entry) => entry.id === tabId);
   const [opened, setOpened] = useState(false);
+  useCoursePageTitle(courseId, tab?.label);
   const trpc = useTRPC();
   const rawUrl = tab && origin ? new URL(tab.html_url, origin) : null;
   const url = rawUrl?.protocol === "https:" ? rawUrl : null;
