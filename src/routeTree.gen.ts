@@ -18,12 +18,14 @@ import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
 import { Route as CoursesCourseIdIndexRouteImport } from './routes/courses.$courseId.index'
 import { Route as CoursesCourseIdAnnouncementsRouteImport } from './routes/courses.$courseId.announcements'
 import { Route as CoursesCourseIdAssignmentsRouteImport } from './routes/courses.$courseId.assignments'
+import { Route as CoursesCourseIdFilesRouteImport } from './routes/courses.$courseId.files'
 import { Route as CoursesCourseIdGradesRouteImport } from './routes/courses.$courseId.grades'
 import { Route as CoursesCourseIdModulesRouteImport } from './routes/courses.$courseId.modules'
 import { Route as CoursesCourseIdQuizzesRouteImport } from './routes/courses.$courseId.quizzes'
 import { Route as CoursesCourseIdSyllabusRouteImport } from './routes/courses.$courseId.syllabus'
 import { Route as CoursesCourseIdUsersRouteImport } from './routes/courses.$courseId.users'
 import { Route as CoursesCourseIdAssignmentsAssignmentIdRouteImport } from './routes/courses.$courseId.assignments_.$assignmentId'
+import { Route as CoursesCourseIdFilesFileIdRouteImport } from './routes/courses.$courseId.files_.$fileId'
 import { Route as CoursesCourseIdQuizzesQuizIdRouteImport } from './routes/courses.$courseId.quizzes_.$quizId'
 import { Route as CoursesCourseIdToolsTabIdRouteImport } from './routes/courses.$courseId.tools.$tabId'
 import { Route as CoursesCourseIdModulesItemsItemIdRouteImport } from './routes/courses.$courseId.modules_.items.$itemId'
@@ -76,6 +78,11 @@ const CoursesCourseIdAssignmentsRoute =
     path: '/assignments',
     getParentRoute: () => CoursesCourseIdRoute,
   } as any)
+const CoursesCourseIdFilesRoute = CoursesCourseIdFilesRouteImport.update({
+  id: '/files',
+  path: '/files',
+  getParentRoute: () => CoursesCourseIdRoute,
+} as any)
 const CoursesCourseIdGradesRoute = CoursesCourseIdGradesRouteImport.update({
   id: '/grades',
   path: '/grades',
@@ -105,6 +112,12 @@ const CoursesCourseIdAssignmentsAssignmentIdRoute =
   CoursesCourseIdAssignmentsAssignmentIdRouteImport.update({
     id: '/assignments_/$assignmentId',
     path: '/assignments/$assignmentId',
+    getParentRoute: () => CoursesCourseIdRoute,
+  } as any)
+const CoursesCourseIdFilesFileIdRoute =
+  CoursesCourseIdFilesFileIdRouteImport.update({
+    id: '/files_/$fileId',
+    path: '/files/$fileId',
     getParentRoute: () => CoursesCourseIdRoute,
   } as any)
 const CoursesCourseIdQuizzesQuizIdRoute =
@@ -141,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/courses/$courseId/announcements': typeof CoursesCourseIdAnnouncementsRoute
   '/courses/$courseId/assignments': typeof CoursesCourseIdAssignmentsRoute
+  '/courses/$courseId/files': typeof CoursesCourseIdFilesRoute
   '/courses/$courseId/grades': typeof CoursesCourseIdGradesRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
   '/courses/$courseId/quizzes': typeof CoursesCourseIdQuizzesRoute
@@ -148,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/courses/$courseId/users': typeof CoursesCourseIdUsersRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/assignments/$assignmentId': typeof CoursesCourseIdAssignmentsAssignmentIdRoute
+  '/courses/$courseId/files/$fileId': typeof CoursesCourseIdFilesFileIdRoute
   '/courses/$courseId/quizzes/$quizId': typeof CoursesCourseIdQuizzesQuizIdRoute
   '/courses/$courseId/tools/$tabId': typeof CoursesCourseIdToolsTabIdRoute
   '/courses/$courseId/modules/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
@@ -160,6 +175,7 @@ export interface FileRoutesByTo {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/courses/$courseId/announcements': typeof CoursesCourseIdAnnouncementsRoute
   '/courses/$courseId/assignments': typeof CoursesCourseIdAssignmentsRoute
+  '/courses/$courseId/files': typeof CoursesCourseIdFilesRoute
   '/courses/$courseId/grades': typeof CoursesCourseIdGradesRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
   '/courses/$courseId/quizzes': typeof CoursesCourseIdQuizzesRoute
@@ -167,6 +183,7 @@ export interface FileRoutesByTo {
   '/courses/$courseId/users': typeof CoursesCourseIdUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/assignments/$assignmentId': typeof CoursesCourseIdAssignmentsAssignmentIdRoute
+  '/courses/$courseId/files/$fileId': typeof CoursesCourseIdFilesFileIdRoute
   '/courses/$courseId/quizzes/$quizId': typeof CoursesCourseIdQuizzesQuizIdRoute
   '/courses/$courseId/tools/$tabId': typeof CoursesCourseIdToolsTabIdRoute
   '/courses/$courseId/modules/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
@@ -182,6 +199,7 @@ export interface FileRoutesById {
   '/api/trpc/$': typeof ApiTrpcSplatRoute
   '/courses/$courseId/announcements': typeof CoursesCourseIdAnnouncementsRoute
   '/courses/$courseId/assignments': typeof CoursesCourseIdAssignmentsRoute
+  '/courses/$courseId/files': typeof CoursesCourseIdFilesRoute
   '/courses/$courseId/grades': typeof CoursesCourseIdGradesRoute
   '/courses/$courseId/modules': typeof CoursesCourseIdModulesRoute
   '/courses/$courseId/quizzes': typeof CoursesCourseIdQuizzesRoute
@@ -189,6 +207,7 @@ export interface FileRoutesById {
   '/courses/$courseId/users': typeof CoursesCourseIdUsersRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/assignments_/$assignmentId': typeof CoursesCourseIdAssignmentsAssignmentIdRoute
+  '/courses/$courseId/files_/$fileId': typeof CoursesCourseIdFilesFileIdRoute
   '/courses/$courseId/quizzes_/$quizId': typeof CoursesCourseIdQuizzesQuizIdRoute
   '/courses/$courseId/tools/$tabId': typeof CoursesCourseIdToolsTabIdRoute
   '/courses/$courseId/modules_/items/$itemId': typeof CoursesCourseIdModulesItemsItemIdRoute
@@ -205,6 +224,7 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/courses/$courseId/announcements'
     | '/courses/$courseId/assignments'
+    | '/courses/$courseId/files'
     | '/courses/$courseId/grades'
     | '/courses/$courseId/modules'
     | '/courses/$courseId/quizzes'
@@ -212,6 +232,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId/users'
     | '/courses/$courseId/'
     | '/courses/$courseId/assignments/$assignmentId'
+    | '/courses/$courseId/files/$fileId'
     | '/courses/$courseId/quizzes/$quizId'
     | '/courses/$courseId/tools/$tabId'
     | '/courses/$courseId/modules/items/$itemId'
@@ -224,6 +245,7 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/courses/$courseId/announcements'
     | '/courses/$courseId/assignments'
+    | '/courses/$courseId/files'
     | '/courses/$courseId/grades'
     | '/courses/$courseId/modules'
     | '/courses/$courseId/quizzes'
@@ -231,6 +253,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId/users'
     | '/courses/$courseId'
     | '/courses/$courseId/assignments/$assignmentId'
+    | '/courses/$courseId/files/$fileId'
     | '/courses/$courseId/quizzes/$quizId'
     | '/courses/$courseId/tools/$tabId'
     | '/courses/$courseId/modules/items/$itemId'
@@ -245,6 +268,7 @@ export interface FileRouteTypes {
     | '/api/trpc/$'
     | '/courses/$courseId/announcements'
     | '/courses/$courseId/assignments'
+    | '/courses/$courseId/files'
     | '/courses/$courseId/grades'
     | '/courses/$courseId/modules'
     | '/courses/$courseId/quizzes'
@@ -252,6 +276,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId/users'
     | '/courses/$courseId/'
     | '/courses/$courseId/assignments_/$assignmentId'
+    | '/courses/$courseId/files_/$fileId'
     | '/courses/$courseId/quizzes_/$quizId'
     | '/courses/$courseId/tools/$tabId'
     | '/courses/$courseId/modules_/items/$itemId'
@@ -331,6 +356,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesCourseIdAssignmentsRouteImport
       parentRoute: typeof CoursesCourseIdRoute
     }
+    '/courses/$courseId/files': {
+      id: '/courses/$courseId/files'
+      path: '/files'
+      fullPath: '/courses/$courseId/files'
+      preLoaderRoute: typeof CoursesCourseIdFilesRouteImport
+      parentRoute: typeof CoursesCourseIdRoute
+    }
     '/courses/$courseId/grades': {
       id: '/courses/$courseId/grades'
       path: '/grades'
@@ -373,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesCourseIdAssignmentsAssignmentIdRouteImport
       parentRoute: typeof CoursesCourseIdRoute
     }
+    '/courses/$courseId/files_/$fileId': {
+      id: '/courses/$courseId/files_/$fileId'
+      path: '/files/$fileId'
+      fullPath: '/courses/$courseId/files/$fileId'
+      preLoaderRoute: typeof CoursesCourseIdFilesFileIdRouteImport
+      parentRoute: typeof CoursesCourseIdRoute
+    }
     '/courses/$courseId/quizzes_/$quizId': {
       id: '/courses/$courseId/quizzes_/$quizId'
       path: '/quizzes/$quizId'
@@ -407,6 +446,7 @@ declare module '@tanstack/react-router' {
 interface CoursesCourseIdRouteChildren {
   CoursesCourseIdAnnouncementsRoute: typeof CoursesCourseIdAnnouncementsRoute
   CoursesCourseIdAssignmentsRoute: typeof CoursesCourseIdAssignmentsRoute
+  CoursesCourseIdFilesRoute: typeof CoursesCourseIdFilesRoute
   CoursesCourseIdGradesRoute: typeof CoursesCourseIdGradesRoute
   CoursesCourseIdModulesRoute: typeof CoursesCourseIdModulesRoute
   CoursesCourseIdQuizzesRoute: typeof CoursesCourseIdQuizzesRoute
@@ -414,6 +454,7 @@ interface CoursesCourseIdRouteChildren {
   CoursesCourseIdUsersRoute: typeof CoursesCourseIdUsersRoute
   CoursesCourseIdIndexRoute: typeof CoursesCourseIdIndexRoute
   CoursesCourseIdAssignmentsAssignmentIdRoute: typeof CoursesCourseIdAssignmentsAssignmentIdRoute
+  CoursesCourseIdFilesFileIdRoute: typeof CoursesCourseIdFilesFileIdRoute
   CoursesCourseIdQuizzesQuizIdRoute: typeof CoursesCourseIdQuizzesQuizIdRoute
   CoursesCourseIdToolsTabIdRoute: typeof CoursesCourseIdToolsTabIdRoute
   CoursesCourseIdModulesItemsItemIdRoute: typeof CoursesCourseIdModulesItemsItemIdRoute
@@ -422,6 +463,7 @@ interface CoursesCourseIdRouteChildren {
 const CoursesCourseIdRouteChildren: CoursesCourseIdRouteChildren = {
   CoursesCourseIdAnnouncementsRoute: CoursesCourseIdAnnouncementsRoute,
   CoursesCourseIdAssignmentsRoute: CoursesCourseIdAssignmentsRoute,
+  CoursesCourseIdFilesRoute: CoursesCourseIdFilesRoute,
   CoursesCourseIdGradesRoute: CoursesCourseIdGradesRoute,
   CoursesCourseIdModulesRoute: CoursesCourseIdModulesRoute,
   CoursesCourseIdQuizzesRoute: CoursesCourseIdQuizzesRoute,
@@ -430,6 +472,7 @@ const CoursesCourseIdRouteChildren: CoursesCourseIdRouteChildren = {
   CoursesCourseIdIndexRoute: CoursesCourseIdIndexRoute,
   CoursesCourseIdAssignmentsAssignmentIdRoute:
     CoursesCourseIdAssignmentsAssignmentIdRoute,
+  CoursesCourseIdFilesFileIdRoute: CoursesCourseIdFilesFileIdRoute,
   CoursesCourseIdQuizzesQuizIdRoute: CoursesCourseIdQuizzesQuizIdRoute,
   CoursesCourseIdToolsTabIdRoute: CoursesCourseIdToolsTabIdRoute,
   CoursesCourseIdModulesItemsItemIdRoute:
