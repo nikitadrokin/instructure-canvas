@@ -111,6 +111,29 @@ const canvasFileSchema = z
   })
   .passthrough();
 
+/**
+ * Folder object from the Canvas Files API.
+ * @see https://developerdocs.instructure.com/services/canvas/resources/files
+ */
+const canvasFolderSchema = z
+  .object({
+    id: canvasIdSchema,
+    name: z.string(),
+    full_name: z.string().optional(),
+    parent_folder_id: canvasIdSchema.nullable().optional(),
+    files_count: z.number().optional(),
+    folders_count: z.number().optional(),
+    position: z.number().nullable().optional(),
+    updated_at: nullableStringSchema,
+    hidden: z.boolean().optional(),
+    hidden_for_user: z.boolean().optional(),
+    locked: z.boolean().optional(),
+    locked_for_user: z.boolean().optional(),
+    /** Read-only folder holding files submitted to assignments. */
+    for_submissions: z.boolean().optional(),
+  })
+  .passthrough();
+
 const canvasFilePublicUrlSchema = z
   .object({
     public_url: nullableStringSchema,
@@ -686,6 +709,7 @@ export type CanvasPage = z.infer<typeof canvasPageSchema>;
 export type CanvasDiscussionTopic = z.infer<typeof canvasDiscussionTopicSchema>;
 export type CanvasQuiz = z.infer<typeof canvasQuizSchema>;
 export type CanvasFile = z.infer<typeof canvasFileSchema>;
+export type CanvasFolder = z.infer<typeof canvasFolderSchema>;
 export type CanvasRubricCriterion = z.infer<typeof canvasRubricCriterionSchema>;
 
 /** Content behind a module item, keyed by the item's Canvas type. */
@@ -1281,6 +1305,43 @@ export class CanvasClient {
         `/api/v1/courses/${encodeURIComponent(courseId)}/files/${encodeURIComponent(fileId)}`,
       ),
       "file",
+    );
+  }
+
+  /**
+   * Flat list of every folder in a course (`GET /courses/:id/folders`).
+   * The tree is rebuilt client-side from `parent_folder_id`.
+   */
+  async getCourseFolders(courseId: string) {
+    return this.fetchAllPages(
+      `/api/v1/courses/${encodeURIComponent(courseId)}/folders?per_page=100`,
+      canvasFolderSchema,
+      "course folders",
+    );
+  }
+
+  /**
+   * Files directly inside one course folder. The folder is first resolved
+   * through the course-scoped endpoint so a folder id from another context
+   * is rejected by Canvas before `/folders/:id/files` is called.
+   */
+  async getCourseFolderFiles(courseId: string, folderId: string) {
+    const course = encodeURIComponent(courseId);
+    const folder = encodeURIComponent(folderId);
+    await this.parseResponse(
+      canvasFolderSchema,
+      await this.request(`/api/v1/courses/${course}/folders/${folder}`),
+      "folder",
+    );
+    const params = new URLSearchParams({
+      per_page: "100",
+      sort: "name",
+      order: "asc",
+    });
+    return this.fetchAllPages(
+      `/api/v1/folders/${folder}/files?${params}`,
+      canvasFileSchema,
+      "folder files",
     );
   }
 
