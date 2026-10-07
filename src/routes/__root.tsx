@@ -9,6 +9,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import type { TRPCRouter } from "#/integrations/trpc/router";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SITE_TITLE } from "@/lib/page-title";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
@@ -29,7 +30,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "Canvas Local — A calmer course dashboard",
+        title: SITE_TITLE,
       },
       {
         name: "description",
