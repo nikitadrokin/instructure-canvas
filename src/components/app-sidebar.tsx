@@ -27,7 +27,7 @@ export function AppSidebar({
   onDisconnect,
 }: {
   data: DashboardData;
-  activePage: "overview" | "courses" | "calendar";
+  activePage: "overview" | "courses" | "calendar" | "todo";
   selectedCourseId?: string;
   onDisconnect: () => void;
 }) {
@@ -129,7 +129,7 @@ function CourseNavGroup({
 }: {
   label: string;
   courses: Course[];
-  activePage: "overview" | "courses" | "calendar";
+  activePage: "overview" | "courses" | "calendar" | "todo";
   selectedCourseId?: string;
 }) {
   return (
