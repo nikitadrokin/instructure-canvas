@@ -165,7 +165,7 @@ function LoadingScreen() {
 			className="flex min-h-screen flex-col items-center justify-center gap-6"
 			aria-label="Loading your Canvas session"
 		>
-			<CanvasLogo decorative size="lg" />
+			<CanvasLogo decorative spinning size="lg" />
 			<p className="font-semibold text-sm tracking-tight">Canvas Local</p>
 			<Spinner className="size-6 text-muted-foreground" />
 		</output>

@@ -8,6 +8,7 @@ struct Params {
   pointer: vec2f,
   hover: f32,
   press: f32,
+  spin: f32,
 }
 
 @group(0) @binding(0) var<uniform> params: Params;
@@ -108,7 +109,7 @@ fn fs_main(@location(0) uv: vec2f) -> @location(0) vec4f {
   p *= 1.18;
 
   let clock = mix(1.7, params.time, params.motion);
-  let spin = clock * 0.08 * params.motion;
+  let spin = clock * 0.08 * params.motion * params.spin;
   p = rotate(p, spin);
 
   let pointer = rotate(params.pointer, spin);

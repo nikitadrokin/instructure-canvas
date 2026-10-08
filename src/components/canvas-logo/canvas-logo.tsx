@@ -38,6 +38,8 @@ export interface CanvasLogoProps
   decorative?: boolean;
   /** Enable pointer repulsion and press energy. */
   interactive?: boolean;
+  /** Rotate the mark. Use only when it acts as a loading spinner. */
+  spinning?: boolean;
   /** Accessible name announced to assistive tech. */
   label?: string;
 }
@@ -126,6 +128,7 @@ export function CanvasLogo({
   className,
   decorative = false,
   interactive = true,
+  spinning = false,
   label = "Canvas",
   size,
   ...props
@@ -156,6 +159,7 @@ export function CanvasLogo({
             },
             reducedMotion,
             interactive,
+            spinning,
           });
         })
         .catch(() => {
@@ -175,7 +179,7 @@ export function CanvasLogo({
       motionQuery.removeEventListener("change", onMotionChange);
       stop();
     };
-  }, [interactive]);
+  }, [interactive, spinning]);
 
   return (
     <div

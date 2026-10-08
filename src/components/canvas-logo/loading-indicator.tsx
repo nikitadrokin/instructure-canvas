@@ -29,7 +29,7 @@ export function LoadingIndicator({
         className,
       )}
     >
-      <CanvasLogo decorative size={size} />
+      <CanvasLogo decorative spinning size={size} />
       <span className="text-muted-foreground text-sm">{label}</span>
     </output>
   );

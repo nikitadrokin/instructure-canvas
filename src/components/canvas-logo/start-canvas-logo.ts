@@ -9,11 +9,21 @@ export interface StartCanvasLogoOptions {
   /** When true, freeze spin and keep a still energy field. */
   reducedMotion: boolean;
   interactive?: boolean;
+  /** Slowly rotate the mark, for use as a loading spinner. */
+  spinning?: boolean;
   /** Called after the first presented frame. */
   onReady?: () => void;
   /** Called when WebGPU init or the first draw fails. */
   onError?: (error: unknown) => void;
 }
+
+/** Exponential response rates (1/s); lower is slower. Exit is slower than entry. */
+const HOVER_IN_RATE = 7;
+const HOVER_OUT_RATE = 2.2;
+const PRESS_IN_RATE = 14;
+const PRESS_OUT_RATE = 4.5;
+/** Below this smoothed hover the field is considered at rest. */
+const SNAP_HOVER_BELOW = 0.02;
 
 /** How long an unused GPU device stays alive before it is destroyed. */
 const IDLE_DISPOSE_MS = 30_000;
@@ -175,6 +185,7 @@ export function startCanvasLogo(
           pointer: [0, 0],
           hover: 0,
           press: 0,
+          spin: options.spinning ? 1 : 0,
           texel: activeSurface.texelSize,
           time: options.reducedMotion ? 1.7 : 0,
         },
@@ -197,7 +208,9 @@ export function startCanvasLogo(
             1.18;
           pointer.y =
             (1 - ((event.clientY - rect.top) / rect.height) * 2) * 1.18;
-          if (!pointer.hover) {
+          // Only snap when the field has fully settled; otherwise glide so a
+          // quick re-entry does not teleport pieces that are still easing back.
+          if (smooth.hover < SNAP_HOVER_BELOW) {
             smooth.x = pointer.x;
             smooth.y = pointer.y;
           }
@@ -241,11 +254,18 @@ export function startCanvasLogo(
         lastTickAt = now;
         const elapsed = (now - startedAt) / 1000;
         const follow = 1 - Math.exp(-14 * dt);
-        const settle = 1 - Math.exp(-7 * dt);
+        // Quick on the way in, slower on the way out so the mark settles back
+        // like a liquid instead of snapping.
+        const hoverRate =
+          pointer.hover > smooth.hover ? HOVER_IN_RATE : HOVER_OUT_RATE;
+        const pressRate =
+          pointer.press > smooth.press ? PRESS_IN_RATE : PRESS_OUT_RATE;
         smooth.x += (pointer.x - smooth.x) * follow;
         smooth.y += (pointer.y - smooth.y) * follow;
-        smooth.hover += (pointer.hover - smooth.hover) * settle;
-        smooth.press += (pointer.press - smooth.press) * follow;
+        smooth.hover +=
+          (pointer.hover - smooth.hover) * (1 - Math.exp(-hoverRate * dt));
+        smooth.press +=
+          (pointer.press - smooth.press) * (1 - Math.exp(-pressRate * dt));
         activeLogo.set({
           params: {
             time: options.reducedMotion ? 1.7 : elapsed % 600,
