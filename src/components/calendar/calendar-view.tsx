@@ -1,11 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import {
-  AlertCircle,
-  ArrowRight,
-  CalendarDays,
-  MousePointerClick,
-  X,
-} from "lucide-react";
+import { AlertCircle, CalendarDays, MousePointerClick, X } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import {
   CalendarColorDot,
@@ -544,7 +538,6 @@ function CalendarItemActionButton({
           params={{ courseId: link.courseId, assignmentId: link.id }}
           className={buttonVariants({ className })}
         >
-          <ArrowRight />
           Open assignment
         </Link>
       );
@@ -555,7 +548,6 @@ function CalendarItemActionButton({
           params={{ courseId: link.courseId, quizId: link.id }}
           className={buttonVariants({ className })}
         >
-          <ArrowRight />
           Open quiz
         </Link>
       );
@@ -566,7 +558,6 @@ function CalendarItemActionButton({
           params={{ courseId: link.courseId, topicId: link.id }}
           className={buttonVariants({ className })}
         >
-          <ArrowRight />
           Open discussion
         </Link>
       );
