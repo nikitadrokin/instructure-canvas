@@ -51,3 +51,25 @@ test("Canvas file preview iframes become inline PDF viewers", () => {
   const pdf = parts.find((part) => part.kind === "pdf");
   assert.equal(pdf?.kind === "pdf" ? pdf.fileId : null, "569");
 });
+
+test("Canvas PPTX file links become inline presentation previews", () => {
+  const html =
+    '<a data-api-returntype="File" data-api-endpoint="https://school.instructure.com/api/v1/courses/317/files/700" href="/courses/317/files/700/download" title="Week6.pptx">Week6.pptx</a>';
+  const parts = splitCanvasFilePreviews(html, "317");
+  const deck = parts.find((part) => part.kind === "pptx");
+  assert.equal(deck?.kind === "pptx" ? deck.fileId : null, "700");
+  assert.equal(
+    parts.some((part) => part.kind === "pdf"),
+    false,
+  );
+});
+
+test("legacy .ppt links are not treated as previewable decks", () => {
+  const html =
+    '<a data-api-returntype="File" data-api-endpoint="https://school.instructure.com/api/v1/courses/1/files/9" href="/courses/1/files/9/download" title="old.ppt">old.ppt</a>';
+  const parts = splitCanvasFilePreviews(html, "1");
+  assert.equal(
+    parts.some((part) => part.kind === "pptx"),
+    false,
+  );
+});

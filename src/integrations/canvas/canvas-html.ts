@@ -1,13 +1,17 @@
 import { canvasFileContentPath, isCanvasId } from "./file-paths";
 
+/** A Canvas file embedded in rich content that gets an inline viewer. */
+export type CanvasFilePart = {
+  kind: "pdf" | "pptx";
+  courseId: string;
+  fileId: string;
+  name: string;
+};
+
 export type CanvasHtmlPart =
   | { kind: "html"; html: string }
-  | {
-      kind: "pdf";
-      courseId: string;
-      fileId: string;
-      name: string;
-    };
+  | (CanvasFilePart & { kind: "pdf" })
+  | (CanvasFilePart & { kind: "pptx" });
 
 const NODE_RE =
   /<a\b[^>]*>[\s\S]*?<\/a>|<iframe\b[^>]*(?:\/>|>[\s\S]*?<\/iframe>)?/gi;
@@ -72,6 +76,11 @@ function looksLikePdf(attrs: Record<string, string>, text: string) {
   return /\.pdf(?:$|[?#\s"'])/i.test(haystack);
 }
 
+function looksLikePptx(attrs: Record<string, string>, text: string) {
+  const haystack = `${attrs.title ?? ""} ${attrs.href ?? ""} ${attrs.src ?? ""} ${attrs["data-filename"] ?? ""} ${text}`;
+  return /\.pptx(?:$|[?#\s"'])/i.test(haystack);
+}
+
 function isCanvasFileNode(attrs: Record<string, string>) {
   const returnType = attrs["data-api-returntype"]?.replace(/[[\]]/g, "");
   if (returnType?.toLowerCase() === "file") return true;
@@ -119,11 +128,20 @@ function parseNode(
   }
 
   const text = stripTags(node);
+  const asPptx = looksLikePptx(attrs, text);
   const name =
     stripTags(attrs.title ?? "") ||
     text ||
     attrs["data-filename"] ||
-    (shouldPreviewAsPdf(tag, attrs, text) ? "PDF" : "File");
+    (asPptx
+      ? "Presentation"
+      : shouldPreviewAsPdf(tag, attrs, text)
+        ? "PDF"
+        : "File");
+
+  if (asPptx) {
+    return { kind: "pptx", courseId, fileId, name };
+  }
 
   if (shouldPreviewAsPdf(tag, attrs, text)) {
     return { kind: "pdf", courseId, fileId, name };
@@ -143,8 +161,8 @@ function parseNode(
 }
 
 /**
- * Pulls Canvas File links that point at PDFs out of API HTML so the UI can
- * render them with the local viewer instead of sending the browser to Canvas.
+ * Pulls Canvas File links that point at PDFs or PPTX decks out of API HTML so
+ * the UI can render them with the local viewers instead of sending the browser to Canvas.
  * Other File links are rewritten onto the same-origin download proxy.
  */
 export function splitCanvasFilePreviews(
@@ -157,7 +175,7 @@ export function splitCanvasFilePreviews(
   let match = NODE_RE.exec(html);
   while (match) {
     const parsed = parseNode(match[0], fallbackCourseId);
-    if (parsed.kind === "pdf" || parsed.html !== match[0]) {
+    if (parsed.kind !== "html" || parsed.html !== match[0]) {
       if (match.index > last) {
         parts.push({ kind: "html", html: html.slice(last, match.index) });
       }

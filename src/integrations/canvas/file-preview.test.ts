@@ -5,6 +5,7 @@ import {
   canvasFileContentPath,
   contentDisposition,
   isCanvasId,
+  isCanvasPptxFile,
 } from "./file-paths";
 import { fetchCanvasFileBytes } from "./file-preview";
 import { getCanvasCredentialsFromRequest } from "./session";
@@ -79,4 +80,17 @@ test("file byte fetch refuses private destinations", async () => {
       }),
     /public HTTPS Canvas domain/,
   );
+});
+
+test("PPTX detection uses mime type or file extension but not legacy .ppt", () => {
+  assert.equal(
+    isCanvasPptxFile({
+      "content-type":
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    }),
+    true,
+  );
+  assert.equal(isCanvasPptxFile({ display_name: "Week6.PPTX" }), true);
+  assert.equal(isCanvasPptxFile({ display_name: "old.ppt" }), false);
+  assert.equal(isCanvasPptxFile({ "content-type": "application/pdf" }), false);
 });

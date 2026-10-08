@@ -1,5 +1,6 @@
 import type React from "react";
 import { PdfViewer } from "@/components/courses/items/pdf-viewer";
+import { PptxViewer } from "@/components/courses/items/pptx-viewer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { splitCanvasFilePreviews } from "@/integrations/canvas/canvas-html";
 import { canvasFileContentPath } from "@/integrations/canvas/file-paths";
@@ -78,13 +79,14 @@ export function CanvasHtml({
   const usedKeys = new Set<string>();
 
   for (const part of parts) {
-    if (part.kind === "pdf") {
-      let key = `pdf-${part.courseId}-${part.fileId}`;
+    if (part.kind === "pdf" || part.kind === "pptx") {
+      let key = `${part.kind}-${part.courseId}-${part.fileId}`;
       while (usedKeys.has(key)) key = `${key}+`;
       usedKeys.add(key);
+      const Viewer = part.kind === "pdf" ? PdfViewer : PptxViewer;
       nodes.push(
         <div key={key} className="my-0 min-w-0 max-w-full first:mt-0 last:mb-0">
-          <PdfViewer
+          <Viewer
             src={canvasFileContentPath(part.courseId, part.fileId)}
             fileName={part.name}
             downloadHref={canvasFileContentPath(

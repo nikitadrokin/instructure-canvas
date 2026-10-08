@@ -1,6 +1,7 @@
 import { Download, FileText, ImageIcon } from "lucide-react";
 import type React from "react";
 import { PdfViewer } from "@/components/courses/items/pdf-viewer";
+import { PptxViewer } from "@/components/courses/items/pptx-viewer";
 import { formatBytes, formatDateTime } from "@/components/courses/items/shared";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import type { CanvasFile } from "@/integrations/canvas/client";
 import {
   canvasFileContentPath,
   isCanvasPdfFile,
+  isCanvasPptxFile,
 } from "@/integrations/canvas/file-paths";
 
 function isImage(file: CanvasFile): boolean {
@@ -71,7 +73,14 @@ export function FileView({
             downloadHref={downloadHref}
           />
         ) : null}
-        {!isCanvasPdfFile(file) ? (
+        {isCanvasPptxFile(file) ? (
+          <PptxViewer
+            src={previewSrc}
+            fileName={file.display_name}
+            downloadHref={downloadHref}
+          />
+        ) : null}
+        {!isCanvasPdfFile(file) && !isCanvasPptxFile(file) ? (
           file.url || previewSrc ? (
             <Button
               render={

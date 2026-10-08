@@ -16,6 +16,23 @@ export function isCanvasPdfFile(file: {
   );
 }
 
+const PPTX_MIME =
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+
+/** Matches modern PowerPoint decks (.pptx). Legacy binary .ppt is not supported. */
+export function isCanvasPptxFile(file: {
+  mime_class?: string;
+  "content-type"?: string;
+  filename?: string;
+  display_name?: string;
+}) {
+  return (
+    file["content-type"] === PPTX_MIME ||
+    Boolean(file.filename?.toLowerCase().endsWith(".pptx")) ||
+    Boolean(file.display_name?.toLowerCase().endsWith(".pptx"))
+  );
+}
+
 export function canvasFileContentPath(
   courseId: string,
   fileId: string,

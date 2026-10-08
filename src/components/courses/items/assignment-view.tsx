@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { PdfViewer } from "@/components/courses/items/pdf-viewer";
+import { PptxViewer } from "@/components/courses/items/pptx-viewer";
 import {
   CanvasHtml,
   formatBytes,
@@ -50,6 +51,7 @@ import type {
 import {
   canvasFileContentPath,
   isCanvasPdfFile,
+  isCanvasPptxFile,
 } from "@/integrations/canvas/file-paths";
 
 type StatusVariant = "success" | "info" | "warning" | "error" | "secondary";
@@ -255,6 +257,12 @@ export function AssignmentView({
                       <li key={file.id} className="flex flex-col gap-2">
                         {isCanvasPdfFile(file) ? (
                           <PdfViewer
+                            src={canvasFileContentPath(courseId, file.id)}
+                            fileName={file.display_name}
+                            downloadHref={downloadHref}
+                          />
+                        ) : isCanvasPptxFile(file) ? (
+                          <PptxViewer
                             src={canvasFileContentPath(courseId, file.id)}
                             fileName={file.display_name}
                             downloadHref={downloadHref}
