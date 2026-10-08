@@ -5,7 +5,6 @@ import {
   useNavigate,
   useParams,
 } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { partitionCourses } from "@/components/dashboard/shared";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -131,7 +130,6 @@ function CoursesLayout() {
                     />
                   }
                 >
-                  <ArrowRight />
                   Course home
                 </Button>
               ) : null}
