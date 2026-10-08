@@ -1,11 +1,12 @@
+import { Link } from "@tanstack/react-router";
 import {
   AlertCircle,
+  ArrowRight,
   CalendarDays,
-  ExternalLink,
   MousePointerClick,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import {
   CalendarColorDot,
   CalendarFilters,
@@ -18,8 +19,10 @@ import { MonthGrid } from "@/components/calendar/month-grid";
 import {
   type CalendarItem,
   calendarContextCodes,
+  calendarItemLink,
   calendarSources,
   calendarSwatch,
+  courseIdFromContextCode,
   filterItemsByContext,
   formatDayHeading,
   formatEventTime,
@@ -294,7 +297,7 @@ export function CalendarView() {
               <EventMeta item={selectedEvent} />
             </SheetPanel>
             <SheetFooter>
-              <CanvasLinkButton
+              <CalendarItemActionButton
                 item={selectedEvent}
                 origin={dashboard.origin}
               />
@@ -455,7 +458,7 @@ function EventDetailCard({
           {item ? (
             <>
               <EventMeta item={item} />
-              <CanvasLinkButton
+              <CalendarItemActionButton
                 item={item}
                 origin={origin}
                 className="mt-auto"
@@ -477,10 +480,7 @@ function EventMeta({ item }: { item: CalendarItem }) {
           <EventKindBadge kind={item.kind} />
         </dd>
       </div>
-      <MetaRow
-        label="Calendar"
-        value={item.context_name ?? "Personal calendar"}
-      />
+      <MetaRow label="Calendar" value={<CalendarContextLabel item={item} />} />
       {item.location_name ? (
         <MetaRow label="Location" value={item.location_name} />
       ) : null}
@@ -491,12 +491,29 @@ function EventMeta({ item }: { item: CalendarItem }) {
   );
 }
 
-function MetaRow({ label, value }: { label: string; value: string }) {
+function MetaRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="grid gap-1">
       <dt className="text-muted-foreground text-xs">{label}</dt>
       <dd className="font-medium">{value}</dd>
     </div>
+  );
+}
+
+/** Course name that opens the course home, or plain text for personal events. */
+function CalendarContextLabel({ item }: { item: CalendarItem }) {
+  const courseId = courseIdFromContextCode(item.context_code);
+  const label =
+    item.context_name ?? (courseId ? "Course" : "Personal calendar");
+  if (!courseId) return <>{label}</>;
+  return (
+    <Link
+      to="/courses/$courseId"
+      params={{ courseId }}
+      className="outline-none hover:underline focus-visible:underline"
+    >
+      {label}
+    </Link>
   );
 }
 
@@ -508,7 +525,8 @@ function EventKindBadge({ kind }: { kind: CalendarItem["kind"] }) {
   );
 }
 
-function CanvasLinkButton({
+/** In-app button for assignments, quizzes, and discussions; hidden for events. */
+function CalendarItemActionButton({
   item,
   origin,
   className,
@@ -517,18 +535,44 @@ function CanvasLinkButton({
   origin: string;
   className?: string;
 }) {
-  const href = item.html_url ?? origin;
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer noopener"
-      className={buttonVariants({ className })}
-    >
-      <ExternalLink />
-      Open in Canvas
-    </a>
-  );
+  const link = calendarItemLink(item, origin);
+  switch (link.kind) {
+    case "assignment":
+      return (
+        <Link
+          to="/courses/$courseId/assignments/$assignmentId"
+          params={{ courseId: link.courseId, assignmentId: link.id }}
+          className={buttonVariants({ className })}
+        >
+          <ArrowRight />
+          Open assignment
+        </Link>
+      );
+    case "quiz":
+      return (
+        <Link
+          to="/courses/$courseId/quizzes/$quizId"
+          params={{ courseId: link.courseId, quizId: link.id }}
+          className={buttonVariants({ className })}
+        >
+          <ArrowRight />
+          Open quiz
+        </Link>
+      );
+    case "discussion":
+      return (
+        <Link
+          to="/courses/$courseId/discussions/$topicId"
+          params={{ courseId: link.courseId, topicId: link.id }}
+          className={buttonVariants({ className })}
+        >
+          <ArrowRight />
+          Open discussion
+        </Link>
+      );
+    case "none":
+      return null;
+  }
 }
 
 function CalendarSkeleton() {
