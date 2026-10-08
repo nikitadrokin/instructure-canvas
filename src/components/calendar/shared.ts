@@ -330,6 +330,49 @@ export function isUntimedItem(item: CalendarItem): boolean {
   return item.all_day || !item.start_at;
 }
 
+/** In-app page a calendar item opens, or `none` when no page exists. */
+export type CalendarItemLink =
+  | { kind: "assignment"; courseId: string; id: string }
+  | { kind: "quiz"; courseId: string; id: string }
+  | { kind: "discussion"; courseId: string; id: string }
+  | { kind: "none" };
+
+const canvasCourseItemPath =
+  /^\/courses\/(\d+)\/(assignments|quizzes|discussion_topics)\/(\d+)\/?$/;
+
+/**
+ * Maps a calendar item to its in-app page using the course path in `html_url`.
+ * Calendar events and URLs on another origin stay unlinked.
+ */
+export function calendarItemLink(
+  item: CalendarItem,
+  origin: string,
+): CalendarItemLink {
+  if (!item.html_url) return { kind: "none" };
+  try {
+    const url = new URL(item.html_url, origin);
+    if (url.origin !== new URL(origin).origin) return { kind: "none" };
+    const match = canvasCourseItemPath.exec(url.pathname);
+    const courseId = match?.[1];
+    const segment = match?.[2];
+    const id = match?.[3];
+    if (!courseId || !segment || !id) return { kind: "none" };
+    if (segment === "assignments") return { kind: "assignment", courseId, id };
+    if (segment === "quizzes") return { kind: "quiz", courseId, id };
+    return { kind: "discussion", courseId, id };
+  } catch {
+    return { kind: "none" };
+  }
+}
+
+/** Course id from a `course_<id>` context code, or `null` for personal calendars. */
+export function courseIdFromContextCode(
+  contextCode: string | undefined,
+): string | null {
+  const match = /^course_(\d+)$/.exec(contextCode ?? "");
+  return match?.[1] ?? null;
+}
+
 /**
  * Positions a timed event in the 7:00–21:00 week column.
  * Events outside that window are clamped so they stay visible.
