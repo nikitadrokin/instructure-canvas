@@ -1,5 +1,5 @@
-import type { FrameLoopHandle, Gpu } from "vgpu";
-import { clock, effect, frame, frameLoop, init, surface } from "vgpu";
+import type { Effect, FrameLoopHandle, Gpu, Surface } from "vgpu";
+import { effect, frame, frameLoop, init, surface } from "vgpu";
 import canvasLogoShader from "./canvas-logo.wgsl?raw";
 
 /**
@@ -15,9 +15,111 @@ export interface StartCanvasLogoOptions {
   onError?: (error: unknown) => void;
 }
 
+/** How long an unused GPU device stays alive before it is destroyed. */
+const IDLE_DISPOSE_MS = 30_000;
+
+/**
+ * Process-wide WebGPU state shared by every logo on the page. Creating the
+ * device and compiling the pipeline is the expensive part of showing the mark,
+ * so it happens once and is reused by later mounts instead of per mount.
+ */
+interface SharedRuntime {
+  gpu: Gpu;
+  /** Effects released by unmounted logos, reused instead of re-created. */
+  idleEffects: Effect[];
+  /** Number of mounted logos using this runtime. */
+  leases: number;
+  disposeTimer: ReturnType<typeof setTimeout> | undefined;
+}
+
+/** A hold on the shared runtime. Release it exactly once when done. */
+interface RuntimeLease {
+  runtime: SharedRuntime;
+  release: () => void;
+}
+
+let runtimePromise: Promise<SharedRuntime> | undefined;
+
+function scheduleIdleDispose(runtime: SharedRuntime): void {
+  clearTimeout(runtime.disposeTimer);
+  runtime.disposeTimer = setTimeout(() => {
+    if (runtime.leases > 0) return;
+    destroyRuntime(runtime);
+  }, IDLE_DISPOSE_MS);
+}
+
+function destroyRuntime(runtime: SharedRuntime): void {
+  clearTimeout(runtime.disposeTimer);
+  runtime.idleEffects.length = 0;
+  runtimePromise = undefined;
+  if (!runtime.gpu.disposed) runtime.gpu.dispose();
+}
+
+function getRuntime(): Promise<SharedRuntime> {
+  if (runtimePromise) return runtimePromise;
+
+  const pending: Promise<SharedRuntime> = init({
+    powerPreference: "low-power",
+  }).then((gpu) => {
+    const runtime: SharedRuntime = {
+      gpu,
+      idleEffects: [],
+      leases: 0,
+      disposeTimer: undefined,
+    };
+    // A lost device cannot be reused; drop it so the next mount starts fresh.
+    void gpu.gpu.lost.then(() => {
+      if (runtimePromise === pending) destroyRuntime(runtime);
+    });
+    scheduleIdleDispose(runtime);
+    return runtime;
+  });
+  pending.catch(() => {
+    if (runtimePromise === pending) runtimePromise = undefined;
+  });
+  runtimePromise = pending;
+  return pending;
+}
+
+async function leaseRuntime(): Promise<RuntimeLease> {
+  const runtime = await getRuntime();
+  runtime.leases += 1;
+  clearTimeout(runtime.disposeTimer);
+
+  let released = false;
+  return {
+    runtime,
+    release: () => {
+      if (released) return;
+      released = true;
+      runtime.leases -= 1;
+      if (runtime.leases === 0) scheduleIdleDispose(runtime);
+    },
+  };
+}
+
+function acquireEffect(runtime: SharedRuntime): Effect {
+  return (
+    runtime.idleEffects.pop() ??
+    effect(runtime.gpu, canvasLogoShader, {
+      blend: "premultiplied",
+      label: "canvas-logo",
+    })
+  );
+}
+
+/**
+ * Warms the shared WebGPU device so the first visible logo skips initialisation.
+ * Safe to call repeatedly and on browsers without WebGPU.
+ */
+export async function preloadCanvasLogoRuntime(): Promise<void> {
+  const runtime = await getRuntime();
+  if (runtime.leases === 0) scheduleIdleDispose(runtime);
+}
+
 /**
  * Starts the Canvas logo render loop on `canvas`.
- * Call the returned function to stop the loop and dispose the GPU context.
+ * Call the returned function to stop the loop and release the shared GPU context.
  */
 export function startCanvasLogo(
   canvas: HTMLCanvasElement,
@@ -25,42 +127,61 @@ export function startCanvasLogo(
 ): () => void {
   let disposed = false;
   let loop: FrameLoopHandle | undefined;
-  let gpu: Gpu | undefined;
+  let lease: RuntimeLease | undefined;
+  let canvasSurface: Surface | undefined;
+  let logo: Effect | undefined;
   const events = new AbortController();
   let unsubscribeResize: (() => void) | undefined;
 
+  const teardown = () => {
+    events.abort();
+    unsubscribeResize?.();
+    unsubscribeResize = undefined;
+    loop?.stop();
+    loop = undefined;
+    if (canvasSurface && !canvasSurface.disposed) canvasSurface.dispose();
+    canvasSurface = undefined;
+    if (logo && lease && !lease.runtime.gpu.disposed) {
+      lease.runtime.idleEffects.push(logo);
+    }
+    logo = undefined;
+    lease?.release();
+    lease = undefined;
+  };
+
   void (async () => {
     try {
-      gpu = await init({ powerPreference: "low-power" });
+      const acquired = await leaseRuntime();
       if (disposed) {
-        gpu.dispose();
+        acquired.release();
         return;
       }
+      lease = acquired;
+      const gpu = acquired.runtime.gpu;
 
-      const canvasSurface = surface(gpu, canvas, {
+      const activeSurface = surface(gpu, canvas, {
         alphaMode: "premultiplied",
         clearColor: [0, 0, 0, 0],
         dpr: [1, 2],
         label: "canvas-logo-surface",
       });
+      canvasSurface = activeSurface;
 
-      const logo = effect(gpu, canvasLogoShader, {
-        blend: "premultiplied",
-        label: "canvas-logo",
-        set: {
-          params: {
-            motion: options.reducedMotion ? 0 : 1,
-            pointer: [0, 0],
-            hover: 0,
-            press: 0,
-            texel: canvasSurface.texelSize,
-            time: options.reducedMotion ? 1.7 : 0,
-          },
+      const activeLogo = acquireEffect(acquired.runtime);
+      logo = activeLogo;
+      activeLogo.set({
+        params: {
+          motion: options.reducedMotion ? 0 : 1,
+          pointer: [0, 0],
+          hover: 0,
+          press: 0,
+          texel: activeSurface.texelSize,
+          time: options.reducedMotion ? 1.7 : 0,
         },
       });
 
-      unsubscribeResize = canvasSurface.onResize(() => {
-        logo.set({ params: { texel: canvasSurface.texelSize } });
+      unsubscribeResize = activeSurface.onResize(() => {
+        activeLogo.set({ params: { texel: activeSurface.texelSize } });
       });
 
       const pointer = { x: 0, y: 0, hover: 0, press: 0 };
@@ -110,18 +231,24 @@ export function startCanvasLogo(
         window.addEventListener("blur", leave, listenerOptions);
       }
 
-      const time = clock(gpu);
+      // The gpu clock is shared and ticks once per frame of every logo, so
+      // each logo keeps its own wall-clock time to stay smooth when several run.
+      const startedAt = performance.now();
+      let lastTickAt = startedAt;
       const writeTime = () => {
-        const dt = Math.min(time.deltaTime, 0.05);
+        const now = performance.now();
+        const dt = Math.min((now - lastTickAt) / 1000, 0.05);
+        lastTickAt = now;
+        const elapsed = (now - startedAt) / 1000;
         const follow = 1 - Math.exp(-14 * dt);
         const settle = 1 - Math.exp(-7 * dt);
         smooth.x += (pointer.x - smooth.x) * follow;
         smooth.y += (pointer.y - smooth.y) * follow;
         smooth.hover += (pointer.hover - smooth.hover) * settle;
         smooth.press += (pointer.press - smooth.press) * follow;
-        logo.set({
+        activeLogo.set({
           params: {
-            time: options.reducedMotion ? 1.7 : time.time % 600,
+            time: options.reducedMotion ? 1.7 : elapsed % 600,
             pointer: [smooth.x, smooth.y],
             hover: smooth.hover,
             press: smooth.press,
@@ -131,12 +258,8 @@ export function startCanvasLogo(
 
       writeTime();
       frame(gpu, (currentFrame) => {
-        currentFrame.pass(canvasSurface, logo);
+        currentFrame.pass(activeSurface, activeLogo);
       });
-      if (disposed) {
-        gpu.dispose();
-        return;
-      }
       options.onReady?.();
 
       if (!options.reducedMotion) {
@@ -144,25 +267,19 @@ export function startCanvasLogo(
           gpu,
           (currentFrame) => {
             writeTime();
-            currentFrame.pass(canvasSurface, logo);
+            currentFrame.pass(activeSurface, activeLogo);
           },
           { fps: options.interactive ? 60 : 30 },
         );
       }
     } catch (error) {
-      events.abort();
-      unsubscribeResize?.();
-      loop?.stop();
+      teardown();
       options.onError?.(error);
-      gpu?.dispose();
     }
   })();
 
   return () => {
     disposed = true;
-    events.abort();
-    unsubscribeResize?.();
-    loop?.stop();
-    gpu?.dispose();
+    teardown();
   };
 }

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { LoadingIndicator } from "@/components/canvas-logo/loading-indicator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,9 +58,7 @@ export function CourseSection({
         />
       </div>
       {query.isPending ? (
-        <output className="text-sm text-muted-foreground">
-          Loading {section}…
-        </output>
+        <LoadingIndicator label={`Loading ${section}…`} className="py-12" />
       ) : null}
       {query.error ? (
         <Alert variant="error">

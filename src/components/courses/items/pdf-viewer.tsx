@@ -15,9 +15,8 @@ import type {
 } from "pdfjs-dist";
 import type React from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { LoadingIndicator } from "@/components/canvas-logo/loading-indicator";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Toolbar,
   ToolbarButton,
@@ -387,10 +386,7 @@ export function PdfViewer({
         className={`${isFullscreen ? "min-h-0 flex-1" : "h-[70vh]"} w-full min-w-0 max-w-full overflow-auto overscroll-contain rounded-lg border bg-muted/40`}
       >
         {loading ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 p-6">
-            <Spinner />
-            <Skeleton className="h-[80%] w-[70%] max-w-xl" />
-          </div>
+          <LoadingIndicator label={`Loading ${fileName}…`} className="h-full" />
         ) : null}
         {error ? (
           <p role="alert" className="p-6 text-muted-foreground text-sm">

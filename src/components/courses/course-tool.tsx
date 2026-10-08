@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { LoadingIndicator } from "@/components/canvas-logo/loading-indicator";
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from "@/integrations/canvas/store";
 import { useCourseDetail } from "@/integrations/canvas/use-course-detail";
@@ -67,7 +68,7 @@ export function CourseTool({
         </Button>
       ) : null}
       {opened && toolId && launch.isPending ? (
-        <output>Opening tool…</output>
+        <LoadingIndicator label="Opening tool…" className="py-12" />
       ) : null}
       {launch.error ? (
         <p role="alert" className="text-sm text-destructive">

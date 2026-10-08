@@ -8,6 +8,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import type { TRPCRouter } from "#/integrations/trpc/router";
+import { CanvasLogoPreload } from "@/components/canvas-logo/canvas-logo";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SITE_TITLE } from "@/lib/page-title";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
@@ -69,6 +70,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             />
           )}
           {children}
+          <CanvasLogoPreload />
           <TanStackDevtools
             config={{
               position: "bottom-right",

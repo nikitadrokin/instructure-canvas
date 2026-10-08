@@ -89,6 +89,36 @@ function CanvasLogoMark(): React.ReactElement {
   );
 }
 
+/** Delay before warming WebGPU so it never competes with first paint. */
+const PRELOAD_FALLBACK_DELAY_MS = 300;
+
+/**
+ * Downloads the logo chunk and creates the shared GPU device while the browser
+ * is idle, so the first loading state that needs the mark can draw instantly.
+ * The chunk itself is content-hashed and served immutable, so repeat visits
+ * come from the HTTP cache. No-op without WebGPU.
+ */
+export function CanvasLogoPreload(): null {
+  useEffect(() => {
+    if (!("gpu" in navigator)) return;
+
+    const warm = () => {
+      void import("./start-canvas-logo")
+        .then(({ preloadCanvasLogoRuntime }) => preloadCanvasLogoRuntime())
+        .catch(() => {});
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+      const handle = window.requestIdleCallback(warm, { timeout: 2000 });
+      return () => window.cancelIdleCallback(handle);
+    }
+    const timer = window.setTimeout(warm, PRELOAD_FALLBACK_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  return null;
+}
+
 /**
  * Canvas LMS community mark. Prefers a WebGPU shader and falls back to SVG.
  */

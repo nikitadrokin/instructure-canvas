@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { LoadingIndicator } from "@/components/canvas-logo/loading-indicator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useCanvasStore } from "@/integrations/canvas/store";
@@ -51,7 +52,9 @@ export function CourseResource({
       >
         Back to {kind === "assignment" ? "assignments" : "quizzes"}
       </Link>
-      {query.isPending ? <output>Loading {kind}…</output> : null}
+      {query.isPending ? (
+        <LoadingIndicator label={`Loading ${kind}…`} className="py-12" />
+      ) : null}
       {query.error ? (
         <Alert variant="error">
           <AlertTitle>Couldn’t load {kind}</AlertTitle>
