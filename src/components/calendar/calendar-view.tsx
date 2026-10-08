@@ -11,10 +11,7 @@ import {
   CalendarColorDot,
   CalendarFilters,
 } from "@/components/calendar/calendar-filters";
-import {
-  CalendarToolbar,
-  type CalendarViewMode,
-} from "@/components/calendar/calendar-toolbar";
+import { CalendarToolbar } from "@/components/calendar/calendar-toolbar";
 import { MonthGrid } from "@/components/calendar/month-grid";
 import {
   type CalendarItem,
@@ -29,10 +26,12 @@ import {
   formatMonthHeading,
   formatWeekHeading,
   groupItemsByDay,
+  startOfMonth,
   toDateKey,
   visibleGridRange,
   weekRange,
 } from "@/components/calendar/shared";
+import { useCalendarSearchParams } from "@/components/calendar/use-calendar-search-params";
 import { WeekView } from "@/components/calendar/week-view";
 import { DisconnectedState } from "@/components/courses/course-detail";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -78,11 +77,18 @@ export function CalendarView() {
   const dashboard = useCanvasStore((state) => state.dashboard);
   const hasHydrated = useCanvasStore((state) => state.hasHydrated);
   const isRestoring = useCanvasStore((state) => state.isRestoring);
-  const [month, setMonth] = useState(() => new Date());
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [selectedEventId, setSelectedEventId] = useState<string>();
-  const [visibleCodes, setVisibleCodes] = useState<string[]>();
-  const [view, setView] = useState<CalendarViewMode>("month");
+  const [today] = useState(() => new Date());
+  const [params, setParams] = useCalendarSearchParams();
+  const {
+    view,
+    date,
+    month: monthParam,
+    event: eventParam,
+    calendars: visibleCodes,
+  } = params;
+  const selectedDate = date ?? today;
+  const month = monthParam ?? startOfMonth(selectedDate);
+  const selectedEventId = eventParam ?? undefined;
   const isLarge = useMediaQuery("lg");
   const isCompactGrid = !useMediaQuery("md");
   const colorsQuery = useCalendarColors();
@@ -119,7 +125,9 @@ export function CalendarView() {
     () => sources.map((source) => source.code),
     [sources],
   );
-  const activeCodes = visibleCodes ?? allCodes;
+  const activeCodes = visibleCodes
+    ? visibleCodes.filter((code) => allCodes.includes(code))
+    : allCodes;
   const events = useCalendarEvents({
     startDate: range.startDate,
     endDate: range.endDate,
@@ -157,30 +165,32 @@ export function CalendarView() {
     );
   }
 
-  function selectDay(date: Date) {
-    setSelectedDate(date);
-    setSelectedEventId(undefined);
+  function selectDay(day: Date) {
+    void setParams({ date: day, event: null });
   }
 
-  function syncMonth(date: Date) {
-    setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+  function selectEvent(day: Date, item: CalendarItem) {
+    void setParams({ date: day, event: item.id });
+  }
+
+  function clearEvent() {
+    void setParams({ event: null });
   }
 
   function jumpToToday() {
-    const today = new Date();
-    syncMonth(today);
-    selectDay(today);
+    void setParams({ date: null, month: null, event: null });
   }
 
   function shift(delta: number) {
     if (view === "week") {
       const next = new Date(selectedDate);
       next.setDate(selectedDate.getDate() + delta * 7);
-      selectDay(next);
-      syncMonth(next);
+      void setParams({ date: next, month: startOfMonth(next), event: null });
       return;
     }
-    setMonth(new Date(month.getFullYear(), month.getMonth() + delta, 1));
+    void setParams({
+      month: new Date(month.getFullYear(), month.getMonth() + delta, 1),
+    });
   }
 
   return (
@@ -219,7 +229,7 @@ export function CalendarView() {
             view={view}
             prevLabel={view === "week" ? "Previous week" : "Previous month"}
             nextLabel={view === "week" ? "Next week" : "Next month"}
-            onViewChange={setView}
+            onViewChange={(next) => void setParams({ view: next })}
             onPrev={() => shift(-1)}
             onNext={() => shift(1)}
             onToday={jumpToToday}
@@ -231,10 +241,7 @@ export function CalendarView() {
               itemsByDay={itemsByDay}
               customColors={customColors}
               onSelectDay={selectDay}
-              onSelectEvent={(date, item) => {
-                setSelectedDate(date);
-                setSelectedEventId(item.id);
-              }}
+              onSelectEvent={selectEvent}
             />
           ) : (
             <MonthGrid
@@ -245,17 +252,14 @@ export function CalendarView() {
               customColors={customColors}
               compact={isCompactGrid}
               onSelectDay={selectDay}
-              onSelectEvent={(date, item) => {
-                setSelectedDate(date);
-                setSelectedEventId(item.id);
-              }}
+              onSelectEvent={selectEvent}
             />
           )}
           <CalendarFilters
             sources={sources}
             value={activeCodes}
             customColors={customColors}
-            onValueChange={setVisibleCodes}
+            onValueChange={(codes) => void setParams({ calendars: codes })}
           />
         </div>
 
@@ -263,7 +267,7 @@ export function CalendarView() {
           <EventDetailCard
             item={selectedEvent}
             origin={dashboard.origin}
-            onBack={() => setSelectedEventId(undefined)}
+            onBack={clearEvent}
           />
           <DayAgendaCard
             date={selectedDate}
@@ -271,7 +275,7 @@ export function CalendarView() {
             isLoading={events.isPending}
             selectedEventId={selectedEventId}
             customColors={customColors}
-            onSelectEvent={setSelectedEventId}
+            onSelectEvent={(id) => void setParams({ event: id })}
           />
         </div>
       </div>
@@ -279,7 +283,7 @@ export function CalendarView() {
       <Sheet
         open={Boolean(selectedEvent) && !isLarge}
         onOpenChange={(open) => {
-          if (!open) setSelectedEventId(undefined);
+          if (!open) clearEvent();
         }}
       >
         {selectedEvent ? (

@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
+import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import type { TRPCRouter } from "#/integrations/trpc/router";
 import { CanvasLogoPreload } from "@/components/canvas-logo/canvas-logo";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -69,7 +70,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               src="//unpkg.com/react-grab/dist/index.global.js"
             />
           )}
-          {children}
+          <NuqsAdapter>{children}</NuqsAdapter>
           <CanvasLogoPreload />
           <TanStackDevtools
             config={{

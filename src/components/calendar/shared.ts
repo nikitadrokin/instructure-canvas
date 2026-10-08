@@ -33,6 +33,11 @@ export function parseDateKey(key: string): Date | null {
   return date;
 }
 
+/** First day of the month that contains `date`, at local midnight. */
+export function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
 /** First and last days of the month that contains `month`. */
 export function monthRange(month: Date): {
   startDate: string;
