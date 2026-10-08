@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { LoadingIndicator } from "@/components/canvas-logo/loading-indicator";
 import { Button } from "@/components/ui/button";
@@ -52,8 +53,9 @@ export function CourseTool({
             href={url.toString()}
             target="_blank"
             rel="noreferrer"
-            className="text-sm underline"
+            className="inline-flex items-center gap-1 text-sm underline"
           >
+            <ExternalLink className="size-3.5" />
             Open in Canvas
           </a>
         ) : null}
