@@ -5,7 +5,7 @@ import {
   useNavigate,
   useParams,
 } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { partitionCourses } from "@/components/dashboard/shared";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -65,11 +65,6 @@ function CoursesLayout() {
   const selectedCourseName = selectedCourse
     ? (selectedCourse.name ?? selectedCourse.course_code)
     : "Courses";
-  const selectedCourseUrl = selectedCourse
-    ? (selectedCourse.html_url ??
-      `${dashboard?.origin}/courses/${selectedCourse.id}`)
-    : null;
-
   async function disconnect() {
     useCanvasStore.getState().forgetSession();
     try {
@@ -125,21 +120,19 @@ function CoursesLayout() {
               </h1>
             </div>
             <div className="flex flex-col gap-2 self-start pt-6 sm:flex-row">
-              {selectedCourseUrl ? (
+              {selectedCourse ? (
                 <Button
                   variant="outline"
                   render={
-                    // biome-ignore lint/a11y/useAnchorContent: Button children supply the rendered anchor's accessible text
-                    <a
-                      href={selectedCourseUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label="Open this course in Canvas"
+                    <Link
+                      to="/courses/$courseId"
+                      params={{ courseId: selectedCourse.id }}
+                      aria-label="Go to course home"
                     />
                   }
                 >
-                  <ExternalLink />
-                  Open in Canvas
+                  <ArrowRight />
+                  Course home
                 </Button>
               ) : null}
               {options.length ? (
