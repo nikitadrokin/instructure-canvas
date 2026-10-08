@@ -1,5 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { AlertCircle, CalendarDays, MousePointerClick, X } from "lucide-react";
+import {
+  AlertCircle,
+  CalendarDays,
+  ExternalLink,
+  MousePointerClick,
+  X,
+} from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import {
   CalendarColorDot,
@@ -562,7 +568,18 @@ function CalendarItemActionButton({
         </Link>
       );
     case "none":
-      return null;
+      if (!item.html_url) return null;
+      return (
+        <a
+          href={item.html_url}
+          target="_blank"
+          rel="noreferrer noopener"
+          className={buttonVariants({ className })}
+        >
+          <ExternalLink />
+          Open in Canvas
+        </a>
+      );
   }
 }
 
