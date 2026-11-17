@@ -135,37 +135,21 @@ export function Dashboard({
               icon={<BookOpen />}
               label="Active courses"
               value={String(data.courses.length)}
-              note={
-                data.courses.length === 1
-                  ? "current enrollment"
-                  : "current enrollments"
-              }
             />
             <StatCard
               icon={<CircleAlert />}
               label="Missing"
               value={String(missing.length)}
-              note={
-                missing.length === 1
-                  ? "assignment still unsubmitted"
-                  : "assignments still unsubmitted"
-              }
             />
             <StatCard
               icon={<Clock />}
               label="Coming up"
               value={String(data.upcoming.length)}
-              note="assignments and events"
             />
             <StatCard
               icon={<BarChart3 />}
               label="Average score"
               value={average === null ? "—" : `${average}%`}
-              note={
-                scores.length
-                  ? `across ${scores.length} graded courses`
-                  : "No scores released yet"
-              }
             />
           </section>
 
