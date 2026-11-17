@@ -36,7 +36,7 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" variant="inset">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-1 py-1.5">
+        <div className="flex items-center gap-2 px-1 py-1.5 -ml-1">
           <CanvasLogo
             decorative
             interactive={false}
