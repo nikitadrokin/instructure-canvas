@@ -1,5 +1,3 @@
-import frauncesLatin from "@fontsource-variable/fraunces/files/fraunces-latin-opsz-normal.woff2?url";
-import interLatin from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -48,13 +46,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         type: "image/svg+xml",
         href: "/favicon.svg",
       },
-      ...[frauncesLatin, interLatin].map((href) => ({
-        rel: "preload",
-        as: "font",
-        type: "font/woff2",
-        href,
-        crossOrigin: "anonymous" as const,
-      })),
       {
         rel: "stylesheet",
         href: appCss,
