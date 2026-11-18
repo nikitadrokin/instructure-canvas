@@ -1,10 +1,8 @@
-import { ChevronRight } from "lucide-react";
 import type React from "react";
 import {
   formatOverdueLabel,
   type MissingItem,
 } from "@/components/dashboard/shared";
-import { Badge } from "@/components/ui/badge";
 
 export function MissingRow({
   item,
@@ -21,18 +19,17 @@ export function MissingRow({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="flex items-center gap-3 px-6 py-3.5 outline-none transition-colors first:rounded-t-2xl last:rounded-b-2xl hover:bg-accent/40 focus-visible:bg-accent/40"
+      className="flex items-baseline justify-between gap-4 px-5 py-3 outline-none transition-colors hover:bg-accent focus-visible:bg-accent"
     >
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-col">
         <span className="truncate font-medium text-sm">{item.name}</span>
         <span className="truncate text-muted-foreground text-xs">
-          {contextLabel} · {formatOverdueLabel(item.due_at)}
+          {contextLabel}
         </span>
       </div>
-      <Badge variant="warning" size="sm">
-        Overdue
-      </Badge>
-      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+      <span className="shrink-0 whitespace-nowrap text-signal-foreground text-xs tabular-nums">
+        {formatOverdueLabel(item.due_at)}
+      </span>
     </a>
   );
 }
