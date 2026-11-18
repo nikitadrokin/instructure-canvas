@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { CanvasLogo } from "#/components/canvas-logo/canvas-logo";
 import { ConnectScreen } from "#/components/connect-screen";
 import { Dashboard } from "#/components/dashboard/dashboard";
-import { Spinner } from "#/components/ui/spinner";
 import { usePageTitle } from "#/hooks/use-page-title";
 import { useCanvasStore } from "#/integrations/canvas/store";
 import { useTRPC, useTRPCClient } from "#/integrations/trpc/react";
@@ -162,12 +161,10 @@ function Home() {
 function LoadingScreen() {
 	return (
 		<output
-			className="flex min-h-screen flex-col items-center justify-center gap-6"
+			className="flex min-h-screen items-center justify-center"
 			aria-label="Loading your Canvas session"
 		>
 			<CanvasLogo decorative spinning size="lg" />
-			<p className="font-semibold text-sm tracking-tight">Canvas Local</p>
-			<Spinner className="size-6 text-muted-foreground" />
 		</output>
 	);
 }
