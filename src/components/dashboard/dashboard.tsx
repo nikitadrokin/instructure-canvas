@@ -1,12 +1,4 @@
-import {
-  AlertCircle,
-  BarChart3,
-  BookOpen,
-  CheckCircle2,
-  CircleAlert,
-  Clock,
-  RefreshCw,
-} from "lucide-react";
+import { AlertCircle, BookOpen, CheckCircle2, RefreshCw } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -18,7 +10,6 @@ import {
   getCourseScore,
   partitionCourses,
 } from "@/components/dashboard/shared";
-import { StatCard } from "@/components/dashboard/stat-card";
 import { UpcomingRow } from "@/components/dashboard/upcoming-row";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -68,11 +59,18 @@ export function Dashboard({
         scores.reduce((total, score) => total + score, 0) / scores.length,
       )
     : null;
-  const firstName =
-    data.profile.short_name?.split(" ")[0] ?? data.profile.name.split(" ")[0];
-  const weekday = new Intl.DateTimeFormat(undefined, {
+  const today = new Intl.DateTimeFormat(undefined, {
     weekday: "long",
+    month: "long",
+    day: "numeric",
   }).format(new Date());
+  const summary = [
+    `${data.courses.length} active ${data.courses.length === 1 ? "course" : "courses"}`,
+    `${data.upcoming.length} coming up`,
+    average === null ? null : `${average}% average`,
+  ]
+    .filter((part): part is string => part !== null)
+    .join(" · ");
 
   return (
     <SidebarProvider>
@@ -106,13 +104,23 @@ export function Dashboard({
           aria-busy={isRefreshing}
           className="mx-auto w-full max-w-6xl px-6 py-8 md:px-10"
         >
-          <div className="mb-8 flex flex-col gap-1">
-            <h1 className="font-heading font-semibold text-3xl tracking-tight">
-              Good to see you, {firstName}.
+          <div className="mb-10 flex flex-col">
+            <span className="eyebrow mb-2">{today}</span>
+            <h1 className="font-heading font-medium text-4xl leading-[1.15] tracking-[-0.025em]">
+              {missing.length === 0 ? (
+                "Nothing is overdue."
+              ) : (
+                <>
+                  <span className="text-signal-foreground tabular-nums">
+                    {missing.length}
+                  </span>{" "}
+                  {missing.length === 1 ? "assignment is" : "assignments are"}{" "}
+                  overdue.
+                </>
+              )}
             </h1>
-            <p className="text-muted-foreground text-sm">
-              Here&rsquo;s what&rsquo;s happening across your Canvas courses on{" "}
-              {weekday}.
+            <p className="mt-3 text-muted-foreground text-sm tabular-nums">
+              {summary}
             </p>
           </div>
 
@@ -126,32 +134,6 @@ export function Dashboard({
           <div className="sr-only" aria-live="polite">
             {isRefreshing ? "Refreshing dashboard" : "Dashboard is up to date"}
           </div>
-
-          <section
-            aria-label="Dashboard summary"
-            className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-          >
-            <StatCard
-              icon={<BookOpen />}
-              label="Active courses"
-              value={String(data.courses.length)}
-            />
-            <StatCard
-              icon={<CircleAlert />}
-              label="Missing"
-              value={String(missing.length)}
-            />
-            <StatCard
-              icon={<Clock />}
-              label="Coming up"
-              value={String(data.upcoming.length)}
-            />
-            <StatCard
-              icon={<BarChart3 />}
-              label="Average score"
-              value={average === null ? "—" : `${average}%`}
-            />
-          </section>
 
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(300px,0.9fr)]">
             <div className="flex flex-col gap-8">
