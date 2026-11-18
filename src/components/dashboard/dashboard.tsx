@@ -10,6 +10,7 @@ import {
   getCourseScore,
   partitionCourses,
 } from "@/components/dashboard/shared";
+import { SectionHeader } from "@/components/dashboard/section-header";
 import { UpcomingRow } from "@/components/dashboard/upcoming-row";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -156,22 +157,20 @@ export function Dashboard({
               ) : null}
             </div>
 
-            <div className="flex min-w-0 flex-col gap-8">
+            <div className="flex min-w-0 flex-col gap-10">
               <section
                 id="missing"
                 aria-labelledby="missing-heading"
                 className="min-w-0"
               >
-                <div className="mb-4">
-                  <h2
-                    id="missing-heading"
-                    className="font-heading font-semibold text-xl"
-                  >
-                    Missing
-                  </h2>
-                </div>
+                <SectionHeader
+                  id="missing-heading"
+                  title="Missing"
+                  aside={missing.length ? String(missing.length) : undefined}
+                  asideTone="signal"
+                />
                 {missing.length ? (
-                  <Card className="divide-y overflow-hidden">
+                  <Card className="hairline-rows overflow-hidden">
                     {missing.slice(0, 7).map((item) => (
                       <MissingRow
                         key={item.id}
@@ -181,20 +180,9 @@ export function Dashboard({
                     ))}
                   </Card>
                 ) : (
-                  <Card>
-                    <Empty>
-                      <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                          <CheckCircle2 />
-                        </EmptyMedia>
-                        <EmptyTitle>You&rsquo;re caught up</EmptyTitle>
-                        <EmptyDescription>
-                          Canvas has no past-due assignments waiting on a
-                          submission.
-                        </EmptyDescription>
-                      </EmptyHeader>
-                    </Empty>
-                  </Card>
+                  <p className="text-muted-foreground text-sm">
+                    No past-due assignments are waiting on a submission.
+                  </p>
                 )}
               </section>
 
@@ -203,16 +191,9 @@ export function Dashboard({
                 aria-labelledby="upcoming-heading"
                 className="min-w-0"
               >
-                <div className="mb-4">
-                  <h2
-                    id="upcoming-heading"
-                    className="font-heading font-semibold text-xl"
-                  >
-                    Upcoming
-                  </h2>
-                </div>
+                <SectionHeader id="upcoming-heading" title="Upcoming" />
                 {data.upcoming.length ? (
-                  <Card className="divide-y overflow-hidden">
+                  <Card className="hairline-rows overflow-hidden">
                     {data.upcoming.slice(0, 7).map((item) => (
                       <UpcomingRow
                         key={`${item.type}-${item.id}`}
@@ -222,20 +203,9 @@ export function Dashboard({
                     ))}
                   </Card>
                 ) : (
-                  <Card>
-                    <Empty>
-                      <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                          <CheckCircle2 />
-                        </EmptyMedia>
-                        <EmptyTitle>You&rsquo;re all clear</EmptyTitle>
-                        <EmptyDescription>
-                          Canvas has no upcoming assignments or calendar events
-                          for you.
-                        </EmptyDescription>
-                      </EmptyHeader>
-                    </Empty>
-                  </Card>
+                  <p className="text-muted-foreground text-sm">
+                    Nothing is due in the coming days.
+                  </p>
                 )}
               </section>
             </div>
