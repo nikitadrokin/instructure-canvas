@@ -1,29 +1,22 @@
-import { AlertCircle, BookOpen, CheckCircle2, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
-import { CourseCard } from "@/components/dashboard/course-card";
+import { CourseCard, CourseRow } from "@/components/dashboard/course-card";
 import { MissingRow } from "@/components/dashboard/missing-row";
+import { SectionHeader } from "@/components/dashboard/section-header";
 import {
   type Course,
   type DashboardData,
   getCourseScore,
   partitionCourses,
 } from "@/components/dashboard/shared";
-import { SectionHeader } from "@/components/dashboard/section-header";
 import { UpcomingRow } from "@/components/dashboard/upcoming-row";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -137,22 +130,22 @@ export function Dashboard({
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(300px,0.9fr)]">
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-10">
               {starred.length ? (
                 <CourseSection
                   id="starred-courses"
-                  title="Starred Courses"
-                  count={starred.length}
+                  title="Starred"
                   courses={starred}
+                  layout="cards"
                 />
               ) : null}
               {other.length || !starred.length ? (
                 <CourseSection
                   id="courses"
-                  title="Other Courses"
-                  count={other.length}
+                  title={starred.length ? "Other courses" : "Courses"}
                   courses={other}
-                  empty
+                  layout={starred.length ? "list" : "cards"}
+                  showEmpty
                 />
               ) : null}
             </div>
@@ -219,47 +212,37 @@ export function Dashboard({
 function CourseSection({
   id,
   title,
-  count,
   courses,
-  empty = false,
+  layout,
+  showEmpty = false,
 }: {
   id: string;
   title: string;
-  count: number;
   courses: Course[];
-  empty?: boolean;
+  layout: "cards" | "list";
+  showEmpty?: boolean;
 }): React.ReactElement {
   return (
     <section id={id} aria-labelledby={`${id}-heading`}>
-      <div className="mb-4 flex items-baseline gap-3">
-        <h2 id={`${id}-heading`} className="font-heading font-semibold text-xl">
-          {title}
-        </h2>
-        <span className="text-muted-foreground text-sm">
-          {count} {count === 1 ? "course" : "courses"}
-        </span>
-      </div>
+      <SectionHeader id={`${id}-heading`} title={title} />
       {courses.length ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {courses.map((course) => (
-            <CourseCard key={course.id} course={course} />
-          ))}
-        </div>
-      ) : empty ? (
-        <Card>
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <BookOpen />
-              </EmptyMedia>
-              <EmptyTitle>No active courses</EmptyTitle>
-              <EmptyDescription>
-                Canvas did not return any available, active enrollments for this
-                account.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        </Card>
+        layout === "cards" ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {courses.map((course) => (
+              <CourseCard key={course.id} course={course} />
+            ))}
+          </div>
+        ) : (
+          <Card className="hairline-rows overflow-hidden">
+            {courses.map((course) => (
+              <CourseRow key={course.id} course={course} />
+            ))}
+          </Card>
+        )
+      ) : showEmpty ? (
+        <p className="text-muted-foreground text-sm">
+          Canvas did not return any active enrollments for this account.
+        </p>
       ) : null}
     </section>
   );
