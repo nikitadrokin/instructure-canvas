@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
-@import "@fontsource-variable/fraunces/opsz.css";
 @import "@fontsource-variable/geist-mono";
 
 @custom-variant dark (&:is(.dark *));
@@ -71,7 +70,7 @@
 	--animate-toast-success-even: toast-success-even 0.32s cubic-bezier(0.5, 1, 0.89, 1);
 	--animate-toast-error-odd: toast-error-odd 0.28s cubic-bezier(0.5, 1, 0.89, 1);
 	--animate-toast-error-even: toast-error-even 0.28s cubic-bezier(0.5, 1, 0.89, 1);
-	--font-heading: 'Fraunces Variable', ui-serif, Georgia, serif;
+	--font-heading: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 	--shadow-raised: var(--elevation-raised);
 	--shadow-raised-hover: var(--elevation-raised-hover);
 	--color-signal: var(--signal);
