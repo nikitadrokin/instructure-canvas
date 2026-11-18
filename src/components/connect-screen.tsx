@@ -1,29 +1,11 @@
-import {
-  AlertCircle,
-  ArrowRight,
-  Globe,
-  Lock,
-  ShieldCheck,
-} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import type React from "react";
 import { CanvasLogo } from "@/components/canvas-logo/canvas-logo";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { Input } from "@/components/ui/input";
 
 const TOKEN_HELP_URL =
   "https://community.instructure.com/en/kb/articles/662901-how-do-i-manage-api-access-tokens-in-my-user-account";
@@ -51,121 +33,81 @@ export function ConnectScreen({
         <ModeToggle />
       </header>
 
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-12">
-        <div className="mb-8 flex flex-col items-center gap-4 text-center">
-          <CanvasLogo size="lg" />
-          <h1 className="font-heading font-semibold text-3xl tracking-tight">
-            Canvas with a <br />
-            Better UI
-          </h1>
-        </div>
+      <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-12">
+        <CanvasLogo size="lg" className="mb-6" />
+        <h1 className="font-heading font-medium text-4xl leading-[1.15] tracking-[-0.025em]">
+          Connect your Canvas account
+        </h1>
+        <p className="mt-3 mb-8 text-muted-foreground text-sm">
+          Your school and access token stay in this browser until you
+          disconnect.
+        </p>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Connect to Canvas</CardTitle>
-            <CardDescription>
-              Use a{" "}
+        <form
+          onSubmit={onSubmit}
+          aria-busy={isPending}
+          className="flex flex-col gap-5"
+        >
+          <Field>
+            <FieldLabel htmlFor="canvas-url">Canvas domain</FieldLabel>
+            <Input
+              id="canvas-url"
+              name="canvas-url"
+              type="text"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+              placeholder="school.instructure.com"
+              value={canvasUrl}
+              onChange={(event) => onCanvasUrlChange(event.target.value)}
+              aria-invalid={error ? true : undefined}
+              required
+            />
+          </Field>
+
+          <Field>
+            <div className="flex w-full items-baseline justify-between gap-3">
+              <FieldLabel htmlFor="canvas-token">
+                Personal access token
+              </FieldLabel>
               <a
+                className="text-muted-foreground text-xs underline decoration-[0.09em] underline-offset-[0.2em] hover:text-foreground"
                 href={TOKEN_HELP_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="text-primary underline-offset-4 not-[&:hover]:underline"
               >
-                personal access
-              </a>{" "}
-              token from your own account.
-            </CardDescription>
-          </CardHeader>
+                Where do I find this?
+              </a>
+            </div>
+            <Input
+              ref={tokenInput}
+              id="canvas-token"
+              name="canvas-token"
+              type="password"
+              autoComplete="off"
+              placeholder="Paste your token"
+              aria-invalid={error ? true : undefined}
+              required
+            />
+          </Field>
 
-          <CardContent>
-            <form
-              onSubmit={onSubmit}
-              aria-busy={isPending}
-              className="flex flex-col gap-4"
-            >
-              <Field>
-                <FieldLabel htmlFor="canvas-url">Canvas domain</FieldLabel>
-                <InputGroup>
-                  <InputGroupAddon>
-                    <Globe />
-                  </InputGroupAddon>
-                  <InputGroupInput
-                    id="canvas-url"
-                    name="canvas-url"
-                    type="text"
-                    inputMode="url"
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    placeholder="school.instructure.com"
-                    value={canvasUrl}
-                    onChange={(event) => onCanvasUrlChange(event.target.value)}
-                    aria-invalid={error ? true : undefined}
-                    required
-                  />
-                </InputGroup>
-              </Field>
+          {error ? (
+            <Alert variant="error">
+              <AlertCircle />
+              <AlertTitle>Couldn&rsquo;t connect</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
 
-              <Field>
-                <div className="flex w-full items-center justify-between gap-3">
-                  <FieldLabel htmlFor="canvas-token">
-                    Personal access token
-                  </FieldLabel>
-                  <a
-                    className="text-primary text-xs underline-offset-4 hover:underline"
-                    href={TOKEN_HELP_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    Where do I find this?
-                  </a>
-                </div>
-                <InputGroup>
-                  <InputGroupAddon>
-                    <Lock />
-                  </InputGroupAddon>
-                  <InputGroupInput
-                    ref={tokenInput}
-                    id="canvas-token"
-                    name="canvas-token"
-                    type="password"
-                    autoComplete="off"
-                    placeholder="Paste your token"
-                    aria-invalid={error ? true : undefined}
-                    required
-                  />
-                </InputGroup>
-              </Field>
-
-              {error ? (
-                <Alert variant="error">
-                  <AlertCircle />
-                  <AlertTitle>Couldn&rsquo;t connect</AlertTitle>
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              ) : null}
-
-              <Button
-                type="submit"
-                size="lg"
-                loading={isPending}
-                className="mt-1 w-full"
-              >
-                Open my dashboard
-                <ArrowRight />
-              </Button>
-            </form>
-          </CardContent>
-
-          <CardFooter className="gap-3 border-t text-muted-foreground text-xs">
-            <ShieldCheck className="size-4 shrink-0" />
-            <p>
-              <span className="font-medium text-foreground">
-                Saved on this device.
-              </span>{" "}
-              Your school and token stay in this browser until you disconnect.
-            </p>
-          </CardFooter>
-        </Card>
+          <Button
+            type="submit"
+            size="lg"
+            loading={isPending}
+            className="w-full"
+          >
+            Connect
+          </Button>
+        </form>
       </main>
     </div>
   );
