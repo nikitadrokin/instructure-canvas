@@ -43,14 +43,13 @@ export function AppSidebar({
             size="sm"
             className="size-8 shrink-0"
           />
-          <span className="font-semibold text-sm tracking-tight group-data-[collapsible=icon]:hidden truncate">
+          <span className="font-heading font-medium text-base group-data-[collapsible=icon]:hidden truncate">
             Canvas Local
           </span>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -88,7 +87,7 @@ export function AppSidebar({
         </SidebarGroup>
         {starred.length ? (
           <CourseNavGroup
-            label="Starred Courses"
+            label="Starred"
             courses={starred}
             activePage={activePage}
             selectedCourseId={selectedCourseId}
@@ -96,7 +95,7 @@ export function AppSidebar({
         ) : null}
         {other.length ? (
           <CourseNavGroup
-            label="Other Courses"
+            label={starred.length ? "Other courses" : "Courses"}
             courses={other}
             activePage={activePage}
             selectedCourseId={selectedCourseId}
@@ -104,19 +103,14 @@ export function AppSidebar({
         ) : null}
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:hidden">
-          <div className="flex min-w-0 flex-col">
-            <span className="font-medium text-xs">Connected at</span>
-            <a
-              href={data.origin}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="truncate text-foreground text-xs hover:underline"
-            >
-              {new URL(data.origin).hostname}
-            </a>
-          </div>
-        </div>
+        <a
+          href={data.origin}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="eyebrow truncate px-2 py-1 normal-case hover:text-foreground group-data-[collapsible=icon]:hidden"
+        >
+          {new URL(data.origin).hostname}
+        </a>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={onDisconnect} tooltip="Disconnect">
