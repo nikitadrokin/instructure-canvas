@@ -1,12 +1,26 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
+@import "@fontsource-variable/fraunces/opsz.css";
 @import "@fontsource-variable/geist-mono";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
 	color-scheme: light;
-	--background: var(--color-white);
+	/* Warm paper ground; cards stay white so ring shadows read as raised. */
+	--background: oklch(0.982 0.004 85);
+	/* Canvas red, reserved for work that needs attention (overdue, missing). */
+	--signal: oklch(0.577 0.215 27);
+	--signal-foreground: oklch(0.5 0.19 27);
+	--border-hairline: 1px;
+	--elevation-raised:
+		0 0 0 1px rgb(0 0 0 / 0.06),
+		0 1px 2px rgb(0 0 0 / 0.04),
+		0 4px 10px -4px rgb(0 0 0 / 0.06);
+	--elevation-raised-hover:
+		0 0 0 1px rgb(0 0 0 / 0.09),
+		0 1px 3px rgb(0 0 0 / 0.06),
+		0 6px 14px -4px rgb(0 0 0 / 0.1);
 	--border: --alpha(var(--color-black) / 8%);
 	--accent: --alpha(var(--color-black) / 4%);
 	--destructive-foreground: var(--color-red-700);
@@ -18,9 +32,9 @@
 	--warning-foreground: var(--color-amber-700);
 	--accent-foreground: var(--color-neutral-800);
 	--card: var(--color-white);
-	--card-foreground: var(--color-neutral-800);
+	--card-foreground: oklch(0.235 0.008 70);
 	--destructive: var(--color-red-500);
-	--foreground: var(--color-neutral-800);
+	--foreground: oklch(0.235 0.008 70);
 	--input: --alpha(var(--color-black) / 10%);
 	--muted: --alpha(var(--color-black) / 4%);
 	--muted-foreground: color-mix(in srgb, var(--color-neutral-500) 90%, var(--color-black));
@@ -40,7 +54,7 @@
 	--code-foreground: var(--foreground);
 	--code-highlight: --alpha(var(--color-black) / 4%);
 	--radius: 0.625rem;
-	--sidebar: var(--color-neutral-50);
+	--sidebar: oklch(0.968 0.005 85);
 	--sidebar-accent: --alpha(var(--color-black) / 4%);
 	--sidebar-accent-foreground: var(--color-neutral-800);
 	--sidebar-border: --alpha(var(--color-black) / 6%);
@@ -57,7 +71,11 @@
 	--animate-toast-success-even: toast-success-even 0.32s cubic-bezier(0.5, 1, 0.89, 1);
 	--animate-toast-error-odd: toast-error-odd 0.28s cubic-bezier(0.5, 1, 0.89, 1);
 	--animate-toast-error-even: toast-error-even 0.28s cubic-bezier(0.5, 1, 0.89, 1);
-	--font-heading: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-heading: 'Fraunces Variable', ui-serif, Georgia, serif;
+	--shadow-raised: var(--elevation-raised);
+	--shadow-raised-hover: var(--elevation-raised-hover);
+	--color-signal: var(--signal);
+	--color-signal-foreground: var(--signal-foreground);
 	--font-mono: 'Geist Mono Variable', ui-monospace, monospace;
 	--font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 	--color-sidebar-ring: var(--sidebar-ring);
@@ -187,6 +205,11 @@
 
 .dark {
 	color-scheme: dark;
+	--signal: oklch(0.68 0.19 25);
+	--signal-foreground: oklch(0.74 0.16 25);
+	/* Depth shadows vanish on dark surfaces; collapse to a single ring. */
+	--elevation-raised: 0 0 0 1px rgb(255 255 255 / 0.09);
+	--elevation-raised-hover: 0 0 0 1px rgb(255 255 255 / 0.15);
 	--destructive-foreground: var(--color-red-400);
 	--info: var(--color-blue-500);
 	--info-foreground: var(--color-blue-400);
@@ -230,9 +253,23 @@
 	--sidebar-ring: var(--color-neutral-400);
 }
 
+@media (min-resolution: 2dppx) {
+	:root {
+		--border-hairline: 0.5px;
+	}
+}
+
 /* Typography for HTML bodies returned by the Canvas API (pages, assignment
    descriptions, discussion messages). */
 @layer components {
+	/* Hairline separators between stacked rows. */
+	.hairline-rows > * + * {
+		border-top: var(--border-hairline) solid var(--border);
+	}
+	/* Small mono caps used for course codes and section eyebrows. */
+	.eyebrow {
+		@apply font-mono text-[0.6875rem] text-muted-foreground uppercase leading-4 tracking-[0.06em];
+	}
 	.canvas-content {
 		@apply text-foreground text-sm leading-relaxed;
 	}
@@ -335,6 +372,10 @@
     font-family: var(--font-mono);
 	}
   html {
-    @apply font-sans font-mono;
+    @apply font-sans antialiased;
+    font-synthesis: none;
+	}
+  h1, h2, h3 {
+    text-wrap: balance;
 	}
 }
