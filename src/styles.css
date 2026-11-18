@@ -266,9 +266,15 @@
 	.hairline-rows > * + * {
 		border-top: var(--border-hairline) solid var(--border);
 	}
+	/* Rule above each dashboard section: foreground tinted down so it sits
+	   between a card ring and body text in both themes. */
+	.section-rule {
+		border-top: var(--border-hairline) solid
+			color-mix(in oklab, var(--foreground) 28%, transparent);
+	}
 	/* Small mono caps used for course codes and section eyebrows. */
 	.eyebrow {
-		@apply font-mono text-[0.6875rem] text-muted-foreground uppercase leading-4 tracking-[0.06em];
+		@apply font-mono text-xs text-foreground/60 uppercase leading-4 tracking-[0.06em];
 	}
 	.canvas-content {
 		@apply text-foreground text-sm leading-relaxed;

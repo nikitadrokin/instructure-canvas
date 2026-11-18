@@ -16,10 +16,7 @@ export function SectionHeader({
   asideTone?: "muted" | "signal";
 }): React.ReactElement {
   return (
-    <div
-      className="mb-3 flex items-baseline justify-between gap-3 pt-3"
-      style={{ borderTop: "var(--border-hairline) solid var(--foreground)" }}
-    >
+    <div className="section-rule mb-3 flex items-baseline justify-between gap-3 pt-3">
       <h2 id={id} className="font-heading font-medium text-lg">
         {title}
       </h2>
